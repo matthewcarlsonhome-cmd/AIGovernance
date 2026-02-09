@@ -1,0 +1,641 @@
+'use client';
+
+import * as React from 'react';
+import { cn } from '@/lib/utils';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { Slider } from '@/components/ui/slider';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
+import {
+  Calculator,
+  DollarSign,
+  TrendingUp,
+  Clock,
+  Download,
+  BarChart3,
+} from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts';
+import type { RoiInputs, RoiResults, SensitivityRow } from '@/types';
+import {
+  calculateRoi,
+  calculateSensitivity,
+  formatCurrency,
+  formatPercent,
+} from '@/lib/scoring/roi-calculator';
+
+/* -------------------------------------------------------------------------- */
+/*  Constants                                                                   */
+/* -------------------------------------------------------------------------- */
+
+const DEFAULT_INPUTS: RoiInputs = {
+  team_size: 20,
+  avg_salary: 150000,
+  current_velocity: 40,
+  projected_velocity_lift: 40,
+  license_cost_per_user: 50,
+  implementation_cost: 25000,
+  training_cost: 10000,
+};
+
+const DEBOUNCE_MS = 400;
+
+/* -------------------------------------------------------------------------- */
+/*  Helpers                                                                     */
+/* -------------------------------------------------------------------------- */
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = React.useState(value);
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
+
+function paybackLabel(months: number): string {
+  if (months >= 999) return 'N/A';
+  if (months <= 1) return '< 1 month';
+  return `${months} months`;
+}
+
+function paybackBadgeVariant(
+  months: number
+): 'default' | 'secondary' | 'destructive' | 'outline' {
+  if (months >= 999) return 'destructive';
+  if (months <= 3) return 'default';
+  if (months <= 6) return 'secondary';
+  return 'outline';
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Metric Card                                                                 */
+/* -------------------------------------------------------------------------- */
+
+function ResultMetricCard({
+  label,
+  value,
+  icon: Icon,
+  variant = 'neutral',
+  badge,
+  sub,
+}: {
+  label: string;
+  value: string;
+  icon: React.ElementType;
+  variant?: 'positive' | 'negative' | 'neutral';
+  badge?: React.ReactNode;
+  sub?: string;
+}): React.ReactElement {
+  const colorMap = {
+    positive: 'text-emerald-600',
+    negative: 'text-red-600',
+    neutral: 'text-foreground',
+  } as const;
+
+  const bgMap = {
+    positive: 'bg-emerald-500/10',
+    negative: 'bg-red-500/10',
+    neutral: 'bg-primary/10',
+  } as const;
+
+  return (
+    <Card>
+      <CardContent className="p-5">
+        <div className="flex items-center gap-3 mb-3">
+          <div
+            className={cn(
+              'flex h-9 w-9 items-center justify-center rounded-lg',
+              bgMap[variant]
+            )}
+          >
+            <Icon
+              className={cn(
+                'h-4.5 w-4.5',
+                variant === 'positive'
+                  ? 'text-emerald-600'
+                  : variant === 'negative'
+                    ? 'text-red-600'
+                    : 'text-primary'
+              )}
+            />
+          </div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {label}
+          </p>
+        </div>
+        <div className="flex items-baseline gap-2">
+          <span className={cn('text-2xl font-bold', colorMap[variant])}>
+            {value}
+          </span>
+          {badge}
+        </div>
+        {sub && (
+          <p className="mt-1 text-xs text-muted-foreground">{sub}</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Sensitivity Chart Tooltip                                                   */
+/* -------------------------------------------------------------------------- */
+
+function SensitivityTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: Array<{ value: number }>;
+  label?: string;
+}): React.ReactElement | null {
+  if (!active || !payload || payload.length === 0) return null;
+  return (
+    <div className="rounded-lg border bg-card px-3 py-2 shadow-md">
+      <p className="text-xs font-medium text-muted-foreground mb-1">
+        Velocity Lift: {label}
+      </p>
+      <p className="text-sm font-bold text-foreground">
+        3-Year NPV: {formatCurrency(payload[0].value)}
+      </p>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Page Component                                                              */
+/* -------------------------------------------------------------------------- */
+
+export default function RoiCalculatorPage(): React.ReactElement {
+  /* ---- State ---- */
+  const [inputs, setInputs] = React.useState<RoiInputs>(DEFAULT_INPUTS);
+  const [results, setResults] = React.useState<RoiResults | null>(null);
+  const [sensitivity, setSensitivity] = React.useState<SensitivityRow[]>([]);
+
+  /* ---- Debounced auto-calculate ---- */
+  const debouncedInputs = useDebounce(inputs, DEBOUNCE_MS);
+
+  React.useEffect(() => {
+    const r = calculateRoi(debouncedInputs);
+    const s = calculateSensitivity(debouncedInputs);
+    setResults(r);
+    setSensitivity(s);
+  }, [debouncedInputs]);
+
+  /* ---- Input updater ---- */
+  function updateField(field: keyof RoiInputs, raw: string): void {
+    const num = parseFloat(raw);
+    if (Number.isNaN(num) || num < 0) return;
+    setInputs((prev) => ({ ...prev, [field]: num }));
+  }
+
+  /* ---- Manual calculate ---- */
+  function handleCalculate(): void {
+    const r = calculateRoi(inputs);
+    const s = calculateSensitivity(inputs);
+    setResults(r);
+    setSensitivity(s);
+  }
+
+  /* ---- Export stub ---- */
+  function handleExport(): void {
+    // eslint-disable-next-line no-console
+    console.log('Export PDF triggered', { inputs, results, sensitivity });
+  }
+
+  /* ---- Chart data ---- */
+  const chartData = sensitivity.map((row) => ({
+    name: `${row.velocity_lift}%`,
+    npv: row.three_year_npv,
+  }));
+
+  return (
+    <div className="flex flex-col gap-6 p-6">
+      {/* ------------------------------------------------------------------ */}
+      {/*  Header                                                             */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Calculator className="h-6 w-6 text-primary" />
+            ROI Calculator
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Calculate and visualize the return on investment for AI coding agent
+            adoption across your engineering organization.
+          </p>
+        </div>
+        <Button variant="outline" className="gap-2 shrink-0" onClick={handleExport}>
+          <Download className="h-4 w-4" />
+          Export PDF
+        </Button>
+      </div>
+
+      <Separator />
+
+      {/* ------------------------------------------------------------------ */}
+      {/*  Input + Results Grid                                               */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
+        {/* ---- Input Card ---- */}
+        <Card className="self-start">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <DollarSign className="h-4 w-4 text-primary" />
+              Input Parameters
+            </CardTitle>
+            <CardDescription>
+              Adjust the values below to model your scenario
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {/* Team Size */}
+            <div className="space-y-1.5">
+              <Label htmlFor="team_size" className="text-xs font-medium">
+                Team Size (developers)
+              </Label>
+              <Input
+                id="team_size"
+                type="number"
+                min={1}
+                value={inputs.team_size}
+                onChange={(e) => updateField('team_size', e.target.value)}
+              />
+            </div>
+
+            {/* Average Salary */}
+            <div className="space-y-1.5">
+              <Label htmlFor="avg_salary" className="text-xs font-medium">
+                Average Developer Salary ($/year)
+              </Label>
+              <Input
+                id="avg_salary"
+                type="number"
+                min={0}
+                step={1000}
+                value={inputs.avg_salary}
+                onChange={(e) => updateField('avg_salary', e.target.value)}
+              />
+            </div>
+
+            {/* Current Velocity */}
+            <div className="space-y-1.5">
+              <Label htmlFor="current_velocity" className="text-xs font-medium">
+                Current Velocity (story pts/sprint)
+              </Label>
+              <Input
+                id="current_velocity"
+                type="number"
+                min={1}
+                value={inputs.current_velocity}
+                onChange={(e) => updateField('current_velocity', e.target.value)}
+              />
+            </div>
+
+            {/* Projected Velocity Lift */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="projected_velocity_lift" className="text-xs font-medium">
+                  Projected Velocity Lift
+                </Label>
+                <span className="text-sm font-semibold text-primary">
+                  {inputs.projected_velocity_lift}%
+                </span>
+              </div>
+              <Slider
+                id="projected_velocity_lift"
+                min={5}
+                max={100}
+                step={5}
+                value={[inputs.projected_velocity_lift]}
+                onValueChange={([val]) =>
+                  setInputs((prev) => ({
+                    ...prev,
+                    projected_velocity_lift: val,
+                  }))
+                }
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground">
+                <span>5%</span>
+                <span>100%</span>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* License Cost */}
+            <div className="space-y-1.5">
+              <Label htmlFor="license_cost" className="text-xs font-medium">
+                License Cost per User/Month ($)
+              </Label>
+              <Input
+                id="license_cost"
+                type="number"
+                min={0}
+                value={inputs.license_cost_per_user}
+                onChange={(e) =>
+                  updateField('license_cost_per_user', e.target.value)
+                }
+              />
+            </div>
+
+            {/* Implementation Cost */}
+            <div className="space-y-1.5">
+              <Label htmlFor="implementation_cost" className="text-xs font-medium">
+                Implementation Cost (one-time, $)
+              </Label>
+              <Input
+                id="implementation_cost"
+                type="number"
+                min={0}
+                step={1000}
+                value={inputs.implementation_cost}
+                onChange={(e) =>
+                  updateField('implementation_cost', e.target.value)
+                }
+              />
+            </div>
+
+            {/* Training Cost */}
+            <div className="space-y-1.5">
+              <Label htmlFor="training_cost" className="text-xs font-medium">
+                Training Cost (one-time, $)
+              </Label>
+              <Input
+                id="training_cost"
+                type="number"
+                min={0}
+                step={1000}
+                value={inputs.training_cost}
+                onChange={(e) => updateField('training_cost', e.target.value)}
+              />
+            </div>
+
+            <Button className="w-full gap-2" onClick={handleCalculate}>
+              <Calculator className="h-4 w-4" />
+              Calculate
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* ---- Results Grid ---- */}
+        {results ? (
+          <div className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <ResultMetricCard
+                label="Monthly Savings"
+                value={formatCurrency(results.monthly_savings)}
+                icon={DollarSign}
+                variant="positive"
+              />
+              <ResultMetricCard
+                label="Annual Savings"
+                value={formatCurrency(results.annual_savings)}
+                icon={DollarSign}
+                variant="positive"
+              />
+              <ResultMetricCard
+                label="Total Annual Cost"
+                value={formatCurrency(results.total_annual_cost)}
+                icon={DollarSign}
+                variant="neutral"
+                sub="Licenses + implementation + training"
+              />
+              <ResultMetricCard
+                label="Net Annual Benefit"
+                value={formatCurrency(results.net_annual_benefit)}
+                icon={TrendingUp}
+                variant={results.net_annual_benefit >= 0 ? 'positive' : 'negative'}
+              />
+              <ResultMetricCard
+                label="Payback Period"
+                value={paybackLabel(results.payback_months)}
+                icon={Clock}
+                variant={results.payback_months <= 6 ? 'positive' : results.payback_months >= 999 ? 'negative' : 'neutral'}
+                badge={
+                  <Badge variant={paybackBadgeVariant(results.payback_months)} className="text-xs">
+                    {results.payback_months <= 3
+                      ? 'Fast'
+                      : results.payback_months <= 6
+                        ? 'Good'
+                        : results.payback_months <= 12
+                          ? 'Moderate'
+                          : results.payback_months >= 999
+                            ? 'Never'
+                            : 'Slow'}
+                  </Badge>
+                }
+              />
+              <ResultMetricCard
+                label="ROI %"
+                value={formatPercent(results.roi_percentage)}
+                icon={TrendingUp}
+                variant={results.roi_percentage >= 0 ? 'positive' : 'negative'}
+                badge={
+                  <Badge
+                    variant={results.roi_percentage >= 100 ? 'default' : results.roi_percentage >= 0 ? 'secondary' : 'destructive'}
+                    className="text-xs"
+                  >
+                    {results.roi_percentage >= 200
+                      ? 'Excellent'
+                      : results.roi_percentage >= 100
+                        ? 'Strong'
+                        : results.roi_percentage >= 0
+                          ? 'Positive'
+                          : 'Negative'}
+                  </Badge>
+                }
+              />
+              <ResultMetricCard
+                label="3-Year NPV"
+                value={formatCurrency(results.three_year_npv)}
+                icon={BarChart3}
+                variant={results.three_year_npv >= 0 ? 'positive' : 'negative'}
+                sub="Net present value at 10% discount rate"
+              />
+            </div>
+          </div>
+        ) : (
+          <Card className="flex items-center justify-center min-h-[300px]">
+            <CardContent className="text-center py-12">
+              <Calculator className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
+              <p className="text-sm text-muted-foreground">
+                Adjust the input parameters and results will appear here automatically.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/*  Sensitivity Analysis                                               */}
+      {/* ------------------------------------------------------------------ */}
+      {sensitivity.length > 0 && (
+        <>
+          <Separator />
+
+          <div>
+            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-1">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              Sensitivity Analysis
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              3-Year Net Present Value at varying velocity lift percentages,
+              holding all other inputs constant.
+            </p>
+
+            {/* Chart */}
+            <Card className="mb-6">
+              <CardContent className="pt-6">
+                <div className="h-[340px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={chartData}
+                      margin={{ top: 8, right: 24, left: 24, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fontSize: 12 }}
+                        className="text-muted-foreground"
+                        label={{
+                          value: 'Velocity Lift',
+                          position: 'insideBottom',
+                          offset: -4,
+                          fontSize: 12,
+                          className: 'fill-muted-foreground',
+                        }}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 12 }}
+                        className="text-muted-foreground"
+                        tickFormatter={(v: number) => formatCurrency(v)}
+                        width={100}
+                        label={{
+                          value: '3-Year NPV',
+                          angle: -90,
+                          position: 'insideLeft',
+                          offset: 0,
+                          fontSize: 12,
+                          className: 'fill-muted-foreground',
+                        }}
+                      />
+                      <Tooltip content={<SensitivityTooltip />} />
+                      <Bar dataKey="npv" radius={[4, 4, 0, 0]} maxBarSize={56}>
+                        {chartData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={entry.npv >= 0 ? '#10b981' : '#ef4444'}
+                            opacity={
+                              entry.name === `${inputs.projected_velocity_lift}%`
+                                ? 1
+                                : 0.6
+                            }
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Detailed Sensitivity Data</CardTitle>
+                <CardDescription>
+                  Full breakdown at each velocity lift scenario
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[120px]">Velocity Lift</TableHead>
+                      <TableHead className="text-right">Monthly Savings</TableHead>
+                      <TableHead className="text-right">Annual Savings</TableHead>
+                      <TableHead className="text-right">Payback (months)</TableHead>
+                      <TableHead className="text-right">3-Year NPV</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sensitivity.map((row) => {
+                      const isCurrentLift =
+                        row.velocity_lift === inputs.projected_velocity_lift;
+                      return (
+                        <TableRow
+                          key={row.velocity_lift}
+                          className={cn(
+                            isCurrentLift && 'bg-primary/5 font-medium'
+                          )}
+                        >
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {row.velocity_lift}%
+                              {isCurrentLift && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                  Current
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(row.monthly_savings)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(row.annual_savings)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {paybackLabel(row.payback_months)}
+                          </TableCell>
+                          <TableCell
+                            className={cn(
+                              'text-right font-semibold',
+                              row.three_year_npv >= 0
+                                ? 'text-emerald-600'
+                                : 'text-red-600'
+                            )}
+                          >
+                            {formatCurrency(row.three_year_npv)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

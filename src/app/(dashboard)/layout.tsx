@@ -34,8 +34,11 @@ import {
   PanelLeft,
   ChevronDown,
   ChevronRight,
-  LogOut,
-  User,
+  Calculator,
+  Grid3X3,
+  Calendar,
+  DollarSign,
+  Camera,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -81,6 +84,7 @@ const projectSections: NavSection[] = [
       { label: 'Gate Reviews', href: p('/governance/gates'), icon: ShieldCheck },
       { label: 'Compliance', href: p('/governance/compliance'), icon: Scale },
       { label: 'Risk', href: p('/governance/risk'), icon: AlertTriangle },
+      { label: 'RACI Matrix', href: p('/governance/raci'), icon: Grid3X3 },
     ],
   },
   {
@@ -105,6 +109,7 @@ const projectSections: NavSection[] = [
     items: [
       { label: 'Gantt Chart', href: p('/timeline/gantt'), icon: CalendarRange },
       { label: 'Milestones', href: p('/timeline/milestones'), icon: Flag },
+      { label: 'Snapshots', href: p('/timeline/snapshots'), icon: Camera },
     ],
   },
   {
@@ -122,11 +127,11 @@ const projectOverviewItem: NavItem = {
   icon: BarChart3,
 };
 
-const teamItem: NavItem = {
-  label: 'Team',
-  href: p('/team'),
-  icon: Users,
-};
+const projectExtraItems: NavItem[] = [
+  { label: 'ROI Calculator', href: p('/roi'), icon: DollarSign },
+  { label: 'Meetings', href: p('/meetings'), icon: Calendar },
+  { label: 'Team', href: p('/team'), icon: Users },
+];
 
 /* ------------------------------------------------------------------ */
 /*  Sidebar nav link                                                   */
@@ -177,7 +182,6 @@ function CollapsibleSection({
 }) {
   const [isOpen, setIsOpen] = useState(true);
 
-  // When sidebar is collapsed, show only the icons without a section header
   if (collapsed) {
     return (
       <div className="space-y-1">
@@ -217,18 +221,6 @@ function CollapsibleSection({
 /* ------------------------------------------------------------------ */
 
 function TopBar({ pathname }: { pathname: string }) {
-  // Derive a human-readable page title from the pathname
-  const getPageTitle = (path: string): string => {
-    if (path === '/') return 'Dashboard';
-    const segments = path.split('/').filter(Boolean);
-    const last = segments[segments.length - 1];
-    // Convert slug to title case
-    return last
-      .split('-')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
-  };
-
   const getBreadcrumbs = (path: string): { label: string; href: string }[] => {
     if (path === '/') return [{ label: 'Dashboard', href: '/' }];
     const segments = path.split('/').filter(Boolean);
@@ -354,8 +346,11 @@ export default function DashboardLayout({
               />
             ))}
 
-            {/* Team */}
-            <NavLink item={teamItem} collapsed={collapsed} pathname={pathname} />
+            {/* Extra items */}
+            <Separator />
+            {projectExtraItems.map((item) => (
+              <NavLink key={item.href} item={item} collapsed={collapsed} pathname={pathname} />
+            ))}
           </div>
         </nav>
 
