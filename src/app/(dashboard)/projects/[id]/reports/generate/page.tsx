@@ -1,103 +1,272 @@
 'use client';
 
-import { useState } from 'react';
-import { FileOutput, Download, Loader2, CheckCircle, Briefcase, Scale, Shield, Code, Megaphone } from 'lucide-react';
+import * as React from 'react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
+import {
+  FileText,
+  Briefcase,
+  Scale,
+  ShieldCheck,
+  Code2,
+  Megaphone,
+  Download,
+  Loader2,
+} from 'lucide-react';
 
-interface ReportType {
-  id: string;
-  persona: string;
-  icon: React.ElementType;
-  format: string;
-  pages: string;
-  color: string;
-  sections: string[];
-  description: string;
-}
-
-const REPORT_TYPES: ReportType[] = [
-  { id: 'executive', persona: 'Executive / Board', icon: Briefcase, format: 'PDF', pages: '3-5 pages', color: 'text-violet-600 bg-violet-50', sections: ['Feasibility Score Summary', 'ROI Projections', 'Risk Heat Map', 'Timeline Overview', 'Go/No-Go Recommendation'], description: 'Business-focused overview with data visualizations and strategic recommendations.' },
-  { id: 'legal', persona: 'Legal / Compliance', icon: Scale, format: 'DOCX', pages: 'Editable', color: 'text-blue-600 bg-blue-50', sections: ['Vendor Contract Analysis', 'Data Processing Terms', 'Compliance Control Mapping', 'Regulatory Risk Assessment', 'AUP Review Status'], description: 'Detailed legal analysis with clause-by-clause review and regulatory references.' },
-  { id: 'it_security', persona: 'IT / Security', icon: Shield, format: 'PDF + Configs', pages: '8-12 pages', color: 'text-emerald-600 bg-emerald-50', sections: ['Sandbox Architecture Diagram', 'Network Security Configuration', 'DLP Rules & Egress Filtering', 'SIEM Integration Plan', 'Managed Settings Detail'], description: 'Technical deep-dive with configuration details and security control specifications.' },
-  { id: 'engineering', persona: 'Engineering / Dev', icon: Code, format: 'Markdown + PDF', pages: 'Setup Guide', color: 'text-amber-600 bg-amber-50', sections: ['Tool Comparison Results', 'Productivity Metrics', 'CI/CD Integration Guide', 'Prompt Playbook', 'CLAUDE.md Templates'], description: 'Developer-friendly guide with code examples, metrics, and practical setup instructions.' },
-  { id: 'marketing', persona: 'Marketing / Comms', icon: Megaphone, format: 'DOCX', pages: 'Editable', color: 'text-rose-600 bg-rose-50', sections: ['AI Initiative Messaging Guide', 'Internal Communications Templates', 'Employee FAQ', 'Change Management Narrative', 'Success Metrics for Reporting'], description: 'Narrative-driven content for internal communications and change management.' },
-];
+/* ------------------------------------------------------------------ */
+/*  Types                                                              */
+/* ------------------------------------------------------------------ */
 
 type GenerateState = 'idle' | 'generating' | 'ready';
 
-export default function ReportGeneratePage() {
-  const [states, setStates] = useState<Record<string, GenerateState>>({});
+interface ReportPersona {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: React.ElementType;
+  format: string;
+  pageCount: string;
+  includes: string[];
+  iconColor: string;
+  iconBg: string;
+}
 
-  const handleGenerate = (id: string) => {
-    setStates((prev) => ({ ...prev, [id]: 'generating' }));
+/* ------------------------------------------------------------------ */
+/*  Demo Data                                                          */
+/* ------------------------------------------------------------------ */
+
+const PERSONAS: ReportPersona[] = [
+  {
+    id: 'executive',
+    title: 'Executive / Board',
+    subtitle: 'Strategic overview for leadership decision-making',
+    icon: Briefcase,
+    format: 'PDF',
+    pageCount: '3-5 pages',
+    includes: [
+      'Feasibility score summary',
+      'ROI projection',
+      'Risk heat map',
+      'Go/No-Go recommendation',
+    ],
+    iconColor: 'text-violet-600',
+    iconBg: 'bg-violet-500/10',
+  },
+  {
+    id: 'legal',
+    title: 'Legal / Compliance',
+    subtitle: 'Editable compliance and contract documentation',
+    icon: Scale,
+    format: 'DOCX',
+    pageCount: 'Editable',
+    includes: [
+      'Contract analysis',
+      'Compliance framework mapping',
+      'AUP review',
+      'Regulatory risk assessment',
+    ],
+    iconColor: 'text-blue-600',
+    iconBg: 'bg-blue-500/10',
+  },
+  {
+    id: 'it-security',
+    title: 'IT / Security',
+    subtitle: 'Technical security architecture and configuration',
+    icon: ShieldCheck,
+    format: 'PDF + Configs',
+    pageCount: '8-12 pages',
+    includes: [
+      'Sandbox architecture diagrams',
+      'Security configuration details',
+      'DLP rule documentation',
+      'Network isolation validation',
+    ],
+    iconColor: 'text-emerald-600',
+    iconBg: 'bg-emerald-500/10',
+  },
+  {
+    id: 'engineering',
+    title: 'Engineering / Dev',
+    subtitle: 'Technical evaluation results and setup documentation',
+    icon: Code2,
+    format: 'Markdown + PDF',
+    pageCount: '10-15 pages',
+    includes: [
+      'Tool comparison results',
+      'Sprint metrics analysis',
+      'Setup and onboarding guides',
+      'Code quality benchmarks',
+    ],
+    iconColor: 'text-orange-600',
+    iconBg: 'bg-orange-500/10',
+  },
+  {
+    id: 'marketing',
+    title: 'Marketing / Comms',
+    subtitle: 'Internal communications and change management',
+    icon: Megaphone,
+    format: 'DOCX',
+    pageCount: 'Editable',
+    includes: [
+      'Messaging guide',
+      'FAQ document',
+      'Change management narrative',
+      'Stakeholder communications plan',
+    ],
+    iconColor: 'text-pink-600',
+    iconBg: 'bg-pink-500/10',
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Page                                                               */
+/* ------------------------------------------------------------------ */
+
+export default function ReportGeneratePage(): React.ReactElement {
+  const [generateStates, setGenerateStates] = React.useState<
+    Record<string, GenerateState>
+  >({});
+
+  const handleGenerate = (personaId: string): void => {
+    setGenerateStates((prev) => ({ ...prev, [personaId]: 'generating' }));
+
+    // Simulate generation time
     setTimeout(() => {
-      setStates((prev) => ({ ...prev, [id]: 'ready' }));
+      setGenerateStates((prev) => ({ ...prev, [personaId]: 'ready' }));
     }, 3000);
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="flex flex-col gap-6 p-6">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <FileOutput className="h-6 w-6 text-primary" />
-          Report Generator
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          Report Builder
         </h1>
-        <p className="text-muted-foreground mt-1">Generate persona-specific reports from project data</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Generate persona-specific reports tailored for each stakeholder group.
+          Reports include project data, assessment results, and AI-generated
+          analysis.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {REPORT_TYPES.map((report) => {
-          const Icon = report.icon;
-          const state = states[report.id] || 'idle';
+      <Separator />
+
+      {/* Info Banner */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <FileText className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                Multi-Stakeholder Report Generation
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Each report is customized for its target audience with
+                appropriate level of detail, terminology, and actionable
+                recommendations. Reports are generated from live project data
+                including assessment scores, compliance status, sandbox
+                configuration, and PoC metrics.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Persona Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {PERSONAS.map((persona) => {
+          const Icon = persona.icon;
+          const state = generateStates[persona.id] || 'idle';
+
           return (
-            <Card key={report.id}>
+            <Card key={persona.id} className="flex flex-col">
               <CardHeader>
                 <div className="flex items-start gap-3">
-                  <div className={`p-2.5 rounded-lg ${report.color}`}>
-                    <Icon className="h-5 w-5" />
+                  <div
+                    className={cn(
+                      'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
+                      persona.iconBg
+                    )}
+                  >
+                    <Icon className={cn('h-5 w-5', persona.iconColor)} />
                   </div>
-                  <div className="flex-1">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      {report.persona}
-                      <Badge variant="outline" className="text-xs">{report.format}</Badge>
-                      <Badge variant="outline" className="text-xs">{report.pages}</Badge>
-                    </CardTitle>
-                    <CardDescription className="mt-1">{report.description}</CardDescription>
+                  <div className="min-w-0">
+                    <CardTitle className="text-base">{persona.title}</CardTitle>
+                    <CardDescription className="text-xs mt-0.5">
+                      {persona.subtitle}
+                    </CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="mb-3">
-                  <p className="text-xs font-medium text-muted-foreground mb-1.5">Included Sections:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {report.sections.map((s) => (
-                      <Badge key={s} variant="outline" className="text-[10px]">{s}</Badge>
-                    ))}
-                  </div>
+              <CardContent className="flex-1">
+                {/* Format info */}
+                <div className="flex items-center gap-2 mb-3">
+                  <Badge variant="outline" className="text-xs">
+                    {persona.format}
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    {persona.pageCount}
+                  </Badge>
                 </div>
+
+                {/* Includes list */}
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  Includes
+                </p>
+                <ul className="space-y-1.5">
+                  {persona.includes.map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-start gap-1.5 text-xs text-muted-foreground"
+                    >
+                      <span className="mt-1.5 h-1 w-1 rounded-full bg-muted-foreground/50 shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              <CardFooter className="pt-0">
                 {state === 'idle' && (
-                  <Button className="w-full" onClick={() => handleGenerate(report.id)}>
-                    <FileOutput className="h-4 w-4 mr-2" /> Generate Report
+                  <Button
+                    className="w-full"
+                    onClick={() => handleGenerate(persona.id)}
+                  >
+                    <FileText className="h-4 w-4" />
+                    Generate Report
                   </Button>
                 )}
                 {state === 'generating' && (
-                  <Button className="w-full" disabled>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...
-                  </Button>
-                )}
-                {state === 'ready' && (
-                  <div className="flex gap-2">
-                    <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700">
-                      <Download className="h-4 w-4 mr-2" /> Download
+                  <div className="w-full space-y-2">
+                    <Button disabled className="w-full">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Generating...
                     </Button>
-                    <Button variant="outline" className="flex-1">
-                      <CheckCircle className="h-4 w-4 mr-2 text-emerald-600" /> Preview
-                    </Button>
+                    <Progress value={66} className="h-1.5" />
                   </div>
                 )}
-              </CardContent>
+                {state === 'ready' && (
+                  <Button
+                    variant="outline"
+                    className="w-full border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/10"
+                  >
+                    <Download className="h-4 w-4" />
+                    Report Ready - Download
+                  </Button>
+                )}
+              </CardFooter>
             </Card>
           );
         })}
