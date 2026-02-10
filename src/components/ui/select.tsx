@@ -38,4 +38,4 @@ const SelectOption = React.forwardRef<
 ));
 SelectOption.displayName = "SelectOption";
 
-export { SelectOption };
+export { Select, SelectOption };

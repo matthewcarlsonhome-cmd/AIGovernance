@@ -46,7 +46,7 @@ export const DOMAINS: ScoreDomain[] = [
 // Pure helper: resolve the numeric score for a single response
 // ---------------------------------------------------------------------------
 
-function scoreResponse(
+export function scoreResponse(
   question: AssessmentQuestion,
   response: AssessmentResponse | undefined
 ): number {
