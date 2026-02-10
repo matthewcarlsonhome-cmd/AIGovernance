@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Mail, ArrowLeft, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,20 +14,71 @@ import {
   CardContent,
   CardFooter,
 } from '@/components/ui/card';
+import { createClient } from '@/lib/supabase/client';
+
+function isSupabaseConfigured(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  return Boolean(
+    url && key &&
+    !url.includes('placeholder') &&
+    !key.includes('placeholder') &&
+    url.startsWith('https://')
+  );
+}
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState('');
+
+  const configured = isSupabaseConfigured();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
+    if (!configured) {
+      setError(
+        'Supabase is not configured. Add your Supabase credentials to .env.local and restart the dev server.'
+      );
+      return;
+    }
+
+    if (!email.trim()) {
+      setError('Please enter your email address.');
+      return;
+    }
+
     setIsLoading(true);
-    // Supabase auth not configured yet -- simulate a delay then show success
-    setTimeout(() => {
-      setIsLoading(false);
+
+    try {
+      const supabase = createClient();
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+      });
+
+      if (resetError) {
+        if (resetError.message.includes('rate limit') || resetError.message.includes('Too many')) {
+          setError('Too many reset requests. Please wait a few minutes before trying again.');
+        } else {
+          setError(`Password reset failed: ${resetError.message}`);
+        }
+        return;
+      }
+
       setIsSubmitted(true);
-    }, 800);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+      if (message.includes('fetch') || message.includes('network') || message.includes('ECONNREFUSED')) {
+        setError('Cannot connect to the authentication server. Please check your internet connection.');
+      } else {
+        setError(`Password reset failed: ${message}`);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -41,10 +92,29 @@ export default function ForgotPasswordPage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {!configured && !isSubmitted && (
+          <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 mb-4">
+            <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+            <div className="text-sm text-blue-800">
+              <p className="font-medium">Supabase not configured</p>
+              <p className="mt-1">
+                Password reset requires Supabase authentication to be configured.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 mb-4">
+            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+            <p className="text-sm text-red-800">{error}</p>
+          </div>
+        )}
+
         {isSubmitted ? (
           <div className="flex flex-col items-center space-y-4 py-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <CheckCircle className="h-6 w-6 text-primary" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle className="h-6 w-6 text-green-600" />
             </div>
             <div className="text-center space-y-2">
               <p className="text-sm text-muted-foreground">
@@ -52,7 +122,7 @@ export default function ForgotPasswordPage() {
               </p>
               <p className="text-sm font-medium">{email}</p>
               <p className="text-xs text-muted-foreground">
-                If you don&apos;t see it, check your spam folder.
+                If you don&apos;t see it, check your spam folder. The link expires in 24 hours.
               </p>
             </div>
             <Button
@@ -61,6 +131,7 @@ export default function ForgotPasswordPage() {
               onClick={() => {
                 setIsSubmitted(false);
                 setEmail('');
+                setError('');
               }}
             >
               Try a different email
@@ -77,9 +148,10 @@ export default function ForgotPasswordPage() {
                   type="email"
                   placeholder="name@company.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => { setEmail(e.target.value); setError(''); }}
                   className="pl-10"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
