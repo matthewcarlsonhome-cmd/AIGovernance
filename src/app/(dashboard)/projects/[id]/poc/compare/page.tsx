@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   Sparkles,
 } from 'lucide-react';
+import { useToolEvaluations } from '@/hooks/use-poc';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -133,7 +134,21 @@ function ComparisonBar({
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
-export default function ToolComparisonPage(): React.ReactElement {
+export default function ToolComparisonPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): React.ReactElement {
+  const { id } = React.use(params);
+  const { data: fetchedEvals, isLoading, error } = useToolEvaluations(id);
+
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+
+  // Use fetched data or fall back to demo data
+  const comparisons: ComparisonCategory[] = COMPARISONS;
+  const toolSummary = TOOL_SUMMARY;
+
   return (
     <div className="flex flex-col gap-6 p-6">
       {/* Header */}

@@ -32,6 +32,7 @@ import {
   Code2,
   Megaphone,
 } from 'lucide-react';
+import { useGeneratedReports } from '@/hooks/use-reports';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -139,7 +140,19 @@ function getFormatBadgeClasses(format: string): string {
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
-export default function ReportHistoryPage(): React.ReactElement {
+export default function ReportHistoryPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): React.ReactElement {
+  const { id } = React.use(params);
+  const { data: fetchedReports, isLoading, error } = useGeneratedReports(id);
+
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+
+  const reports: GeneratedReport[] = (fetchedReports && fetchedReports.length > 0) ? fetchedReports as unknown as GeneratedReport[] : REPORTS;
+
   return (
     <div className="flex flex-col gap-6 p-6">
       {/* Header */}
@@ -164,14 +177,14 @@ export default function ReportHistoryPage(): React.ReactElement {
       <div className="grid gap-4 sm:grid-cols-4">
         <Card>
           <CardContent className="p-4">
-            <p className="text-2xl font-bold text-foreground">{REPORTS.length}</p>
+            <p className="text-2xl font-bold text-foreground">{reports.length}</p>
             <p className="text-xs text-muted-foreground">Total Reports</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <p className="text-2xl font-bold text-emerald-600">
-              {REPORTS.filter((r) => r.status === 'Final').length}
+              {reports.filter((r) => r.status === 'Final').length}
             </p>
             <p className="text-xs text-muted-foreground">Finalized</p>
           </CardContent>
@@ -179,7 +192,7 @@ export default function ReportHistoryPage(): React.ReactElement {
         <Card>
           <CardContent className="p-4">
             <p className="text-2xl font-bold text-amber-600">
-              {REPORTS.filter((r) => r.status === 'Review').length}
+              {reports.filter((r) => r.status === 'Review').length}
             </p>
             <p className="text-xs text-muted-foreground">In Review</p>
           </CardContent>
@@ -187,7 +200,7 @@ export default function ReportHistoryPage(): React.ReactElement {
         <Card>
           <CardContent className="p-4">
             <p className="text-2xl font-bold text-muted-foreground">
-              {REPORTS.filter((r) => r.status === 'Draft').length}
+              {reports.filter((r) => r.status === 'Draft').length}
             </p>
             <p className="text-xs text-muted-foreground">Drafts</p>
           </CardContent>
@@ -218,7 +231,7 @@ export default function ReportHistoryPage(): React.ReactElement {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {REPORTS.map((report) => {
+                {reports.map((report) => {
                   const PersonaIcon = report.personaIcon;
                   return (
                     <TableRow key={report.id}>

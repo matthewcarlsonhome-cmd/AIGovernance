@@ -13,6 +13,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Tabs,
   TabsList,
@@ -29,6 +40,7 @@ import {
   FileCheck,
   ExternalLink,
 } from "lucide-react";
+import { useComplianceMappings } from '@/hooks/use-governance';
 
 type ControlStatus = "verified" | "implemented" | "in_progress" | "not_started";
 
@@ -368,9 +380,9 @@ function getStatusBadgeClasses(status: ControlStatus): string {
     case "in_progress":
       return "bg-amber-500/15 text-amber-700 border-amber-500/25";
     case "not_started":
-      return "bg-muted text-muted-foreground border-border";
+      return "bg-slate-100 text-slate-500 border-slate-200";
     default:
-      return "bg-muted text-muted-foreground border-border";
+      return "bg-slate-100 text-slate-500 border-slate-200";
   }
 }
 
@@ -423,13 +435,57 @@ function computeFrameworkStats(controls: ComplianceControl[]): {
   return { total, verified, implemented, inProgress, notStarted, percentage };
 }
 
-export default function ComplianceMappingPage(): React.ReactElement {
+export default function ComplianceMappingPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): React.ReactElement {
+  const { id } = React.use(params);
+  const { data: fetchedMappings, isLoading, error } = useComplianceMappings(id);
   const [activeFramework, setActiveFramework] = React.useState<string>("soc2");
+  const [showMapDialog, setShowMapDialog] = React.useState(false);
+  const [newControlId, setNewControlId] = React.useState("");
+  const [newControlName, setNewControlName] = React.useState("");
+  const [newControlDescription, setNewControlDescription] = React.useState("");
+  const [newControlFramework, setNewControlFramework] = React.useState("soc2");
+  const [newControlStatus, setNewControlStatus] = React.useState<ControlStatus>("not_started");
+  const [localControls, setLocalControls] = React.useState<Record<string, ComplianceControl[]>>({});
 
-  const currentFramework = FRAMEWORKS.find((f) => f.id === activeFramework);
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+
+  // Use fetched data or fall back to demo data
+  // Merge local controls into frameworks
+  const frameworks: FrameworkData[] = FRAMEWORKS.map((f) => ({
+    ...f,
+    controls: [...f.controls, ...(localControls[f.id] || [])],
+  }));
+
+  const currentFramework = frameworks.find((f) => f.id === activeFramework);
+
+  const handleMapControl = (): void => {
+    if (!newControlId.trim() || !newControlName.trim()) return;
+    const control: ComplianceControl = {
+      controlId: newControlId.trim(),
+      controlName: newControlName.trim(),
+      description: newControlDescription.trim() || "New control mapping",
+      status: newControlStatus,
+      evidence: "",
+    };
+    setLocalControls((prev) => ({
+      ...prev,
+      [newControlFramework]: [...(prev[newControlFramework] || []), control],
+    }));
+    setShowMapDialog(false);
+    setNewControlId("");
+    setNewControlName("");
+    setNewControlDescription("");
+    setNewControlStatus("not_started");
+    setActiveFramework(newControlFramework);
+  };
 
   // Compute overall stats across all frameworks
-  const allControls = FRAMEWORKS.flatMap((f) => f.controls);
+  const allControls = frameworks.flatMap((f) => f.controls);
   const overallStats = computeFrameworkStats(allControls);
 
   return (
@@ -437,19 +493,80 @@ export default function ComplianceMappingPage(): React.ReactElement {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             Compliance Framework Mapping
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-slate-500">
             Map AI governance controls to compliance frameworks and track
             implementation status across SOC 2, HIPAA, NIST, and GDPR.
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setShowMapDialog(true)} className="bg-slate-900 text-white hover:bg-slate-800">
           <Plus className="h-4 w-4" />
           Map New Control
         </Button>
       </div>
+
+      {/* Map New Control Dialog */}
+      <Dialog open={showMapDialog} onOpenChange={setShowMapDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Map New Control</DialogTitle>
+            <DialogDescription>
+              Add a new compliance control mapping to a framework.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="ctrl-framework">Framework</Label>
+              <select
+                id="ctrl-framework"
+                value={newControlFramework}
+                onChange={(e) => setNewControlFramework(e.target.value)}
+                className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
+              >
+                {FRAMEWORKS.map((f) => (
+                  <option key={f.id} value={f.id}>{f.shortName}</option>
+                ))}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="ctrl-id">Control ID</Label>
+                <Input id="ctrl-id" placeholder="e.g. CC7.1" value={newControlId} onChange={(e) => setNewControlId(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ctrl-status">Status</Label>
+                <select
+                  id="ctrl-status"
+                  value={newControlStatus}
+                  onChange={(e) => setNewControlStatus(e.target.value as ControlStatus)}
+                  className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
+                >
+                  <option value="not_started">Not Started</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="implemented">Implemented</option>
+                  <option value="verified">Verified</option>
+                </select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ctrl-name">Control Name</Label>
+              <Input id="ctrl-name" placeholder="e.g. System Operations Monitoring" value={newControlName} onChange={(e) => setNewControlName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ctrl-desc">Description</Label>
+              <Textarea id="ctrl-desc" placeholder="Describe the control requirement..." value={newControlDescription} onChange={(e) => setNewControlDescription(e.target.value)} rows={3} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowMapDialog(false)}>Cancel</Button>
+            <Button onClick={handleMapControl} disabled={!newControlId.trim() || !newControlName.trim()} className="bg-slate-900 text-white hover:bg-slate-800">
+              Map Control
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Separator />
 
@@ -458,14 +575,14 @@ export default function ComplianceMappingPage(): React.ReactElement {
         <CardContent className="p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <Shield className="h-6 w-6 text-primary" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100">
+                <Shield className="h-6 w-6 text-slate-900" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-foreground">
+                <h2 className="text-lg font-semibold text-slate-900">
                   Overall Compliance Progress
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-slate-500">
                   {overallStats.verified + overallStats.implemented} of{" "}
                   {overallStats.total} controls implemented or verified across
                   all frameworks
@@ -473,10 +590,10 @@ export default function ComplianceMappingPage(): React.ReactElement {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-3xl font-bold text-foreground">
+              <p className="text-3xl font-bold text-slate-900">
                 {overallStats.percentage}%
               </p>
-              <p className="text-xs text-muted-foreground">Complete</p>
+              <p className="text-xs text-slate-500">Complete</p>
             </div>
           </div>
           <div className="mt-4">
@@ -485,29 +602,29 @@ export default function ComplianceMappingPage(): React.ReactElement {
           <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div className="flex items-center gap-2 text-sm">
               <div className="h-3 w-3 rounded-full bg-emerald-500" />
-              <span className="text-muted-foreground">Verified:</span>
-              <span className="font-medium text-foreground">
+              <span className="text-slate-500">Verified:</span>
+              <span className="font-medium text-slate-900">
                 {overallStats.verified}
               </span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <div className="h-3 w-3 rounded-full bg-blue-500" />
-              <span className="text-muted-foreground">Implemented:</span>
-              <span className="font-medium text-foreground">
+              <span className="text-slate-500">Implemented:</span>
+              <span className="font-medium text-slate-900">
                 {overallStats.implemented}
               </span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <div className="h-3 w-3 rounded-full bg-amber-500" />
-              <span className="text-muted-foreground">In Progress:</span>
-              <span className="font-medium text-foreground">
+              <span className="text-slate-500">In Progress:</span>
+              <span className="font-medium text-slate-900">
                 {overallStats.inProgress}
               </span>
             </div>
             <div className="flex items-center gap-2 text-sm">
-              <div className="h-3 w-3 rounded-full bg-muted-foreground/40" />
-              <span className="text-muted-foreground">Not Started:</span>
-              <span className="font-medium text-foreground">
+              <div className="h-3 w-3 rounded-full bg-slate-400" />
+              <span className="text-slate-500">Not Started:</span>
+              <span className="font-medium text-slate-900">
                 {overallStats.notStarted}
               </span>
             </div>
@@ -526,7 +643,7 @@ export default function ComplianceMappingPage(): React.ReactElement {
             return (
               <TabsTrigger key={framework.id} value={framework.id}>
                 {framework.shortName}
-                <span className="ml-1.5 text-xs text-muted-foreground">
+                <span className="ml-1.5 text-xs text-slate-500">
                   ({stats.percentage}%)
                 </span>
               </TabsTrigger>
@@ -549,10 +666,10 @@ export default function ComplianceMappingPage(): React.ReactElement {
                       </CardDescription>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-2xl font-bold text-foreground">
+                      <p className="text-2xl font-bold text-slate-900">
                         {stats.percentage}%
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-slate-500">
                         {stats.verified + stats.implemented}/{stats.total}{" "}
                         controls
                       </p>
@@ -568,23 +685,23 @@ export default function ComplianceMappingPage(): React.ReactElement {
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-border">
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        <tr className="border-b border-slate-200">
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                             Control ID
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                             Control Name
                           </th>
-                          <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">
+                          <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 md:table-cell">
                             Description
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                             Status
                           </th>
-                          <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:table-cell">
+                          <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 sm:table-cell">
                             Evidence
                           </th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
                             Action
                           </th>
                         </tr>
@@ -594,22 +711,22 @@ export default function ComplianceMappingPage(): React.ReactElement {
                           <tr
                             key={control.controlId}
                             className={cn(
-                              "border-b border-border transition-colors hover:bg-muted/50",
-                              idx % 2 === 0 ? "bg-background" : "bg-muted/20"
+                              "border-b border-slate-200 transition-colors hover:bg-slate-50",
+                              idx % 2 === 0 ? "bg-white" : "bg-slate-50"
                             )}
                           >
                             <td className="px-4 py-3">
-                              <span className="text-sm font-mono font-medium text-foreground">
+                              <span className="text-sm font-mono font-medium text-slate-900">
                                 {control.controlId}
                               </span>
                             </td>
                             <td className="px-4 py-3">
-                              <span className="text-sm font-medium text-foreground">
+                              <span className="text-sm font-medium text-slate-900">
                                 {control.controlName}
                               </span>
                             </td>
                             <td className="hidden px-4 py-3 md:table-cell">
-                              <span className="text-sm text-muted-foreground line-clamp-2">
+                              <span className="text-sm text-slate-500 line-clamp-2">
                                 {control.description}
                               </span>
                             </td>
@@ -626,7 +743,7 @@ export default function ComplianceMappingPage(): React.ReactElement {
                               </Badge>
                             </td>
                             <td className="hidden px-4 py-3 sm:table-cell">
-                              <span className="text-sm text-muted-foreground">
+                              <span className="text-sm text-slate-500">
                                 {control.evidence}
                               </span>
                             </td>

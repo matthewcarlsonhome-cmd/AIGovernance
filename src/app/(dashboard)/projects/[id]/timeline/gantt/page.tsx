@@ -1,10 +1,12 @@
 'use client';
 
+import * as React from 'react';
 import { useState, useMemo } from 'react';
 import { CalendarRange, Download, ChevronDown, ChevronRight, Diamond } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useTimelineTasks } from '@/hooks/use-timeline';
 
 type TaskStatus = 'complete' | 'in_progress' | 'not_started' | 'blocked';
 type ZoomLevel = 'day' | 'week' | 'month';
@@ -91,9 +93,20 @@ const statusLabels: Record<TaskStatus, string> = {
   blocked: 'Blocked',
 };
 
-export default function GanttPage() {
+export default function GanttPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = React.use(params);
+  const { data: fetchedTasks, isLoading, error } = useTimelineTasks(id);
   const [zoom, setZoom] = useState<ZoomLevel>('week');
   const [collapsedPhases, setCollapsedPhases] = useState<Set<string>>(new Set());
+
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+
+  const tasks: GanttTask[] = (fetchedTasks && fetchedTasks.length > 0) ? fetchedTasks as unknown as GanttTask[] : TASKS;
 
   const dayWidth = zoom === 'day' ? 40 : zoom === 'week' ? 28 : 8;
   const totalWidth = TOTAL_DAYS * dayWidth;
@@ -137,7 +150,7 @@ export default function GanttPage() {
 
   const groupedTasks = PHASES.map((phase) => ({
     ...phase,
-    tasks: TASKS.filter((t) => t.phase === phase.name),
+    tasks: tasks.filter((t) => t.phase === phase.name),
   }));
 
   return (

@@ -75,7 +75,7 @@ export async function PUT(
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validation error', message: parsed.error.issues.map((i) => i.message).join(', ') },
+        { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
         { status: 400 },
       );
     }

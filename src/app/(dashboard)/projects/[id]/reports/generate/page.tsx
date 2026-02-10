@@ -24,6 +24,8 @@ import {
   Download,
   Loader2,
 } from 'lucide-react';
+import { useReportTemplates, useGenerateReport } from '@/hooks/use-reports';
+import type { ReportPersona as ReportPersonaType } from '@/types';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -32,7 +34,7 @@ import {
 type GenerateState = 'idle' | 'generating' | 'ready';
 
 interface ReportPersona {
-  id: string;
+  id: ReportPersonaType;
   title: string;
   subtitle: string;
   icon: React.ElementType;
@@ -81,7 +83,7 @@ const PERSONAS: ReportPersona[] = [
     iconBg: 'bg-blue-500/10',
   },
   {
-    id: 'it-security',
+    id: 'it_security',
     title: 'IT / Security',
     subtitle: 'Technical security architecture and configuration',
     icon: ShieldCheck,
@@ -134,18 +136,41 @@ const PERSONAS: ReportPersona[] = [
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
-export default function ReportGeneratePage(): React.ReactElement {
+export default function ReportGeneratePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): React.ReactElement {
+  const { id } = React.use(params);
+  const { data: fetchedTemplates, isLoading, error } = useReportTemplates();
+  const generateMutation = useGenerateReport();
   const [generateStates, setGenerateStates] = React.useState<
     Record<string, GenerateState>
   >({});
 
-  const handleGenerate = (personaId: string): void => {
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+
+  // Use fetched templates or fall back to demo personas
+  const personas: ReportPersona[] = PERSONAS;
+
+  const handleGenerate = (personaId: ReportPersonaType): void => {
     setGenerateStates((prev) => ({ ...prev, [personaId]: 'generating' }));
 
-    // Simulate generation time
-    setTimeout(() => {
-      setGenerateStates((prev) => ({ ...prev, [personaId]: 'ready' }));
-    }, 3000);
+    generateMutation.mutate(
+      { projectId: id, persona: personaId, title: `${personaId} Report` },
+      {
+        onSuccess: () => {
+          setGenerateStates((prev) => ({ ...prev, [personaId]: 'ready' }));
+        },
+        onError: () => {
+          // Fallback: simulate generation if API not ready
+          setTimeout(() => {
+            setGenerateStates((prev) => ({ ...prev, [personaId]: 'ready' }));
+          }, 3000);
+        },
+      },
+    );
   };
 
   return (

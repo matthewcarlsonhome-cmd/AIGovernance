@@ -1,7 +1,35 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Project, ApiResponse } from '@/types';
+import type { Project, ProjectStatus, ApiResponse } from '@/types';
+
+/**
+ * Input for creating a new project.
+ * Only `name` and `description` are required; all other fields are optional.
+ */
+export interface CreateProjectInput {
+  name: string;
+  description: string;
+  organization_id?: string;
+  status?: ProjectStatus;
+  start_date?: string | null;
+  target_end_date?: string | null;
+}
+
+/**
+ * Input for updating an existing project.
+ * Requires `id`; all other fields are optional partial updates.
+ */
+export interface UpdateProjectInput {
+  id: string;
+  name?: string;
+  description?: string;
+  status?: ProjectStatus;
+  feasibility_score?: number;
+  start_date?: string | null;
+  target_end_date?: string | null;
+  actual_end_date?: string | null;
+}
 
 // ---------------------------------------------------------------------------
 // Query Keys
@@ -68,7 +96,7 @@ export function useProject(id: string) {
 export function useCreateProject() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: Partial<Project>) => {
+    mutationFn: async (data: CreateProjectInput) => {
       const res = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -94,7 +122,7 @@ export function useUpdateProject() {
     mutationFn: async ({
       id,
       ...data
-    }: Partial<Project> & { id: string }) => {
+    }: UpdateProjectInput) => {
       const res = await fetch(`/api/projects/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

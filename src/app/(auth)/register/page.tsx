@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { User, Mail, Lock, Building, AlertCircle, Info, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Card,
   CardHeader,
@@ -15,7 +16,16 @@ import {
   CardContent,
   CardFooter,
 } from '@/components/ui/card';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { createClient } from '@/lib/supabase/client';
+import { registerSchema, type RegisterFormValues } from '@/lib/validations/auth';
 
 function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -31,18 +41,23 @@ function isSupabaseConfigured(): boolean {
 export default function RegisterPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [orgName, setOrgName] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   const configured = isSupabaseConfigured();
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      fullName: '',
+      email: '',
+      orgName: '',
+      password: '',
+      confirmPassword: '',
+    },
+  });
+
+  const onSubmit = async (values: RegisterFormValues) => {
     setError('');
     setSuccess('');
 
@@ -53,42 +68,17 @@ export default function RegisterPage() {
       return;
     }
 
-    if (!fullName.trim()) {
-      setError('Please enter your full name.');
-      return;
-    }
-
-    if (!email.trim()) {
-      setError('Please enter your email address.');
-      return;
-    }
-
-    if (!orgName.trim()) {
-      setError('Please enter your organization name.');
-      return;
-    }
-
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long.');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match. Please re-enter your password.');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
       const supabase = createClient();
       const { data, error: signUpError } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
+        email: values.email.trim(),
+        password: values.password,
         options: {
           data: {
-            full_name: fullName.trim(),
-            organization_name: orgName.trim(),
+            full_name: values.fullName.trim(),
+            organization_name: values.orgName.trim(),
           },
         },
       });
@@ -109,10 +99,10 @@ export default function RegisterPage() {
       if (data.user && !data.session) {
         // Email confirmation is required
         setSuccess(
-          `Account created! A confirmation email has been sent to ${email.trim()}. Please check your inbox (and spam folder) to verify your email before signing in.`
+          `Account created! A confirmation email has been sent to ${values.email.trim()}. Please check your inbox (and spam folder) to verify your email before signing in.`
         );
       } else if (data.user && data.session) {
-        // Email confirmation is disabled — auto-signed in
+        // Email confirmation is disabled -- auto-signed in
         router.push('/');
         router.refresh();
       } else {
@@ -176,100 +166,137 @@ export default function RegisterPage() {
         )}
 
         {!success && (
-          <form onSubmit={handleRegister} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="Jane Smith"
-                  value={fullName}
-                  onChange={(e) => { setFullName(e.target.value); setError(''); }}
-                  className="pl-10"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder="Jane Smith"
+                          className="pl-10"
+                          disabled={isLoading}
+                          {...field}
+                          onChange={(e) => { field.onChange(e); setError(''); }}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="name@company.com"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                  className="pl-10"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          type="email"
+                          placeholder="name@company.com"
+                          className="pl-10"
+                          disabled={isLoading}
+                          {...field}
+                          onChange={(e) => { field.onChange(e); setError(''); }}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="space-y-2">
-              <Label htmlFor="orgName">Organization Name</Label>
-              <div className="relative">
-                <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="orgName"
-                  type="text"
-                  placeholder="Acme Corp"
-                  value={orgName}
-                  onChange={(e) => { setOrgName(e.target.value); setError(''); }}
-                  className="pl-10"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
+              <FormField
+                control={form.control}
+                name="orgName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Organization Name</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder="Acme Corp"
+                          className="pl-10"
+                          disabled={isLoading}
+                          {...field}
+                          onChange={(e) => { field.onChange(e); setError(''); }}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="At least 8 characters"
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                  className="pl-10"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          type="password"
+                          placeholder="At least 8 characters"
+                          className="pl-10"
+                          disabled={isLoading}
+                          {...field}
+                          onChange={(e) => { field.onChange(e); setError(''); }}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Re-enter your password"
-                  value={confirmPassword}
-                  onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }}
-                  className="pl-10"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          type="password"
+                          placeholder="Re-enter your password"
+                          className="pl-10"
+                          disabled={isLoading}
+                          {...field}
+                          onChange={(e) => { field.onChange(e); setError(''); }}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <Button
-              type="submit"
-              className="w-full bg-slate-900 text-white hover:bg-slate-800"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Creating account...' : 'Create Account'}
-            </Button>
-          </form>
+              <Button
+                type="submit"
+                className="w-full bg-slate-900 text-white hover:bg-slate-800"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Creating account...' : 'Create Account'}
+              </Button>
+            </form>
+          </Form>
         )}
       </CardContent>
       <CardFooter>

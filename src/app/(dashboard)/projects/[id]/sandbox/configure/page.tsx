@@ -1,7 +1,9 @@
 'use client';
 
+import * as React from 'react';
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import {
   Cloud,
   Server,
@@ -174,9 +176,9 @@ function StepIndicator({
               <div
                 className={cn(
                   'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  isActive && 'bg-primary text-primary-foreground',
-                  isComplete && 'bg-primary/10 text-primary',
-                  !isActive && !isComplete && 'text-muted-foreground'
+                  isActive && 'bg-slate-900 text-white',
+                  isComplete && 'bg-slate-100 text-slate-900',
+                  !isActive && !isComplete && 'text-slate-500'
                 )}
               >
                 <StepIcon className="h-4 w-4" />
@@ -184,7 +186,7 @@ function StepIndicator({
                 <span className="sm:hidden">{step.number}</span>
               </div>
               {idx < steps.length - 1 && (
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <ChevronRight className="h-4 w-4 text-slate-500" />
               )}
             </li>
           );
@@ -209,7 +211,7 @@ function StepCloudProvider({
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold">Select Cloud Provider</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-slate-500">
           Choose the cloud platform where the sandbox environment will be provisioned.
         </p>
       </div>
@@ -223,7 +225,7 @@ function StepCloudProvider({
               key={provider.id}
               className={cn(
                 'cursor-pointer transition-all hover:shadow-md',
-                isSelected && 'ring-2 ring-primary border-primary'
+                isSelected && 'ring-2 ring-slate-900 border-slate-900'
               )}
               onClick={() => onSelect(provider.id)}
             >
@@ -233,8 +235,8 @@ function StepCloudProvider({
                     className={cn(
                       'flex h-10 w-10 items-center justify-center rounded-lg',
                       isSelected
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-muted-foreground'
+                        ? 'bg-slate-900 text-white'
+                        : 'bg-slate-100 text-slate-500'
                     )}
                   >
                     <Icon className="h-5 w-5" />
@@ -270,7 +272,7 @@ function StepSandboxModel({
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold">Select Sandbox Model</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-slate-500">
           Choose the isolation architecture for your AI coding sandbox.
         </p>
       </div>
@@ -284,7 +286,7 @@ function StepSandboxModel({
               key={model.id}
               className={cn(
                 'cursor-pointer transition-all hover:shadow-md',
-                isSelected && 'ring-2 ring-primary border-primary'
+                isSelected && 'ring-2 ring-slate-900 border-slate-900'
               )}
               onClick={() => onSelect(model.id)}
             >
@@ -294,8 +296,8 @@ function StepSandboxModel({
                     className={cn(
                       'flex h-10 w-10 items-center justify-center rounded-lg',
                       isSelected
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-muted-foreground'
+                        ? 'bg-slate-900 text-white'
+                        : 'bg-slate-100 text-slate-500'
                     )}
                   >
                     <Icon className="h-5 w-5" />
@@ -336,7 +338,7 @@ function StepSecurity({
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold">Security Configuration</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-slate-500">
           Configure network, data protection, and audit settings for the sandbox.
         </p>
       </div>
@@ -346,7 +348,7 @@ function StepSecurity({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Network className="h-4 w-4 text-muted-foreground" />
+              <Network className="h-4 w-4 text-slate-500" />
               <CardTitle className="text-base">Egress Filtering</CardTitle>
             </div>
             <Switch
@@ -365,7 +367,7 @@ function StepSecurity({
             <Label htmlFor="domain-allowlist" className="text-sm font-medium">
               Domain Allowlist
             </Label>
-            <p className="text-xs text-muted-foreground mb-2">
+            <p className="text-xs text-slate-500 mb-2">
               One domain per line. Wildcards supported (e.g., *.internal.corp.com).
             </p>
             <Textarea
@@ -389,7 +391,7 @@ function StepSecurity({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Lock className="h-4 w-4 text-muted-foreground" />
+              <Lock className="h-4 w-4 text-slate-500" />
               <CardTitle className="text-base">DLP Rules</CardTitle>
             </div>
             <Switch
@@ -420,7 +422,7 @@ function StepSecurity({
                   />
                   <div>
                     <span className="text-sm font-medium">Secrets & Credentials</span>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-slate-500">
                       API keys, tokens, passwords, connection strings
                     </p>
                   </div>
@@ -439,7 +441,7 @@ function StepSecurity({
                     <span className="text-sm font-medium">
                       Personally Identifiable Information (PII)
                     </span>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-slate-500">
                       SSNs, email addresses, phone numbers, credit card numbers
                     </p>
                   </div>
@@ -459,7 +461,7 @@ function StepSecurity({
                   />
                   <div>
                     <span className="text-sm font-medium">Proprietary Code Patterns</span>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-slate-500">
                       Internal package names, trade secrets, restricted file patterns
                     </p>
                   </div>
@@ -475,7 +477,7 @@ function StepSecurity({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Settings className="h-4 w-4 text-muted-foreground" />
+              <Settings className="h-4 w-4 text-slate-500" />
               <CardTitle className="text-base">Audit Logging</CardTitle>
             </div>
             <Switch
@@ -494,7 +496,7 @@ function StepSecurity({
             <Label htmlFor="siem-select" className="text-sm font-medium">
               SIEM Integration
             </Label>
-            <p className="text-xs text-muted-foreground mb-2">
+            <p className="text-xs text-slate-500 mb-2">
               Forward audit logs to your security information and event management platform.
             </p>
             <select
@@ -503,7 +505,7 @@ function StepSecurity({
               onChange={(e) =>
                 onChange({ ...config, siemIntegration: e.target.value })
               }
-              className="flex h-9 w-full max-w-xs items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              className="flex h-9 w-full max-w-xs items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
             >
               {SIEM_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -519,7 +521,7 @@ function StepSecurity({
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
-            <Settings className="h-4 w-4 text-muted-foreground" />
+            <Settings className="h-4 w-4 text-slate-500" />
             <CardTitle className="text-base">Managed Settings</CardTitle>
           </div>
           <CardDescription>
@@ -530,7 +532,7 @@ function StepSecurity({
           <Label htmlFor="model-select" className="text-sm font-medium">
             Default AI Model
           </Label>
-          <p className="text-xs text-muted-foreground mb-2">
+          <p className="text-xs text-slate-500 mb-2">
             Select the primary model that will be available in the sandbox environment.
           </p>
           <select
@@ -539,7 +541,7 @@ function StepSecurity({
             onChange={(e) =>
               onChange({ ...config, selectedModel: e.target.value })
             }
-            className="flex h-9 w-full max-w-xs items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            className="flex h-9 w-full max-w-xs items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
           >
             {AI_MODELS.map((model) => (
               <option key={model.value} value={model.value}>
@@ -585,7 +587,7 @@ function StepReview({
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold">Review Configuration</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-slate-500">
           Verify your sandbox configuration before generating files.
         </p>
       </div>
@@ -595,16 +597,16 @@ function StepReview({
           <div className="space-y-4">
             {/* Infrastructure */}
             <div>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">
                 Infrastructure
               </h3>
               <div className="grid gap-2 sm:grid-cols-2">
-                <div className="flex justify-between py-1.5 px-3 rounded-md bg-muted/50">
-                  <span className="text-sm text-muted-foreground">Cloud Provider</span>
+                <div className="flex justify-between py-1.5 px-3 rounded-md bg-slate-50">
+                  <span className="text-sm text-slate-500">Cloud Provider</span>
                   <span className="text-sm font-medium">{providerLabel}</span>
                 </div>
-                <div className="flex justify-between py-1.5 px-3 rounded-md bg-muted/50">
-                  <span className="text-sm text-muted-foreground">Sandbox Model</span>
+                <div className="flex justify-between py-1.5 px-3 rounded-md bg-slate-50">
+                  <span className="text-sm text-slate-500">Sandbox Model</span>
                   <span className="text-sm font-medium">{modelLabel}</span>
                 </div>
               </div>
@@ -614,19 +616,19 @@ function StepReview({
 
             {/* Security */}
             <div>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">
                 Security
               </h3>
               <div className="space-y-2">
-                <div className="flex justify-between py-1.5 px-3 rounded-md bg-muted/50">
-                  <span className="text-sm text-muted-foreground">Egress Filtering</span>
+                <div className="flex justify-between py-1.5 px-3 rounded-md bg-slate-50">
+                  <span className="text-sm text-slate-500">Egress Filtering</span>
                   <Badge variant={security.egressFiltering ? 'default' : 'secondary'}>
                     {security.egressFiltering ? 'Enabled' : 'Disabled'}
                   </Badge>
                 </div>
                 {security.egressFiltering && security.domainAllowlist.trim() && (
-                  <div className="py-1.5 px-3 rounded-md bg-muted/50">
-                    <span className="text-sm text-muted-foreground block mb-1">
+                  <div className="py-1.5 px-3 rounded-md bg-slate-50">
+                    <span className="text-sm text-slate-500 block mb-1">
                       Allowed Domains
                     </span>
                     <div className="flex flex-wrap gap-1">
@@ -641,15 +643,15 @@ function StepReview({
                     </div>
                   </div>
                 )}
-                <div className="flex justify-between py-1.5 px-3 rounded-md bg-muted/50">
-                  <span className="text-sm text-muted-foreground">DLP Rules</span>
+                <div className="flex justify-between py-1.5 px-3 rounded-md bg-slate-50">
+                  <span className="text-sm text-slate-500">DLP Rules</span>
                   <Badge variant={security.dlpEnabled ? 'default' : 'secondary'}>
                     {security.dlpEnabled ? 'Enabled' : 'Disabled'}
                   </Badge>
                 </div>
                 {security.dlpEnabled && dlpPatternsList.length > 0 && (
-                  <div className="py-1.5 px-3 rounded-md bg-muted/50">
-                    <span className="text-sm text-muted-foreground block mb-1">
+                  <div className="py-1.5 px-3 rounded-md bg-slate-50">
+                    <span className="text-sm text-slate-500 block mb-1">
                       DLP Patterns
                     </span>
                     <div className="flex flex-wrap gap-1">
@@ -661,15 +663,15 @@ function StepReview({
                     </div>
                   </div>
                 )}
-                <div className="flex justify-between py-1.5 px-3 rounded-md bg-muted/50">
-                  <span className="text-sm text-muted-foreground">Audit Logging</span>
+                <div className="flex justify-between py-1.5 px-3 rounded-md bg-slate-50">
+                  <span className="text-sm text-slate-500">Audit Logging</span>
                   <Badge variant={security.auditLogging ? 'default' : 'secondary'}>
                     {security.auditLogging ? 'Enabled' : 'Disabled'}
                   </Badge>
                 </div>
                 {security.auditLogging && security.siemIntegration !== 'none' && (
-                  <div className="flex justify-between py-1.5 px-3 rounded-md bg-muted/50">
-                    <span className="text-sm text-muted-foreground">SIEM Integration</span>
+                  <div className="flex justify-between py-1.5 px-3 rounded-md bg-slate-50">
+                    <span className="text-sm text-slate-500">SIEM Integration</span>
                     <span className="text-sm font-medium">{siemLabel}</span>
                   </div>
                 )}
@@ -680,11 +682,11 @@ function StepReview({
 
             {/* AI Model */}
             <div>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">
                 AI Configuration
               </h3>
-              <div className="flex justify-between py-1.5 px-3 rounded-md bg-muted/50">
-                <span className="text-sm text-muted-foreground">Default Model</span>
+              <div className="flex justify-between py-1.5 px-3 rounded-md bg-slate-50">
+                <span className="text-sm text-slate-500">Default Model</span>
                 <span className="text-sm font-medium">{aiModelLabel}</span>
               </div>
             </div>
@@ -699,10 +701,25 @@ function StepReview({
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
-export default function SandboxConfigurePage(): React.JSX.Element {
-  const params = useParams();
+export default function SandboxConfigurePage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id: string }>;
+}): React.JSX.Element {
+  const { id: projectId } = React.use(paramsPromise);
   const router = useRouter();
-  const projectId = params.id as string;
+
+  // Inline fetch for any saved sandbox config
+  const { data: savedConfig, isLoading, error } = useQuery({
+    queryKey: ['sandbox-config', projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/configs/sandbox?projectId=${encodeURIComponent(projectId)}`);
+      if (!res.ok) return null;
+      const json = await res.json();
+      return json.data ?? null;
+    },
+    enabled: Boolean(projectId),
+  });
 
   const [currentStep, setCurrentStep] = useState(1);
   const [cloudProvider, setCloudProvider] = useState('aws');
@@ -716,6 +733,9 @@ export default function SandboxConfigurePage(): React.JSX.Element {
     siemIntegration: 'splunk',
     selectedModel: 'claude-sonnet-4-20250514',
   });
+
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {(error as Error).message}</p></div>;
 
   const canProceed = (): boolean => {
     switch (currentStep) {
@@ -752,7 +772,7 @@ export default function SandboxConfigurePage(): React.JSX.Element {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Sandbox Configuration</h1>
-        <p className="text-muted-foreground">
+        <p className="text-slate-500">
           Configure the isolated environment for AI coding agent evaluation.
         </p>
       </div>

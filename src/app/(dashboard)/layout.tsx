@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { CommandPalette } from '@/components/shared/command-palette';
 import {
   Shield,
   LayoutDashboard,
@@ -156,8 +157,8 @@ function NavLink({
       className={cn(
         'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
         isActive
-          ? 'bg-primary text-primary-foreground'
-          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+          ? 'bg-slate-900 text-white'
+          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
         collapsed && 'justify-center px-2'
       )}
     >
@@ -196,7 +197,7 @@ function CollapsibleSection({
     <div>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 hover:text-muted-foreground transition-colors"
+        className="flex w-full items-center justify-between px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-600 transition-colors"
       >
         {section.title}
         {isOpen ? (
@@ -240,17 +241,17 @@ function TopBar({ pathname }: { pathname: string }) {
   const crumbs = getBreadcrumbs(pathname);
 
   return (
-    <header className="flex h-14 items-center justify-between border-b bg-background px-6">
+    <header className="flex h-14 items-center justify-between border-b bg-white px-6">
       <nav className="flex items-center gap-1.5 text-sm">
         {crumbs.map((crumb, i) => (
           <span key={crumb.href} className="flex items-center gap-1.5">
-            {i > 0 && <span className="text-muted-foreground">/</span>}
+            {i > 0 && <span className="text-slate-400">/</span>}
             {i === crumbs.length - 1 ? (
-              <span className="font-medium text-foreground">{crumb.label}</span>
+              <span className="font-medium text-slate-900">{crumb.label}</span>
             ) : (
               <Link
                 href={crumb.href}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-slate-500 hover:text-slate-900 transition-colors"
               >
                 {crumb.label}
               </Link>
@@ -260,12 +261,12 @@ function TopBar({ pathname }: { pathname: string }) {
       </nav>
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white text-xs font-semibold">
             JS
           </div>
           <div className="hidden sm:block text-sm">
             <p className="font-medium leading-none">Jane Smith</p>
-            <p className="text-xs text-muted-foreground">Admin</p>
+            <p className="text-xs text-slate-500">Admin</p>
           </div>
         </div>
       </div>
@@ -286,11 +287,11 @@ export default function DashboardLayout({
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden bg-white">
       {/* ---- Sidebar ---- */}
       <aside
         className={cn(
-          'flex flex-col border-r bg-card transition-all duration-200',
+          'flex flex-col border-r bg-white transition-all duration-200',
           collapsed ? 'w-16' : 'w-64'
         )}
       >
@@ -301,7 +302,7 @@ export default function DashboardLayout({
             collapsed ? 'justify-center' : 'gap-2'
           )}
         >
-          <Shield className="h-6 w-6 shrink-0 text-primary" />
+          <Shield className="h-6 w-6 shrink-0 text-slate-900" />
           {!collapsed && (
             <span className="text-lg font-bold tracking-tight">
               GovAI Studio
@@ -314,7 +315,7 @@ export default function DashboardLayout({
           {/* Main nav */}
           <div className="space-y-1">
             {!collapsed && (
-              <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+              <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 Main
               </p>
             )}
@@ -328,7 +329,7 @@ export default function DashboardLayout({
           {/* Current Project */}
           <div className="space-y-3">
             {!collapsed && (
-              <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+              <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 Current Project
               </p>
             )}
@@ -366,7 +367,7 @@ export default function DashboardLayout({
             size="sm"
             onClick={() => setCollapsed(!collapsed)}
             className={cn(
-              'w-full justify-start gap-3 text-muted-foreground',
+              'w-full justify-start gap-3 text-slate-500',
               collapsed && 'justify-center px-2'
             )}
           >
@@ -381,6 +382,9 @@ export default function DashboardLayout({
           </Button>
         </div>
       </aside>
+
+      {/* ---- Command Palette (Cmd+K) ---- */}
+      <CommandPalette />
 
       {/* ---- Main content ---- */}
       <div className="flex flex-1 flex-col overflow-hidden">

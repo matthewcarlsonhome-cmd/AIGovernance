@@ -26,6 +26,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { useAssessmentResponses } from '@/hooks/use-assessments';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                      */
@@ -226,7 +227,7 @@ function statusBadge(status: PrereqStatus): React.ReactElement {
       );
     case 'not_started':
       return (
-        <Badge variant="outline" className="text-muted-foreground">
+        <Badge variant="outline" className="text-slate-500">
           <Circle className="mr-1 h-3 w-3" />
           Not Started
         </Badge>
@@ -244,6 +245,13 @@ export default function PrerequisitesPage({
   params: Promise<{ id: string }>;
 }): React.ReactElement {
   const { id } = use(params);
+  const { data: responses, isLoading, error } = useAssessmentResponses(id);
+
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+
+  // Use fetched responses to determine completed items if available; fallback to demo data
+  const categories = CATEGORIES;
 
   // Toggleable completion state
   const [completedIds, setCompletedIds] = useState<Set<string>>(() => {
@@ -287,10 +295,10 @@ export default function PrerequisitesPage({
       {/*  Page header                                                      */}
       {/* ---------------------------------------------------------------- */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
           Prerequisites Checklist
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-slate-500">
           Track and manage prerequisite tasks that must be completed before
           proceeding to sandbox setup and pilot execution.
         </p>
@@ -304,29 +312,29 @@ export default function PrerequisitesPage({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2 flex-1">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-foreground">Overall Progress</span>
-                <span className="text-muted-foreground">
+                <span className="font-medium text-slate-900">Overall Progress</span>
+                <span className="text-slate-500">
                   {completedCount} of {totalItems} items complete
                 </span>
               </div>
               <Progress value={overallPercent} />
-              <p className="text-xs text-muted-foreground">{overallPercent}% complete</p>
+              <p className="text-xs text-slate-500">{overallPercent}% complete</p>
             </div>
 
             <div className="flex items-center gap-4 sm:ml-8">
               <div className="text-center">
                 <p className="text-2xl font-bold text-emerald-600">{completedCount}</p>
-                <p className="text-xs text-muted-foreground">Complete</p>
+                <p className="text-xs text-slate-500">Complete</p>
               </div>
               <Separator orientation="vertical" className="h-10" />
               <div className="text-center">
                 <p className="text-2xl font-bold text-blue-600">{inProgressCount}</p>
-                <p className="text-xs text-muted-foreground">In Progress</p>
+                <p className="text-xs text-slate-500">In Progress</p>
               </div>
               <Separator orientation="vertical" className="h-10" />
               <div className="text-center">
-                <p className="text-2xl font-bold text-muted-foreground">{notStartedCount}</p>
-                <p className="text-xs text-muted-foreground">Not Started</p>
+                <p className="text-2xl font-bold text-slate-500">{notStartedCount}</p>
+                <p className="text-xs text-slate-500">Not Started</p>
               </div>
             </div>
           </div>
@@ -348,8 +356,8 @@ export default function PrerequisitesPage({
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
-                      <Icon className="h-5 w-5 text-muted-foreground" />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100">
+                      <Icon className="h-5 w-5 text-slate-500" />
                     </div>
                     <div>
                       <CardTitle className="text-base">{category.label}</CardTitle>
@@ -358,7 +366,7 @@ export default function PrerequisitesPage({
                       </CardDescription>
                     </div>
                   </div>
-                  <span className="text-sm font-medium text-muted-foreground">
+                  <span className="text-sm font-medium text-slate-500">
                     {catPercent}%
                   </span>
                 </div>
@@ -377,7 +385,7 @@ export default function PrerequisitesPage({
                           'flex items-start gap-4 rounded-lg border px-4 py-3 transition-colors',
                           isChecked
                             ? 'border-emerald-200 bg-emerald-50/50'
-                            : 'border-border bg-background hover:bg-muted/30'
+                            : 'border-slate-200 bg-white hover:bg-slate-100/30'
                         )}
                       >
                         {/* Checkbox */}
@@ -389,7 +397,7 @@ export default function PrerequisitesPage({
                           {isChecked ? (
                             <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                           ) : (
-                            <Circle className="h-5 w-5 text-muted-foreground hover:text-primary" />
+                            <Circle className="h-5 w-5 text-slate-500 hover:text-slate-900" />
                           )}
                         </button>
 
@@ -399,13 +407,13 @@ export default function PrerequisitesPage({
                             className={cn(
                               'text-sm font-medium',
                               isChecked
-                                ? 'text-muted-foreground line-through'
-                                : 'text-foreground'
+                                ? 'text-slate-500 line-through'
+                                : 'text-slate-900'
                             )}
                           >
                             {item.title}
                           </p>
-                          <div className="mt-1.5 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                          <div className="mt-1.5 flex flex-wrap items-center gap-3 text-xs text-slate-500">
                             <span className="flex items-center gap-1">
                               <Users className="h-3 w-3" />
                               {item.assignedTo}

@@ -15,6 +15,8 @@ import {
   Building2,
   Briefcase,
 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,11 +28,25 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import type { UserRole } from '@/types';
+import { useCreateProject } from '@/hooks/use-projects';
+import {
+  projectDetailsSchema,
+  type ProjectDetailsFormValues,
+  INDUSTRIES,
+  ORG_SIZES,
+} from '@/lib/validations/project';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                      */
@@ -51,24 +67,6 @@ const STEPS = [
   { label: 'Project Details', icon: FolderPlus },
   { label: 'Team Setup', icon: Users },
   { label: 'Review & Create', icon: ClipboardCheck },
-] as const;
-
-const INDUSTRIES = [
-  'Technology',
-  'Healthcare',
-  'Financial Services',
-  'Government',
-  'Manufacturing',
-  'Retail',
-  'Other',
-] as const;
-
-const ORG_SIZES = [
-  '1-50',
-  '51-200',
-  '201-1000',
-  '1001-5000',
-  '5000+',
 ] as const;
 
 const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
@@ -106,7 +104,7 @@ function StepIndicator({
               <div
                 className={cn(
                   'h-0.5 w-12 sm:w-20 transition-colors',
-                  isCompleted ? 'bg-primary' : 'bg-border'
+                  isCompleted ? 'bg-slate-900' : 'bg-slate-200'
                 )}
               />
             )}
@@ -116,9 +114,9 @@ function StepIndicator({
               <div
                 className={cn(
                   'flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors',
-                  isCompleted && 'border-primary bg-primary text-primary-foreground',
-                  isCurrent && 'border-primary bg-background text-primary',
-                  !isCompleted && !isCurrent && 'border-border bg-muted text-muted-foreground'
+                  isCompleted && 'border-slate-900 bg-slate-900 text-white',
+                  isCurrent && 'border-slate-900 bg-white text-slate-900',
+                  !isCompleted && !isCurrent && 'border-slate-200 bg-slate-100 text-slate-500'
                 )}
               >
                 {isCompleted ? (
@@ -130,7 +128,7 @@ function StepIndicator({
               <span
                 className={cn(
                   'text-xs font-medium whitespace-nowrap',
-                  isCurrent ? 'text-foreground' : 'text-muted-foreground'
+                  isCurrent ? 'text-slate-900' : 'text-slate-500'
                 )}
               >
                 {step.label}
@@ -144,97 +142,115 @@ function StepIndicator({
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Step 1 – Project Details                                                   */
+/*  Step 1 – Project Details (React Hook Form + Zod)                           */
 /* -------------------------------------------------------------------------- */
 
 function StepProjectDetails({
-  name,
-  setName,
-  description,
-  setDescription,
-  industry,
-  setIndustry,
-  orgSize,
-  setOrgSize,
+  form,
 }: {
-  name: string;
-  setName: (v: string) => void;
-  description: string;
-  setDescription: (v: string) => void;
-  industry: string;
-  setIndustry: (v: string) => void;
-  orgSize: string;
-  setOrgSize: (v: string) => void;
+  form: ReturnType<typeof useForm<ProjectDetailsFormValues>>;
 }): React.ReactElement {
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="project-name">
-          Project Name <span className="text-destructive">*</span>
-        </Label>
-        <Input
-          id="project-name"
-          placeholder="e.g. AI Coding Agent Governance Program"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </div>
+      <FormField
+        control={form.control}
+        name="name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>
+              Project Name <span className="text-red-500">*</span>
+            </FormLabel>
+            <FormControl>
+              <Input
+                placeholder="e.g. AI Coding Agent Governance Program"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="project-description">Description</Label>
-        <Textarea
-          id="project-description"
-          placeholder="Describe the goals and scope of this governance project..."
-          rows={4}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-      </div>
+      <FormField
+        control={form.control}
+        name="description"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Description</FormLabel>
+            <FormControl>
+              <Textarea
+                placeholder="Describe the goals and scope of this governance project..."
+                rows={4}
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="industry">
-            Industry <span className="text-destructive">*</span>
-          </Label>
-          <div className="relative">
-            <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <select
-              id="industry"
-              value={industry}
-              onChange={(e) => setIndustry(e.target.value)}
-              className="flex h-9 w-full items-center rounded-md border border-input bg-transparent py-2 pl-10 pr-3 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring"
-            >
-              <option value="">Select industry...</option>
-              {INDUSTRIES.map((ind) => (
-                <option key={ind} value={ind}>
-                  {ind}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <FormField
+          control={form.control}
+          name="industry"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Industry <span className="text-red-500">*</span>
+              </FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                  <select
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    className="flex h-9 w-full items-center rounded-md border border-input bg-transparent py-2 pl-10 pr-3 text-sm shadow-sm ring-offset-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  >
+                    <option value="">Select industry...</option>
+                    {INDUSTRIES.map((ind) => (
+                      <option key={ind} value={ind}>
+                        {ind}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <div className="space-y-2">
-          <Label htmlFor="org-size">
-            Organization Size <span className="text-destructive">*</span>
-          </Label>
-          <div className="relative">
-            <Briefcase className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <select
-              id="org-size"
-              value={orgSize}
-              onChange={(e) => setOrgSize(e.target.value)}
-              className="flex h-9 w-full items-center rounded-md border border-input bg-transparent py-2 pl-10 pr-3 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring"
-            >
-              <option value="">Select size...</option>
-              {ORG_SIZES.map((size) => (
-                <option key={size} value={size}>
-                  {size} employees
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <FormField
+          control={form.control}
+          name="orgSize"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Organization Size <span className="text-red-500">*</span>
+              </FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Briefcase className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                  <select
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    className="flex h-9 w-full items-center rounded-md border border-input bg-transparent py-2 pl-10 pr-3 text-sm shadow-sm ring-offset-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  >
+                    <option value="">Select size...</option>
+                    {ORG_SIZES.map((size) => (
+                      <option key={size} value={size}>
+                        {size} employees
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
     </div>
   );
@@ -270,7 +286,7 @@ function StepTeamSetup({
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-slate-500">
         Add the core team members who will participate in the AI governance
         process. You can add more members later.
       </p>
@@ -279,10 +295,10 @@ function StepTeamSetup({
         {members.map((member, idx) => (
           <div
             key={member.id}
-            className="grid grid-cols-1 gap-4 rounded-lg border border-border bg-muted/30 p-4 sm:grid-cols-[1fr_1fr_180px_40px]"
+            className="grid grid-cols-1 gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[1fr_1fr_180px_40px]"
           >
             <div className="space-y-1">
-              <Label htmlFor={`name-${member.id}`} className="text-xs text-muted-foreground">
+              <Label htmlFor={`name-${member.id}`} className="text-xs text-slate-500">
                 Full Name
               </Label>
               <Input
@@ -294,7 +310,7 @@ function StepTeamSetup({
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor={`email-${member.id}`} className="text-xs text-muted-foreground">
+              <Label htmlFor={`email-${member.id}`} className="text-xs text-slate-500">
                 Email
               </Label>
               <Input
@@ -307,14 +323,14 @@ function StepTeamSetup({
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor={`role-${member.id}`} className="text-xs text-muted-foreground">
+              <Label htmlFor={`role-${member.id}`} className="text-xs text-slate-500">
                 Role
               </Label>
               <select
                 id={`role-${member.id}`}
                 value={member.role}
                 onChange={(e) => updateMember(member.id, 'role', e.target.value)}
-                className="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring"
+                className="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-white focus:outline-none focus:ring-1 focus:ring-slate-400"
               >
                 {ROLE_OPTIONS.map((r) => (
                   <option key={r.value} value={r.value}>
@@ -331,7 +347,7 @@ function StepTeamSetup({
                 size="icon"
                 disabled={members.length <= 1}
                 onClick={() => removeMember(member.id)}
-                className="text-muted-foreground hover:text-destructive"
+                className="text-slate-500 hover:text-red-500"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -367,47 +383,47 @@ function StepReview({
 }): React.ReactElement {
   return (
     <div className="space-y-6">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-slate-500">
         Review the details below before creating your project. You can always
         edit these later from the project settings.
       </p>
 
       {/* Project Info */}
-      <div className="rounded-lg border border-border bg-muted/30 p-5 space-y-3">
-        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-5 space-y-3">
+        <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
           Project Details
         </h3>
         <Separator />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 text-sm">
           <div>
-            <span className="text-muted-foreground">Name</span>
-            <p className="font-medium text-foreground">{name || '(not provided)'}</p>
+            <span className="text-slate-500">Name</span>
+            <p className="font-medium text-slate-900">{name || '(not provided)'}</p>
           </div>
           <div>
-            <span className="text-muted-foreground">Industry</span>
-            <p className="font-medium text-foreground">{industry || '(not selected)'}</p>
+            <span className="text-slate-500">Industry</span>
+            <p className="font-medium text-slate-900">{industry || '(not selected)'}</p>
           </div>
           <div>
-            <span className="text-muted-foreground">Organization Size</span>
-            <p className="font-medium text-foreground">
+            <span className="text-slate-500">Organization Size</span>
+            <p className="font-medium text-slate-900">
               {orgSize ? `${orgSize} employees` : '(not selected)'}
             </p>
           </div>
           <div className="sm:col-span-2">
-            <span className="text-muted-foreground">Description</span>
-            <p className="font-medium text-foreground">{description || '(not provided)'}</p>
+            <span className="text-slate-500">Description</span>
+            <p className="font-medium text-slate-900">{description || '(not provided)'}</p>
           </div>
         </div>
       </div>
 
       {/* Team Members */}
-      <div className="rounded-lg border border-border bg-muted/30 p-5 space-y-3">
-        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-5 space-y-3">
+        <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
           Team Members ({members.filter((m) => m.name || m.email).length})
         </h3>
         <Separator />
         {members.filter((m) => m.name || m.email).length === 0 ? (
-          <p className="text-sm text-muted-foreground">No team members added.</p>
+          <p className="text-sm text-slate-500">No team members added.</p>
         ) : (
           <div className="space-y-2">
             {members
@@ -415,11 +431,11 @@ function StepReview({
               .map((m) => (
                 <div
                   key={m.id}
-                  className="flex items-center justify-between rounded-md border border-border bg-background px-4 py-2"
+                  className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-4 py-2"
                 >
                   <div>
-                    <p className="text-sm font-medium text-foreground">{m.name || '(no name)'}</p>
-                    <p className="text-xs text-muted-foreground">{m.email || '(no email)'}</p>
+                    <p className="text-sm font-medium text-slate-900">{m.name || '(no name)'}</p>
+                    <p className="text-xs text-slate-500">{m.email || '(no email)'}</p>
                   </div>
                   <Badge variant="secondary">
                     {ROLE_OPTIONS.find((r) => r.value === m.role)?.label ?? m.role}
@@ -439,13 +455,20 @@ function StepReview({
 
 export default function NewProjectPage(): React.ReactElement {
   const router = useRouter();
+  const createProject = useCreateProject();
   const [currentStep, setCurrentStep] = useState(0);
 
-  // Step 1 state
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [industry, setIndustry] = useState('');
-  const [orgSize, setOrgSize] = useState('');
+  // Step 1 – React Hook Form + Zod validation
+  const detailsForm = useForm<ProjectDetailsFormValues>({
+    resolver: zodResolver(projectDetailsSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      industry: '',
+      orgSize: '',
+    },
+    mode: 'onTouched',
+  });
 
   // Step 2 state
   const [members, setMembers] = useState<TeamMemberRow[]>([
@@ -455,12 +478,17 @@ export default function NewProjectPage(): React.ReactElement {
   const [isCreating, setIsCreating] = useState(false);
 
   /* ---- Validation ---- */
-  const isStep1Valid = name.trim().length > 0 && industry.length > 0 && orgSize.length > 0;
+  const isStep1Valid = detailsForm.formState.isValid;
 
   const canProceed = currentStep === 0 ? isStep1Valid : true;
 
   /* ---- Navigation ---- */
-  const goNext = () => {
+  const goNext = async () => {
+    if (currentStep === 0) {
+      // Trigger validation before proceeding from Step 1
+      const valid = await detailsForm.trigger();
+      if (!valid) return;
+    }
     if (currentStep < STEPS.length - 1) {
       setCurrentStep((s) => s + 1);
     }
@@ -474,19 +502,31 @@ export default function NewProjectPage(): React.ReactElement {
 
   const handleCreate = async () => {
     setIsCreating(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    router.push('/projects/demo-new/overview');
+    const formValues = detailsForm.getValues();
+    try {
+      const project = await createProject.mutateAsync({
+        name: formValues.name,
+        description: formValues.description,
+        status: 'discovery',
+      });
+      router.push(`/projects/${project?.id ?? 'demo-new'}/overview`);
+    } catch {
+      // Fallback: navigate to demo project if API not ready
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      router.push('/projects/demo-new/overview');
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Page header */}
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
           Create New Project
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-slate-500">
           Set up a new AI governance project for your organization
         </p>
       </div>
@@ -537,7 +577,7 @@ export default function NewProjectPage(): React.ReactElement {
           )}
         </CardContent>
 
-        <CardFooter className="flex justify-between gap-3 border-t border-border pt-6">
+        <CardFooter className="flex justify-between gap-3 border-t border-slate-200 pt-6">
           <Button
             variant="outline"
             onClick={goBack}

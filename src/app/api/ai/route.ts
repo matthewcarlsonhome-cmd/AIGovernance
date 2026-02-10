@@ -1,20 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { withRateLimit } from '@/lib/api-helpers';
+import { RATE_LIMIT_STRICT, RATE_LIMIT_WINDOW_MS } from '@/lib/rate-limit';
+import { PROMPT_TEMPLATES, type PromptType } from '@/lib/ai/prompts';
 import type { ApiResponse } from '@/types';
 
-const AI_REQUEST_TYPES = ['policy_draft', 'report_narrative', 'meeting_summary', 'proposal'] as const;
-type AiRequestType = (typeof AI_REQUEST_TYPES)[number];
+const PROMPT_TYPES = [
+  'policy_draft',
+  'report_narrative',
+  'meeting_summary',
+  'risk_assessment',
+  'proposal_narrative',
+] as const;
 
 const aiRequestSchema = z.object({
+  type: z.enum(PROMPT_TYPES),
+  /** Free-form prompt text (used as fallback or appended to structured context). */
   prompt: z.string().min(1, 'Prompt is required').max(10000),
+  /** Legacy plain-text context string. Prefer `templateContext` instead. */
   context: z.string().max(50000).optional().default(''),
-  type: z.enum(AI_REQUEST_TYPES),
+  /** Structured context object consumed by the prompt template's buildUserMessage. */
+  templateContext: z.record(z.string(), z.unknown()).optional(),
 });
+
+/** Shape of a single content block returned by the Anthropic Messages API. */
+interface AnthropicContentBlock {
+  type: string;
+  text?: string;
+}
+
+/** Shape of the top-level response from the Anthropic Messages API. */
+interface AnthropicMessagesResponse {
+  content: AnthropicContentBlock[];
+  model: string;
+  usage: {
+    input_tokens: number;
+    output_tokens: number;
+  };
+}
 
 interface AiResponseData {
   text: string;
-  type: AiRequestType;
+  type: PromptType;
   model: string;
   usage: {
     input_tokens: number;
@@ -23,42 +51,20 @@ interface AiResponseData {
 }
 
 /**
- * System prompt templates per request type.
- * These guide Claude to generate content appropriate for each use case.
- */
-const SYSTEM_PROMPTS: Record<AiRequestType, string> = {
-  policy_draft: `You are an expert AI governance consultant drafting organizational policies for enterprise AI coding tool adoption.
-Write in formal, precise policy language appropriate for corporate governance documents.
-Include clear definitions, scope statements, and actionable requirements.
-Structure the output with numbered sections and subsections.
-Focus on practical, enforceable policy language that aligns with SOC 2, HIPAA, NIST, and GDPR frameworks where applicable.`,
-
-  report_narrative: `You are an expert AI governance consultant writing report sections for stakeholders evaluating AI coding tool adoption.
-Write in clear, professional language appropriate for the specified audience.
-Support claims with data points when provided in context.
-Include executive-appropriate summaries and actionable recommendations.
-Structure content with clear headings and bullet points for readability.`,
-
-  meeting_summary: `You are an expert AI governance consultant summarizing meeting notes.
-Produce a structured summary with the following sections:
-1. Key Decisions - numbered list of decisions made
-2. Action Items - who, what, and by when
-3. Open Questions - unresolved topics requiring follow-up
-4. Next Steps - planned activities and timeline
-Be concise but comprehensive. Attribute actions and decisions to specific participants when mentioned.`,
-
-  proposal: `You are an expert AI governance consultant drafting proposals for AI coding tool adoption initiatives.
-Write persuasive, data-informed content appropriate for executive and technical decision-makers.
-Include a clear problem statement, proposed approach, expected outcomes, and resource requirements.
-Structure the proposal with professional formatting including headers, bullet points, and summary tables where appropriate.`,
-};
-
-/**
  * POST /api/ai
  * Proxy requests to the Claude API for AI-assisted content generation.
  * All AI calls are server-side only to protect the ANTHROPIC_API_KEY.
+ *
+ * The route resolves a typed PromptTemplate from `lib/ai/prompts.ts` based on
+ * the request `type`.  When `templateContext` is provided the template builds a
+ * structured user message; otherwise the route falls back to the plain `prompt`
+ * + `context` fields for backward compatibility.
  */
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<AiResponseData>>> {
+  // Strict rate limit: 10 requests per minute for AI endpoints
+  const rateLimitResponse = withRateLimit(request, RATE_LIMIT_STRICT, RATE_LIMIT_WINDOW_MS);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -71,7 +77,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validation error', message: parsed.error.issues.map((i) => i.message).join(', ') },
+        { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
         { status: 400 },
       );
     }
@@ -84,16 +90,32 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       );
     }
 
-    const { prompt, context, type } = parsed.data;
+    const { prompt, context, type, templateContext } = parsed.data;
 
-    // Build the user message with context
-    const userMessage = context
-      ? `Context:\n${context}\n\n---\n\nRequest:\n${prompt}`
-      : prompt;
+    // Resolve the prompt template for this request type
+    const template = PROMPT_TEMPLATES[type];
+
+    // Build the user message ------------------------------------------------
+    let userMessage: string;
+
+    if (template && templateContext) {
+      // Structured path: inject the free-form prompt into templateContext so
+      // the template can incorporate it, then build the full message.
+      const enrichedCtx = { ...templateContext, prompt };
+      userMessage = template.buildUserMessage(enrichedCtx);
+    } else if (context) {
+      // Legacy plain-text path
+      userMessage = `Context:\n${context}\n\n---\n\nRequest:\n${prompt}`;
+    } else {
+      userMessage = prompt;
+    }
+
+    // Resolve the system prompt from the template
+    const systemPrompt = template?.system ?? '';
 
     const model = 'claude-sonnet-4-20250514';
 
-    // Call the Anthropic Messages API
+    // Call the Anthropic Messages API ----------------------------------------
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -104,7 +126,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       body: JSON.stringify({
         model,
         max_tokens: 4096,
-        system: SYSTEM_PROMPTS[type],
+        system: systemPrompt,
         messages: [
           {
             role: 'user',
@@ -131,14 +153,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       );
     }
 
-    const result = await response.json();
+    const result: AnthropicMessagesResponse = await response.json();
 
     // Extract text from the response content blocks
     const textBlocks = (result.content ?? []).filter(
-      (block: { type: string }) => block.type === 'text',
+      (block: AnthropicContentBlock) => block.type === 'text',
     );
     const generatedText = textBlocks
-      .map((block: { text: string }) => block.text)
+      .map((block: AnthropicContentBlock) => block.text ?? '')
       .join('\n\n');
 
     const aiResponse: AiResponseData = {

@@ -556,8 +556,8 @@ function SingleSelectQuestion({
           className={cn(
             'flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 transition-colors',
             value === opt.label
-              ? 'border-primary bg-primary/5'
-              : 'border-border hover:border-primary/40 hover:bg-muted/50'
+              ? 'border-slate-900 bg-slate-50'
+              : 'border-slate-200 hover:border-slate-400 hover:bg-slate-50'
           )}
         >
           <input
@@ -566,9 +566,9 @@ function SingleSelectQuestion({
             value={opt.label}
             checked={value === opt.label}
             onChange={() => onChange(opt.label)}
-            className="h-4 w-4 shrink-0 cursor-pointer rounded-full border border-primary accent-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="h-4 w-4 shrink-0 cursor-pointer rounded-full border border-slate-400 accent-slate-900 shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
           />
-          <span className="text-sm text-foreground">{opt.label}</span>
+          <span className="text-sm text-slate-900">{opt.label}</span>
         </label>
       ))}
     </div>
@@ -607,17 +607,17 @@ function MultiSelectQuestion({
           className={cn(
             'flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 transition-colors',
             values.includes(opt.label)
-              ? 'border-primary bg-primary/5'
-              : 'border-border hover:border-primary/40 hover:bg-muted/50'
+              ? 'border-slate-900 bg-slate-50'
+              : 'border-slate-200 hover:border-slate-400 hover:bg-slate-50'
           )}
         >
           <input
             type="checkbox"
             checked={values.includes(opt.label)}
             onChange={() => toggle(opt.label)}
-            className="h-4 w-4 shrink-0 cursor-pointer rounded-sm border border-primary accent-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="h-4 w-4 shrink-0 cursor-pointer rounded-sm border border-slate-400 accent-slate-900 shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
           />
-          <span className="text-sm text-foreground">{opt.label}</span>
+          <span className="text-sm text-slate-900">{opt.label}</span>
         </label>
       ))}
     </div>
@@ -728,10 +728,10 @@ export default function QuestionnairePage({
       {/*  Page header                                                      */}
       {/* ---------------------------------------------------------------- */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
           Feasibility Assessment Questionnaire
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-slate-500">
           Answer the questions across five domains to generate your organization&apos;s
           AI readiness score.
         </p>
@@ -742,8 +742,8 @@ export default function QuestionnairePage({
       {/* ---------------------------------------------------------------- */}
       <div className="mb-6 space-y-2">
         <div className="flex items-center justify-between text-sm">
-          <span className="font-medium text-foreground">Overall Completion</span>
-          <span className="text-muted-foreground">
+          <span className="font-medium text-slate-900">Overall Completion</span>
+          <span className="text-slate-500">
             {answeredQuestions} of {totalQuestions} questions ({overallPercent}%)
           </span>
         </div>
@@ -767,20 +767,20 @@ export default function QuestionnairePage({
               className={cn(
                 'group relative flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all',
                 isActive
-                  ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                  : 'border-border bg-card text-foreground hover:border-primary/40 hover:bg-muted/50'
+                  ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
+                  : 'border-slate-200 bg-white text-slate-900 hover:border-slate-400 hover:bg-slate-50'
               )}
             >
               <Icon className="h-4 w-4" />
               <span>{domain.label}</span>
               {isComplete && (
-                <CircleCheck className={cn('h-4 w-4', isActive ? 'text-primary-foreground' : 'text-emerald-500')} />
+                <CircleCheck className={cn('h-4 w-4', isActive ? 'text-white' : 'text-emerald-500')} />
               )}
               {!isComplete && dc.answered > 0 && (
                 <span
                   className={cn(
                     'text-xs',
-                    isActive ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                    isActive ? 'text-white/80' : 'text-slate-500'
                   )}
                 >
                   {dc.answered}/{dc.total}
@@ -798,7 +798,7 @@ export default function QuestionnairePage({
         <CardHeader>
           <div className="flex items-center gap-3">
             {React.createElement(activeDomain.icon, {
-              className: 'h-6 w-6 text-primary',
+              className: 'h-6 w-6 text-slate-900',
             })}
             <div>
               <CardTitle className="text-lg">{activeDomain.label}</CardTitle>
@@ -806,7 +806,7 @@ export default function QuestionnairePage({
             </div>
           </div>
           <div className="mt-3">
-            <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+            <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
               <span>Domain progress</span>
               <span>
                 {domainCompletion[activeDomain.key].answered} /{' '}
@@ -838,21 +838,21 @@ export default function QuestionnairePage({
                     className={cn(
                       'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
                       answered
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-muted-foreground'
+                        ? 'bg-slate-900 text-white'
+                        : 'bg-slate-100 text-slate-500'
                     )}
                   >
                     {qIdx + 1}
                   </span>
                   <div className="space-y-1 flex-1">
-                    <Label className="text-sm font-medium leading-snug text-foreground">
+                    <Label className="text-sm font-medium leading-snug text-slate-900">
                       {question.text}
                       {question.required && (
-                        <span className="ml-1 text-destructive">*</span>
+                        <span className="ml-1 text-red-500">*</span>
                       )}
                     </Label>
                     {question.helpText && (
-                      <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                      <div className="flex items-start gap-1.5 text-xs text-slate-500">
                         <HelpCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                         <span>{question.helpText}</span>
                       </div>

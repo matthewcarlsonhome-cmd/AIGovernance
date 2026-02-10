@@ -71,18 +71,19 @@ export async function PUT(
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validation error', message: parsed.error.issues.map((i) => i.message).join(', ') },
+        { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
         { status: 400 },
       );
     }
 
-    const { data: updated, error } = await supabase
-      .from('assessment_responses')
-      .update({
-        value: parsed.data.value,
-        responded_by: user.id,
-        updated_at: new Date().toISOString(),
-      })
+    const updatePayload = {
+      value: parsed.data.value,
+      responded_by: user.id,
+      updated_at: new Date().toISOString(),
+    };
+    const { data: updated, error } = await (supabase
+      .from('assessment_responses') as any)
+      .update(updatePayload)
       .eq('id', responseId)
       .select()
       .single();

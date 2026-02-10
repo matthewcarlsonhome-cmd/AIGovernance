@@ -23,6 +23,7 @@ import {
   X,
   UserPlus,
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -136,7 +137,7 @@ function getRoleBadgeClasses(role: TeamRole): string {
     case 'marketing':
       return 'bg-orange-500/15 text-orange-700 border-orange-500/25';
     default:
-      return 'bg-muted text-muted-foreground border-border';
+      return 'bg-slate-100 text-slate-500 border-slate-200';
   }
 }
 
@@ -155,7 +156,7 @@ function getAvatarBg(role: TeamRole): string {
     case 'marketing':
       return 'bg-orange-500';
     default:
-      return 'bg-muted-foreground';
+      return 'bg-slate-500';
   }
 }
 
@@ -163,27 +164,83 @@ function getAvatarBg(role: TeamRole): string {
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
-export default function TeamPage(): React.ReactElement {
+export default function TeamPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): React.ReactElement {
+  const { id } = React.use(params);
+
+  // Inline fetch for team members
+  const { data: fetchedMembers, isLoading, error } = useQuery({
+    queryKey: ['team-members', id],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${encodeURIComponent(id)}/team`);
+      if (!res.ok) return null;
+      const json = await res.json();
+      return json.data ?? null;
+    },
+    enabled: Boolean(id),
+  });
+
   const [showAddForm, setShowAddForm] = React.useState(false);
   const [newName, setNewName] = React.useState('');
   const [newEmail, setNewEmail] = React.useState('');
   const [newRole, setNewRole] = React.useState<TeamRole>('engineering');
+  const [localMembers, setLocalMembers] = React.useState<TeamMember[]>([]);
+  const [removedIds, setRemovedIds] = React.useState<Set<string>>(new Set());
 
-  const totalTasks = TEAM_MEMBERS.reduce((sum, m) => sum + m.tasksAssigned, 0);
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {(error as Error).message}</p></div>;
+
+  const baseMembers: TeamMember[] = (fetchedMembers && Array.isArray(fetchedMembers) && fetchedMembers.length > 0)
+    ? fetchedMembers as TeamMember[]
+    : TEAM_MEMBERS;
+
+  const teamMembers = [...baseMembers, ...localMembers].filter((m) => !removedIds.has(m.id));
+  const totalTasks = teamMembers.reduce((sum, m) => sum + m.tasksAssigned, 0);
+
+  const handleAddMember = (): void => {
+    if (!newName.trim()) return;
+    const initials = newName.trim().split(' ').map((w) => w[0]?.toUpperCase()).join('').slice(0, 2);
+    const roleLabel = ROLE_OPTIONS.find((o) => o.value === newRole)?.label ?? newRole;
+    const member: TeamMember = {
+      id: `tm-local-${Date.now()}`,
+      name: newName.trim(),
+      email: newEmail.trim() || `${newName.trim().toLowerCase().replace(/\s+/g, '.')}@company.com`,
+      role: newRole,
+      roleLabel,
+      status: 'Active',
+      tasksAssigned: 0,
+      initials,
+    };
+    setLocalMembers((prev) => [...prev, member]);
+    setNewName('');
+    setNewEmail('');
+    setNewRole('engineering');
+    setShowAddForm(false);
+  };
+
+  const handleRemoveMember = (memberId: string): void => {
+    setRemovedIds((prev) => new Set([...prev, memberId]));
+  };
 
   return (
     <div className="flex flex-col gap-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             Team Management
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-slate-500">
             Manage project team members, role assignments, and task allocation.
           </p>
         </div>
-        <Button onClick={() => setShowAddForm(!showAddForm)}>
+        <Button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className={showAddForm ? 'bg-slate-200 text-slate-900 hover:bg-slate-300' : 'bg-slate-900 text-white hover:bg-slate-800'}
+        >
           {showAddForm ? (
             <>
               <X className="h-4 w-4" />
@@ -236,7 +293,7 @@ export default function TeamPage(): React.ReactElement {
                   id="member-role"
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value as TeamRole)}
-                  className="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="flex h-9 w-full items-center rounded-md border border-slate-200 bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
                 >
                   {ROLE_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -248,7 +305,11 @@ export default function TeamPage(): React.ReactElement {
             </div>
           </CardContent>
           <CardFooter>
-            <Button>
+            <Button
+              onClick={handleAddMember}
+              disabled={!newName.trim()}
+              className="bg-slate-900 text-white hover:bg-slate-800"
+            >
               <Plus className="h-4 w-4" />
               Add Member
             </Button>
@@ -261,14 +322,14 @@ export default function TeamPage(): React.ReactElement {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <Users className="h-5 w-5 text-primary" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
+                <Users className="h-5 w-5 text-slate-900" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">
-                  {TEAM_MEMBERS.length}
+                <p className="text-2xl font-bold text-slate-900">
+                  {teamMembers.length}
                 </p>
-                <p className="text-xs text-muted-foreground">Team Members</p>
+                <p className="text-xs text-slate-500">Team Members</p>
               </div>
             </div>
           </CardContent>
@@ -280,10 +341,10 @@ export default function TeamPage(): React.ReactElement {
                 <Users className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">
-                  {TEAM_MEMBERS.filter((m) => m.status === 'Active').length}
+                <p className="text-2xl font-bold text-slate-900">
+                  {teamMembers.filter((m) => m.status === 'Active').length}
                 </p>
-                <p className="text-xs text-muted-foreground">Active</p>
+                <p className="text-xs text-slate-500">Active</p>
               </div>
             </div>
           </CardContent>
@@ -295,8 +356,8 @@ export default function TeamPage(): React.ReactElement {
                 <ListTodo className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{totalTasks}</p>
-                <p className="text-xs text-muted-foreground">Total Tasks Assigned</p>
+                <p className="text-2xl font-bold text-slate-900">{totalTasks}</p>
+                <p className="text-xs text-slate-500">Total Tasks Assigned</p>
               </div>
             </div>
           </CardContent>
@@ -305,7 +366,7 @@ export default function TeamPage(): React.ReactElement {
 
       {/* Team Member Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {TEAM_MEMBERS.map((member) => (
+        {teamMembers.map((member) => (
           <Card key={member.id}>
             <CardContent className="p-5">
               <div className="flex items-start gap-4">
@@ -321,7 +382,7 @@ export default function TeamPage(): React.ReactElement {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-foreground">{member.name}</h3>
+                  <h3 className="font-semibold text-slate-900">{member.name}</h3>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge
                       variant="outline"
@@ -336,11 +397,11 @@ export default function TeamPage(): React.ReactElement {
                       {member.status}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5 mt-2 text-xs text-slate-500">
                     <Mail className="h-3 w-3" />
                     <span className="truncate">{member.email}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-500">
                     <ListTodo className="h-3 w-3" />
                     <span>{member.tasksAssigned} tasks assigned</span>
                   </div>
@@ -348,12 +409,12 @@ export default function TeamPage(): React.ReactElement {
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
-                <Button variant="outline" size="sm" className="flex-1">
+              <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-200">
+                <Button variant="outline" size="sm" className="flex-1" onClick={(e) => { e.stopPropagation(); alert(`Tasks for ${member.name}:\n- ${member.tasksAssigned} tasks assigned`); }}>
                   <ListTodo className="h-3.5 w-3.5" />
                   View Tasks
                 </Button>
-                <Button variant="ghost" size="sm" className="text-muted-foreground">
+                <Button variant="ghost" size="sm" className="text-slate-500" onClick={(e) => { e.stopPropagation(); handleRemoveMember(member.id); }}>
                   <X className="h-3.5 w-3.5" />
                   Remove
                 </Button>
