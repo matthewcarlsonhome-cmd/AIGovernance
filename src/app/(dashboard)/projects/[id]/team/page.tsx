@@ -187,15 +187,43 @@ export default function TeamPage({
   const [newName, setNewName] = React.useState('');
   const [newEmail, setNewEmail] = React.useState('');
   const [newRole, setNewRole] = React.useState<TeamRole>('engineering');
+  const [localMembers, setLocalMembers] = React.useState<TeamMember[]>([]);
+  const [removedIds, setRemovedIds] = React.useState<Set<string>>(new Set());
 
   if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
   if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {(error as Error).message}</p></div>;
 
-  const teamMembers: TeamMember[] = (fetchedMembers && Array.isArray(fetchedMembers) && fetchedMembers.length > 0)
+  const baseMembers: TeamMember[] = (fetchedMembers && Array.isArray(fetchedMembers) && fetchedMembers.length > 0)
     ? fetchedMembers as TeamMember[]
     : TEAM_MEMBERS;
 
+  const teamMembers = [...baseMembers, ...localMembers].filter((m) => !removedIds.has(m.id));
   const totalTasks = teamMembers.reduce((sum, m) => sum + m.tasksAssigned, 0);
+
+  const handleAddMember = (): void => {
+    if (!newName.trim()) return;
+    const initials = newName.trim().split(' ').map((w) => w[0]?.toUpperCase()).join('').slice(0, 2);
+    const roleLabel = ROLE_OPTIONS.find((o) => o.value === newRole)?.label ?? newRole;
+    const member: TeamMember = {
+      id: `tm-local-${Date.now()}`,
+      name: newName.trim(),
+      email: newEmail.trim() || `${newName.trim().toLowerCase().replace(/\s+/g, '.')}@company.com`,
+      role: newRole,
+      roleLabel,
+      status: 'Active',
+      tasksAssigned: 0,
+      initials,
+    };
+    setLocalMembers((prev) => [...prev, member]);
+    setNewName('');
+    setNewEmail('');
+    setNewRole('engineering');
+    setShowAddForm(false);
+  };
+
+  const handleRemoveMember = (memberId: string): void => {
+    setRemovedIds((prev) => new Set([...prev, memberId]));
+  };
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -209,7 +237,10 @@ export default function TeamPage({
             Manage project team members, role assignments, and task allocation.
           </p>
         </div>
-        <Button onClick={() => setShowAddForm(!showAddForm)}>
+        <Button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className={showAddForm ? 'bg-slate-200 text-slate-900 hover:bg-slate-300' : 'bg-slate-900 text-white hover:bg-slate-800'}
+        >
           {showAddForm ? (
             <>
               <X className="h-4 w-4" />
@@ -262,7 +293,7 @@ export default function TeamPage({
                   id="member-role"
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value as TeamRole)}
-                  className="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  className="flex h-9 w-full items-center rounded-md border border-slate-200 bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
                 >
                   {ROLE_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -274,7 +305,11 @@ export default function TeamPage({
             </div>
           </CardContent>
           <CardFooter>
-            <Button>
+            <Button
+              onClick={handleAddMember}
+              disabled={!newName.trim()}
+              className="bg-slate-900 text-white hover:bg-slate-800"
+            >
               <Plus className="h-4 w-4" />
               Add Member
             </Button>
@@ -375,11 +410,11 @@ export default function TeamPage({
 
               {/* Actions */}
               <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-200">
-                <Button variant="outline" size="sm" className="flex-1">
+                <Button variant="outline" size="sm" className="flex-1" onClick={(e) => { e.stopPropagation(); alert(`Tasks for ${member.name}:\n- ${member.tasksAssigned} tasks assigned`); }}>
                   <ListTodo className="h-3.5 w-3.5" />
                   View Tasks
                 </Button>
-                <Button variant="ghost" size="sm" className="text-slate-500">
+                <Button variant="ghost" size="sm" className="text-slate-500" onClick={(e) => { e.stopPropagation(); handleRemoveMember(member.id); }}>
                   <X className="h-3.5 w-3.5" />
                   Remove
                 </Button>

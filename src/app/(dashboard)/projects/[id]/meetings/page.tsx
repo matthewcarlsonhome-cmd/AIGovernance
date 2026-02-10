@@ -103,7 +103,7 @@ function getMeetingTypeBadgeClasses(type: MeetingType): string {
     case 'retrospective':
       return 'bg-orange-500/15 text-orange-700 border-orange-500/25';
     default:
-      return 'bg-muted text-muted-foreground border-border';
+      return 'bg-slate-100 text-slate-500 border-slate-200';
   }
 }
 
@@ -118,7 +118,7 @@ function getStatusBadgeClasses(status: ActionItemStatus): string {
     case 'cancelled':
       return 'bg-gray-500/15 text-gray-500 border-gray-500/25';
     default:
-      return 'bg-muted text-muted-foreground border-border';
+      return 'bg-slate-100 text-slate-500 border-slate-200';
   }
 }
 
@@ -133,7 +133,7 @@ function getPriorityBadgeClasses(priority: ActionItemPriority): string {
     case 'urgent':
       return 'bg-red-500/15 text-red-700 border-red-500/25';
     default:
-      return 'bg-muted text-muted-foreground border-border';
+      return 'bg-slate-100 text-slate-500 border-slate-200';
   }
 }
 
@@ -204,6 +204,8 @@ const DEMO_MEETINGS: MeetingNote[] = [
     ],
     notes:
       'Introduced the AI governance engagement and outlined the three-phase approach: Discovery, Sandbox Setup, and Pilot Execution. Discussed high-level timeline targets and assigned initial workstream owners. Agreed on bi-weekly executive check-ins and weekly working sessions. David Park emphasized the importance of security-first approach and early legal review.',
+    summary: null,
+    created_by: null,
     created_at: '2026-01-06T10:00:00Z',
     updated_at: '2026-01-06T10:00:00Z',
   },
@@ -221,6 +223,8 @@ const DEMO_MEETINGS: MeetingNote[] = [
     ],
     notes:
       'Deep dive into current infrastructure: AWS-based, running EKS for container orchestration. Reviewed existing VPC architecture and identified gaps for AI sandbox isolation. Discussed network segmentation requirements and egress filtering capabilities. Tom outlined existing CI/CD pipeline that would need modification for AI-assisted workflows. Key finding: current DLP tools may not cover AI API traffic patterns.',
+    summary: null,
+    created_by: null,
     created_at: '2026-01-10T14:00:00Z',
     updated_at: '2026-01-10T14:00:00Z',
   },
@@ -239,6 +243,8 @@ const DEMO_MEETINGS: MeetingNote[] = [
     ],
     notes:
       'Reviewed security posture for AI tool integration. Identified key concerns: API key management, data classification for code repositories, and audit logging requirements. Maria raised compliance implications for SOC 2 Type II certification. Discussed managed-settings.json configuration to restrict Claude Code capabilities. Need to evaluate DLP rules for outbound API calls. Rachel will conduct a threat model analysis specific to AI coding assistants.',
+    summary: null,
+    created_by: null,
     created_at: '2026-01-15T10:00:00Z',
     updated_at: '2026-01-15T10:00:00Z',
   },
@@ -259,6 +265,8 @@ const DEMO_MEETINGS: MeetingNote[] = [
     ],
     notes:
       'Gate 1 checkpoint review for Discovery phase completion. All assessment questionnaires completed. Feasibility score: 72/100 (Moderate). Key gaps identified in DLP coverage and incident response procedures. Legal review of AUP is 80% complete. Decision: Conditional pass - proceed to sandbox setup with remediation items tracked. David approved moving forward with the caveat that DLP gaps must be closed before pilot.',
+    summary: null,
+    created_by: null,
     created_at: '2026-01-24T09:00:00Z',
     updated_at: '2026-01-24T09:00:00Z',
   },
@@ -275,6 +283,8 @@ const DEMO_MEETINGS: MeetingNote[] = [
     ],
     notes:
       'Monthly executive status update. Presented progress through Discovery phase and Gate 1 conditional approval. Shared feasibility scorecard and remediation roadmap. Jennifer requested a projected ROI analysis by next meeting. David wants a risk heat map included in the next board update. Timeline remains on track for sandbox deployment in mid-February.',
+    summary: null,
+    created_by: null,
     created_at: '2026-01-31T15:00:00Z',
     updated_at: '2026-01-31T15:00:00Z',
   },
@@ -292,6 +302,8 @@ const DEMO_ACTION_ITEMS: ActionItem[] = [
     status: 'complete',
     priority: 'high',
     due_date: '2026-01-08',
+    description: null,
+    linked_task_id: null,
     completed_at: '2026-01-07T16:00:00Z',
     created_at: '2026-01-06T10:00:00Z',
     updated_at: '2026-01-07T16:00:00Z',
@@ -306,6 +318,8 @@ const DEMO_ACTION_ITEMS: ActionItem[] = [
     status: 'complete',
     priority: 'medium',
     due_date: '2026-01-10',
+    description: null,
+    linked_task_id: null,
     completed_at: '2026-01-09T11:00:00Z',
     created_at: '2026-01-06T10:00:00Z',
     updated_at: '2026-01-09T11:00:00Z',
@@ -320,6 +334,8 @@ const DEMO_ACTION_ITEMS: ActionItem[] = [
     status: 'complete',
     priority: 'medium',
     due_date: '2026-01-09',
+    description: null,
+    linked_task_id: null,
     completed_at: '2026-01-08T14:00:00Z',
     created_at: '2026-01-06T10:00:00Z',
     updated_at: '2026-01-08T14:00:00Z',
@@ -335,6 +351,8 @@ const DEMO_ACTION_ITEMS: ActionItem[] = [
     status: 'complete',
     priority: 'high',
     due_date: '2026-01-14',
+    description: null,
+    linked_task_id: null,
     completed_at: '2026-01-13T17:00:00Z',
     created_at: '2026-01-10T14:00:00Z',
     updated_at: '2026-01-13T17:00:00Z',
@@ -349,6 +367,9 @@ const DEMO_ACTION_ITEMS: ActionItem[] = [
     status: 'in_progress',
     priority: 'urgent',
     due_date: '2026-01-20',
+    description: null,
+    linked_task_id: null,
+    completed_at: null,
     created_at: '2026-01-10T14:00:00Z',
     updated_at: '2026-01-18T09:00:00Z',
   },
@@ -362,6 +383,9 @@ const DEMO_ACTION_ITEMS: ActionItem[] = [
     status: 'in_progress',
     priority: 'high',
     due_date: '2026-01-22',
+    description: null,
+    linked_task_id: null,
+    completed_at: null,
     created_at: '2026-01-10T14:00:00Z',
     updated_at: '2026-01-19T10:00:00Z',
   },
@@ -375,6 +399,9 @@ const DEMO_ACTION_ITEMS: ActionItem[] = [
     status: 'open',
     priority: 'medium',
     due_date: '2026-01-25',
+    description: null,
+    linked_task_id: null,
+    completed_at: null,
     created_at: '2026-01-10T14:00:00Z',
     updated_at: '2026-01-10T14:00:00Z',
   },
@@ -389,6 +416,9 @@ const DEMO_ACTION_ITEMS: ActionItem[] = [
     status: 'in_progress',
     priority: 'urgent',
     due_date: '2026-01-28',
+    description: null,
+    linked_task_id: null,
+    completed_at: null,
     created_at: '2026-01-15T10:00:00Z',
     updated_at: '2026-01-22T08:00:00Z',
   },
@@ -402,6 +432,9 @@ const DEMO_ACTION_ITEMS: ActionItem[] = [
     status: 'open',
     priority: 'high',
     due_date: '2026-01-30',
+    description: null,
+    linked_task_id: null,
+    completed_at: null,
     created_at: '2026-01-15T10:00:00Z',
     updated_at: '2026-01-15T10:00:00Z',
   },
@@ -415,6 +448,9 @@ const DEMO_ACTION_ITEMS: ActionItem[] = [
     status: 'open',
     priority: 'high',
     due_date: '2026-02-01',
+    description: null,
+    linked_task_id: null,
+    completed_at: null,
     created_at: '2026-01-15T10:00:00Z',
     updated_at: '2026-01-15T10:00:00Z',
   },
@@ -429,6 +465,9 @@ const DEMO_ACTION_ITEMS: ActionItem[] = [
     status: 'open',
     priority: 'urgent',
     due_date: '2026-02-07',
+    description: null,
+    linked_task_id: null,
+    completed_at: null,
     created_at: '2026-01-24T09:00:00Z',
     updated_at: '2026-01-24T09:00:00Z',
   },
@@ -442,6 +481,9 @@ const DEMO_ACTION_ITEMS: ActionItem[] = [
     status: 'in_progress',
     priority: 'high',
     due_date: '2026-02-05',
+    description: null,
+    linked_task_id: null,
+    completed_at: null,
     created_at: '2026-01-24T09:00:00Z',
     updated_at: '2026-01-28T14:00:00Z',
   },
@@ -456,6 +498,9 @@ const DEMO_ACTION_ITEMS: ActionItem[] = [
     status: 'open',
     priority: 'high',
     due_date: '2026-02-12',
+    description: null,
+    linked_task_id: null,
+    completed_at: null,
     created_at: '2026-01-31T15:00:00Z',
     updated_at: '2026-01-31T15:00:00Z',
   },
@@ -469,6 +514,9 @@ const DEMO_ACTION_ITEMS: ActionItem[] = [
     status: 'open',
     priority: 'medium',
     due_date: '2026-02-14',
+    description: null,
+    linked_task_id: null,
+    completed_at: null,
     created_at: '2026-01-31T15:00:00Z',
     updated_at: '2026-01-31T15:00:00Z',
   },
@@ -520,6 +568,10 @@ export default function MeetingsPage(): React.ReactElement {
   const [newActionPriority, setNewActionPriority] = useState<ActionItemPriority>('medium');
   const [newActionDueDate, setNewActionDueDate] = useState('');
 
+  // Inline note editing state
+  const [editingMeetingId, setEditingMeetingId] = useState<string | null>(null);
+  const [editingNotes, setEditingNotes] = useState('');
+
   /* ---------------------------------------------------------------- */
   /*  Computed                                                         */
   /* ---------------------------------------------------------------- */
@@ -566,6 +618,8 @@ export default function MeetingsPage(): React.ReactElement {
       meeting_type: formData.type,
       attendees: attendeeList,
       notes: formData.notes,
+      summary: null,
+      created_by: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -599,10 +653,14 @@ export default function MeetingsPage(): React.ReactElement {
       meeting_id: meetingId,
       project_id: 'proj-1',
       title: newActionTitle,
-      assigned_to_name: newActionAssignee || undefined,
+      description: null,
+      assigned_to: null,
+      assigned_to_name: newActionAssignee || null,
       status: 'open',
       priority: newActionPriority,
-      due_date: newActionDueDate || undefined,
+      due_date: newActionDueDate || null,
+      linked_task_id: null,
+      completed_at: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -623,7 +681,7 @@ export default function MeetingsPage(): React.ReactElement {
         return {
           ...ai,
           status: newStatus,
-          completed_at: newStatus === 'complete' ? new Date().toISOString() : undefined,
+          completed_at: newStatus === 'complete' ? new Date().toISOString() : null,
           updated_at: new Date().toISOString(),
         };
       })
@@ -638,11 +696,11 @@ export default function MeetingsPage(): React.ReactElement {
     <div className="flex flex-col gap-6 p-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-          <FileText className="h-6 w-6 text-primary" />
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+          <FileText className="h-6 w-6 text-slate-900" />
           Meeting Tracker
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-slate-500">
           Track meeting notes, decisions, and action items across your consulting engagement.
         </p>
       </div>
@@ -670,8 +728,8 @@ export default function MeetingsPage(): React.ReactElement {
             {/* Meetings Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-foreground">Meeting Notes</h2>
-                <p className="text-sm text-muted-foreground">
+                <h2 className="text-lg font-semibold text-slate-900">Meeting Notes</h2>
+                <p className="text-sm text-slate-500">
                   {filteredMeetings.length} meeting{filteredMeetings.length !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -679,7 +737,7 @@ export default function MeetingsPage(): React.ReactElement {
                 <DialogTrigger
                   className={cn(
                     'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors',
-                    'bg-primary text-primary-foreground shadow hover:bg-primary/90',
+                    'bg-slate-900 text-white shadow hover:bg-slate-800',
                     'h-9 px-4 py-2'
                   )}
                 >
@@ -730,7 +788,7 @@ export default function MeetingsPage(): React.ReactElement {
                     <div className="space-y-2">
                       <Label htmlFor="meeting-attendees">
                         Attendees{' '}
-                        <span className="text-muted-foreground font-normal">(comma-separated)</span>
+                        <span className="text-slate-500 font-normal">(comma-separated)</span>
                       </Label>
                       <Input
                         id="meeting-attendees"
@@ -759,7 +817,7 @@ export default function MeetingsPage(): React.ReactElement {
 
             {/* Meeting Type Filter */}
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Filter className="h-4 w-4 text-slate-500" />
               <Select
                 value={meetingTypeFilter}
                 onValueChange={setMeetingTypeFilter}
@@ -778,8 +836,8 @@ export default function MeetingsPage(): React.ReactElement {
             {filteredMeetings.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center">
-                  <Calendar className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">No meetings found.</p>
+                  <Calendar className="h-10 w-10 text-slate-500 mx-auto mb-3" />
+                  <p className="text-slate-500">No meetings found.</p>
                 </CardContent>
               </Card>
             ) : (
@@ -826,7 +884,7 @@ export default function MeetingsPage(): React.ReactElement {
                                 {meetingActions.length} action item
                                 {meetingActions.length !== 1 ? 's' : ''}
                               </span>
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-slate-500">
                                 {formatDistanceToNow(new Date(meeting.meeting_date), {
                                   addSuffix: true,
                                 })}
@@ -837,19 +895,31 @@ export default function MeetingsPage(): React.ReactElement {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-muted-foreground"
+                              className="h-8 w-8 p-0 text-slate-500"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                // Edit could open dialog - for demo, just toggle expand
-                                setExpandedMeetingId(isExpanded ? null : meeting.id);
+                                if (editingMeetingId === meeting.id) {
+                                  // Save and exit edit mode
+                                  updateMeeting(meeting.id, { notes: editingNotes });
+                                  setEditingMeetingId(null);
+                                } else {
+                                  // Enter edit mode
+                                  setExpandedMeetingId(meeting.id);
+                                  setEditingMeetingId(meeting.id);
+                                  setEditingNotes(meeting.notes || '');
+                                }
                               }}
                             >
-                              <Edit className="h-4 w-4" />
+                              {editingMeetingId === meeting.id ? (
+                                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                              ) : (
+                                <Edit className="h-4 w-4" />
+                              )}
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
+                              className="h-8 w-8 p-0 text-slate-500 hover:text-red-600"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 deleteMeeting(meeting.id);
@@ -858,9 +928,9 @@ export default function MeetingsPage(): React.ReactElement {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                             {isExpanded ? (
-                              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                              <ChevronUp className="h-4 w-4 text-slate-500" />
                             ) : (
-                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                              <ChevronDown className="h-4 w-4 text-slate-500" />
                             )}
                           </div>
                         </div>
@@ -871,19 +941,74 @@ export default function MeetingsPage(): React.ReactElement {
                         <CardContent>
                           <Separator className="mb-4" />
 
-                          {/* Notes */}
-                          {meeting.notes && (
-                            <div className="mb-4">
-                              <h4 className="text-sm font-semibold text-foreground mb-2">Notes</h4>
-                              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                          {/* Notes - editable when in edit mode */}
+                          <div className="mb-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="text-sm font-semibold text-slate-900">Notes</h4>
+                              {editingMeetingId !== meeting.id && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs text-slate-500 hover:text-slate-900"
+                                  onClick={() => {
+                                    setEditingMeetingId(meeting.id);
+                                    setEditingNotes(meeting.notes || '');
+                                  }}
+                                >
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Edit Notes
+                                </Button>
+                              )}
+                            </div>
+                            {editingMeetingId === meeting.id ? (
+                              <div className="space-y-2">
+                                <Textarea
+                                  value={editingNotes}
+                                  onChange={(e) => setEditingNotes(e.target.value)}
+                                  className="min-h-[120px] text-sm"
+                                  placeholder="Add meeting notes, decisions, key discussion points..."
+                                />
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    className="bg-slate-900 text-white hover:bg-slate-800"
+                                    onClick={() => {
+                                      updateMeeting(meeting.id, { notes: editingNotes });
+                                      setEditingMeetingId(null);
+                                    }}
+                                  >
+                                    <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                                    Save Notes
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setEditingMeetingId(null)}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : meeting.notes ? (
+                              <p className="text-sm text-slate-500 leading-relaxed whitespace-pre-wrap">
                                 {meeting.notes}
                               </p>
-                            </div>
-                          )}
+                            ) : (
+                              <button
+                                className="text-sm text-slate-400 hover:text-slate-600 italic cursor-pointer"
+                                onClick={() => {
+                                  setEditingMeetingId(meeting.id);
+                                  setEditingNotes('');
+                                }}
+                              >
+                                Click to add notes...
+                              </button>
+                            )}
+                          </div>
 
                           {/* Attendees */}
                           <div className="mb-4">
-                            <h4 className="text-sm font-semibold text-foreground mb-2">
+                            <h4 className="text-sm font-semibold text-slate-900 mb-2">
                               Attendees
                             </h4>
                             <div className="flex flex-wrap gap-2">
@@ -891,11 +1016,11 @@ export default function MeetingsPage(): React.ReactElement {
                                 <Badge
                                   key={idx}
                                   variant="outline"
-                                  className="text-xs bg-muted/50"
+                                  className="text-xs bg-slate-50"
                                 >
                                   {att.name}
                                   {att.role && (
-                                    <span className="text-muted-foreground ml-1">
+                                    <span className="text-slate-500 ml-1">
                                       ({att.role})
                                     </span>
                                   )}
@@ -907,7 +1032,7 @@ export default function MeetingsPage(): React.ReactElement {
                           {/* Action Items for this Meeting */}
                           <div>
                             <div className="flex items-center justify-between mb-2">
-                              <h4 className="text-sm font-semibold text-foreground">
+                              <h4 className="text-sm font-semibold text-slate-900">
                                 Action Items ({meetingActions.length})
                               </h4>
                               <Button
@@ -981,7 +1106,7 @@ export default function MeetingsPage(): React.ReactElement {
                             )}
 
                             {meetingActions.length === 0 ? (
-                              <p className="text-xs text-muted-foreground py-2">
+                              <p className="text-xs text-slate-500 py-2">
                                 No action items for this meeting.
                               </p>
                             ) : (
@@ -1006,7 +1131,7 @@ export default function MeetingsPage(): React.ReactElement {
                                         className={cn(
                                           'text-sm truncate',
                                           item.status === 'complete' &&
-                                            'line-through text-muted-foreground'
+                                            'line-through text-slate-500'
                                         )}
                                       >
                                         {item.title}
@@ -1014,7 +1139,7 @@ export default function MeetingsPage(): React.ReactElement {
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0 ml-2">
                                       {item.assigned_to_name && (
-                                        <span className="text-xs text-muted-foreground hidden sm:inline">
+                                        <span className="text-xs text-slate-500 hidden sm:inline">
                                           {item.assigned_to_name}
                                         </span>
                                       )}
@@ -1043,7 +1168,7 @@ export default function MeetingsPage(): React.ReactElement {
                                             'text-xs',
                                             isOverdue(item)
                                               ? 'text-red-600 font-medium'
-                                              : 'text-muted-foreground'
+                                              : 'text-slate-500'
                                           )}
                                         >
                                           {format(new Date(item.due_date), 'MMM d')}
@@ -1073,7 +1198,7 @@ export default function MeetingsPage(): React.ReactElement {
             {/* Action Items Header */}
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-foreground">Action Items</h2>
+                <h2 className="text-lg font-semibold text-slate-900">Action Items</h2>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge
                     variant="outline"
@@ -1099,7 +1224,7 @@ export default function MeetingsPage(): React.ReactElement {
 
             {/* Filters */}
             <div className="flex items-center gap-3">
-              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Filter className="h-4 w-4 text-slate-500" />
               <Select
                 value={statusFilter}
                 onValueChange={setStatusFilter}
@@ -1141,7 +1266,7 @@ export default function MeetingsPage(): React.ReactElement {
                   <TableBody>
                     {filteredActionItems.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center py-8 text-slate-500">
                           No action items match the current filters.
                         </TableCell>
                       </TableRow>
@@ -1164,7 +1289,7 @@ export default function MeetingsPage(): React.ReactElement {
                                 className={cn(
                                   'text-sm',
                                   item.status === 'complete' &&
-                                    'line-through text-muted-foreground'
+                                    'line-through text-slate-500'
                                 )}
                               >
                                 {item.title}
@@ -1173,7 +1298,7 @@ export default function MeetingsPage(): React.ReactElement {
                           </TableCell>
                           <TableCell className="text-sm">
                             {item.assigned_to_name || (
-                              <span className="text-muted-foreground">Unassigned</span>
+                              <span className="text-slate-500">Unassigned</span>
                             )}
                           </TableCell>
                           <TableCell>
@@ -1194,7 +1319,7 @@ export default function MeetingsPage(): React.ReactElement {
                                   'text-sm',
                                   isOverdue(item)
                                     ? 'text-red-600 font-medium'
-                                    : 'text-foreground'
+                                    : 'text-slate-900'
                                 )}
                               >
                                 {format(new Date(item.due_date), 'MMM d, yyyy')}
@@ -1203,7 +1328,7 @@ export default function MeetingsPage(): React.ReactElement {
                                 )}
                               </span>
                             ) : (
-                              <span className="text-muted-foreground text-sm">No date</span>
+                              <span className="text-slate-500 text-sm">No date</span>
                             )}
                           </TableCell>
                           <TableCell>
@@ -1220,7 +1345,7 @@ export default function MeetingsPage(): React.ReactElement {
                           </TableCell>
                           <TableCell>
                             <button
-                              className="text-xs text-primary hover:underline"
+                              className="text-xs text-slate-900 hover:underline"
                               onClick={() => {
                                 setActiveTab('meetings');
                                 setExpandedMeetingId(item.meeting_id);
