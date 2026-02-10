@@ -141,7 +141,11 @@ export default function RegisterPage() {
             <p className="text-sm text-destructive text-center">{error}</p>
           )}
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button
+            type="submit"
+            className="w-full bg-slate-900 text-white hover:bg-slate-800"
+            disabled={isLoading}
+          >
             {isLoading ? 'Creating account...' : 'Create Account'}
           </Button>
         </form>
