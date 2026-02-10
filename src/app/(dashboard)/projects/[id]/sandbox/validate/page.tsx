@@ -75,10 +75,10 @@ export default function ValidatePage({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Shield className="h-6 w-6 text-primary" />
+            <Shield className="h-6 w-6 text-slate-900" />
             Sandbox Validation
           </h1>
-          <p className="text-muted-foreground mt-1">Health check results for sandbox environment</p>
+          <p className="text-slate-500 mt-1">Health check results for sandbox environment</p>
         </div>
         <Button onClick={handleRerun} disabled={running}>
           <RefreshCw className={`h-4 w-4 mr-2 ${running ? 'animate-spin' : ''}`} />
@@ -103,10 +103,10 @@ export default function ValidatePage({
               <span className="text-lg font-semibold">{failed} Failed</span>
             </div>
             <div className="ml-auto">
-              <span className="text-sm text-muted-foreground">Last run: Feb 9, 2026 at 2:15 PM</span>
+              <span className="text-sm text-slate-500">Last run: Feb 9, 2026 at 2:15 PM</span>
             </div>
           </div>
-          <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden flex">
+          <div className="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden flex">
             <div className="bg-emerald-500 h-full" style={{ width: `${(passed / checks.length) * 100}%` }} />
             <div className="bg-yellow-400 h-full" style={{ width: `${(warnings / checks.length) * 100}%` }} />
             <div className="bg-red-500 h-full" style={{ width: `${(failed / checks.length) * 100}%` }} />
@@ -131,8 +131,8 @@ export default function ValidatePage({
                     </div>
                     <ul className="mt-2 space-y-1">
                       {check.details.map((d, i) => (
-                        <li key={i} className="text-sm text-muted-foreground flex items-start gap-1.5">
-                          <span className="mt-1.5 h-1 w-1 rounded-full bg-muted-foreground/50 shrink-0" />
+                        <li key={i} className="text-sm text-slate-500 flex items-start gap-1.5">
+                          <span className="mt-1.5 h-1 w-1 rounded-full bg-slate-400 shrink-0" />
                           {d}
                         </li>
                       ))}
@@ -140,7 +140,7 @@ export default function ValidatePage({
                     {check.recommendation && (
                       <div className="mt-3 p-3 bg-white/50 rounded-md border border-current/10">
                         <p className="text-sm font-medium">Recommendation:</p>
-                        <p className="text-sm text-muted-foreground mt-1">{check.recommendation}</p>
+                        <p className="text-sm text-slate-500 mt-1">{check.recommendation}</p>
                       </div>
                     )}
                   </div>

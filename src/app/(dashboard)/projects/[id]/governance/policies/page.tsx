@@ -840,7 +840,7 @@ export default function GovernancePoliciesPage({
                               {policy.versions.map((ver, idx) => (
                                 <div key={idx} className="relative">
                                   {idx < policy.versions.length - 1 && (
-                                    <div className="absolute left-[9px] top-5 h-full w-px bg-border" />
+                                    <div className="absolute left-[9px] top-5 h-full w-px bg-slate-200" />
                                   )}
                                   <div className="flex gap-3">
                                     <div className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 border-slate-200 bg-white">
@@ -848,7 +848,7 @@ export default function GovernancePoliciesPage({
                                         className={cn(
                                           "h-2 w-2 rounded-full",
                                           idx === 0
-                                            ? "bg-primary"
+                                            ? "bg-slate-900"
                                             : "bg-slate-100-foreground/40"
                                         )}
                                       />

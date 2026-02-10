@@ -601,7 +601,7 @@ function CodeEditor({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-muted-foreground">{config.description}</p>
+          <p className="text-sm text-slate-500">{config.description}</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs font-mono">
@@ -613,10 +613,10 @@ function CodeEditor({
         </div>
       </div>
 
-      <div className="relative rounded-lg border bg-muted/30 overflow-hidden">
+      <div className="relative rounded-lg border bg-slate-50 overflow-hidden">
         {/* Toolbar */}
-        <div className="flex items-center justify-between border-b bg-muted/50 px-4 py-2">
-          <span className="text-xs font-mono text-muted-foreground">
+        <div className="flex items-center justify-between border-b bg-slate-50 px-4 py-2">
+          <span className="text-xs font-mono text-slate-500">
             {config.filename}
           </span>
           <div className="flex items-center gap-1">
@@ -653,12 +653,12 @@ function CodeEditor({
         {/* Editor area */}
         <div className="relative">
           {/* Line numbers */}
-          <div className="absolute left-0 top-0 bottom-0 w-12 bg-muted/50 border-r pointer-events-none z-10">
+          <div className="absolute left-0 top-0 bottom-0 w-12 bg-slate-50 border-r pointer-events-none z-10">
             <div className="py-4 px-2 text-right">
               {content.split('\n').map((_, i) => (
                 <div
                   key={i}
-                  className="text-xs leading-[1.625rem] text-muted-foreground/50 font-mono select-none"
+                  className="text-xs leading-[1.625rem] text-slate-500/50 font-mono select-none"
                 >
                   {i + 1}
                 </div>
@@ -744,7 +744,7 @@ export default function SandboxFilesPage({
           <h1 className="text-2xl font-bold tracking-tight">
             Configuration Files
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-slate-500">
             Review and customize generated sandbox configuration files. Edit
             inline or download individually.
           </p>

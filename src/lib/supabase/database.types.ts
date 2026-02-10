@@ -1565,6 +1565,44 @@ export interface Database {
           deleted_at?: string | null;
         };
       };
+
+      // ── Audit Logs ───────────────────────────────────────────
+
+      audit_logs: {
+        Row: {
+          id: string;
+          organization_id: string;
+          user_id: string;
+          action: string;
+          resource_type: string;
+          resource_id: string | null;
+          details: Json;
+          ip_address: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          user_id: string;
+          action: string;
+          resource_type: string;
+          resource_id?: string | null;
+          details?: Json;
+          ip_address?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          user_id?: string;
+          action?: string;
+          resource_type?: string;
+          resource_id?: string | null;
+          details?: Json;
+          ip_address?: string | null;
+          created_at?: string;
+        };
+      };
     };
 
     Views: {
@@ -1636,3 +1674,4 @@ export type ActionItemRow = TableRow<'action_items'>;
 export type RaciMatrixRow = TableRow<'raci_matrices'>;
 export type RaciEntryRow = TableRow<'raci_entries'>;
 export type RoiCalculationRow = TableRow<'roi_calculations'>;
+export type AuditLogRow = TableRow<'audit_logs'>;

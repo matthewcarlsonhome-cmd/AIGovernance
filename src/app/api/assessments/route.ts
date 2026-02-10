@@ -80,18 +80,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       );
     }
 
-    const { data: saved, error } = await supabase
-      .from('assessment_responses')
-      .upsert(
-        {
-          project_id: parsed.data.project_id,
-          question_id: parsed.data.question_id,
-          value: parsed.data.value,
-          responded_by: user.id,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'project_id,question_id' },
-      )
+    const upsertPayload = {
+      project_id: parsed.data.project_id,
+      question_id: parsed.data.question_id,
+      value: parsed.data.value,
+      responded_by: user.id,
+      updated_at: new Date().toISOString(),
+    };
+    const { data: saved, error } = await (supabase
+      .from('assessment_responses') as any)
+      .upsert(upsertPayload, { onConflict: 'project_id,question_id' })
       .select()
       .single();
 

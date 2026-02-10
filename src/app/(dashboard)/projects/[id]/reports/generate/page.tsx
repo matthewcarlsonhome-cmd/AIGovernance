@@ -154,7 +154,7 @@ export default function ReportGeneratePage({
   // Use fetched templates or fall back to demo personas
   const personas: ReportPersona[] = PERSONAS;
 
-  const handleGenerate = (personaId: string): void => {
+  const handleGenerate = (personaId: ReportPersonaType): void => {
     setGenerateStates((prev) => ({ ...prev, [personaId]: 'generating' }));
 
     generateMutation.mutate(

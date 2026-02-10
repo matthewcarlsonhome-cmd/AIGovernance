@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Mail, ArrowLeft, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Card,
   CardHeader,
@@ -14,7 +15,16 @@ import {
   CardContent,
   CardFooter,
 } from '@/components/ui/card';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { createClient } from '@/lib/supabase/client';
+import { forgotPasswordSchema, type ForgotPasswordFormValues } from '@/lib/validations/auth';
 
 function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -28,15 +38,21 @@ function isSupabaseConfigured(): boolean {
 }
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState('');
   const [error, setError] = useState('');
 
   const configured = isSupabaseConfigured();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: '',
+    },
+  });
+
+  const onSubmit = async (values: ForgotPasswordFormValues) => {
     setError('');
 
     if (!configured) {
@@ -46,16 +62,11 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    if (!email.trim()) {
-      setError('Please enter your email address.');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
       const supabase = createClient();
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(values.email.trim(), {
         redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
       });
 
@@ -68,6 +79,7 @@ export default function ForgotPasswordPage() {
         return;
       }
 
+      setSubmittedEmail(values.email.trim());
       setIsSubmitted(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'An unexpected error occurred';
@@ -120,7 +132,7 @@ export default function ForgotPasswordPage() {
               <p className="text-sm text-muted-foreground">
                 We sent a password reset link to
               </p>
-              <p className="text-sm font-medium">{email}</p>
+              <p className="text-sm font-medium">{submittedEmail}</p>
               <p className="text-xs text-muted-foreground">
                 If you don&apos;t see it, check your spam folder. The link expires in 24 hours.
               </p>
@@ -130,7 +142,8 @@ export default function ForgotPasswordPage() {
               className="w-full mt-4"
               onClick={() => {
                 setIsSubmitted(false);
-                setEmail('');
+                setSubmittedEmail('');
+                form.reset();
                 setError('');
               }}
             >
@@ -138,31 +151,40 @@ export default function ForgotPasswordPage() {
             </Button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="name@company.com"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                  className="pl-10"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-            <Button
-              type="submit"
-              className="w-full bg-slate-900 text-white hover:bg-slate-800"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Sending link...' : 'Send Reset Link'}
-            </Button>
-          </form>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          type="email"
+                          placeholder="name@company.com"
+                          className="pl-10"
+                          disabled={isLoading}
+                          {...field}
+                          onChange={(e) => { field.onChange(e); setError(''); }}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="submit"
+                className="w-full bg-slate-900 text-white hover:bg-slate-800"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Sending link...' : 'Send Reset Link'}
+              </Button>
+            </form>
+          </Form>
         )}
       </CardContent>
       <CardFooter>

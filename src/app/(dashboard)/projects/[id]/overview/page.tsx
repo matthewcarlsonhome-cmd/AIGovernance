@@ -235,10 +235,10 @@ export default function ProjectOverviewPage({
               {project.status}
             </Badge>
           </div>
-          <p className="text-sm text-muted-foreground">{project.description}</p>
+          <p className="text-sm text-slate-500">{project.description}</p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-6 text-sm text-muted-foreground">
+        <div className="flex shrink-0 items-center gap-6 text-sm text-slate-500">
           <div className="flex items-center gap-1.5">
             <LayoutDashboard className="h-4 w-4" />
             <span>
@@ -297,9 +297,9 @@ export default function ProjectOverviewPage({
                 <div key={d.domain} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium text-slate-900">{d.label}</span>
-                    <span className="text-muted-foreground">{d.score}/100</span>
+                    <span className="text-slate-500">{d.score}/100</span>
                   </div>
-                  <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
                     <div
                       className={cn('h-full rounded-full transition-all', d.color)}
                       style={{ width: `${d.score}%` }}
@@ -325,17 +325,17 @@ export default function ProjectOverviewPage({
               <Card className="group cursor-pointer transition-shadow hover:shadow-md">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
-                      <Icon className="h-5 w-5 text-muted-foreground" />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100">
+                      <Icon className="h-5 w-5 text-slate-500" />
                     </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                    <ArrowRight className="h-4 w-4 text-slate-500 opacity-0 transition-opacity group-hover:opacity-100" />
                   </div>
                   <CardTitle className="text-base">{card.label}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <p className="text-sm text-muted-foreground">{card.detail}</p>
+                  <p className="text-sm text-slate-500">{card.detail}</p>
                   <Progress value={percentage} />
-                  <p className="text-xs text-muted-foreground">{percentage}% complete</p>
+                  <p className="text-xs text-slate-500">{percentage}% complete</p>
                 </CardContent>
               </Card>
             </Link>
@@ -351,7 +351,7 @@ export default function ProjectOverviewPage({
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Activity className="h-5 w-5 text-muted-foreground" />
+              <Activity className="h-5 w-5 text-slate-500" />
               Recent Activity
             </CardTitle>
           </CardHeader>
@@ -361,12 +361,12 @@ export default function ProjectOverviewPage({
                 const Icon = entry.icon;
                 return (
                   <div key={entry.id} className="flex items-start gap-3">
-                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
-                      <Icon className="h-4 w-4 text-muted-foreground" />
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100">
+                      <Icon className="h-4 w-4 text-slate-500" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm text-slate-900">{entry.text}</p>
-                      <p className="text-xs text-muted-foreground">{entry.timestamp}</p>
+                      <p className="text-xs text-slate-500">{entry.timestamp}</p>
                     </div>
                   </div>
                 );

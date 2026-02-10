@@ -61,8 +61,7 @@ export async function logAudit(params: LogAuditParams): Promise<void> {
   try {
     const supabase = await createServerSupabaseClient();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase.from('audit_logs') as any).insert({
+    const { error } = await supabase.from('audit_logs').insert({
       organization_id: params.orgId,
       user_id: params.userId,
       action: params.action,
@@ -108,8 +107,7 @@ export async function getAuditLogs(
     offset = 0,
   } = filters;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabase.from('audit_logs') as any)
+  let query = supabase.from('audit_logs')
     .select('*', { count: 'exact' })
     .eq('organization_id', orgId)
     .order('created_at', { ascending: false })

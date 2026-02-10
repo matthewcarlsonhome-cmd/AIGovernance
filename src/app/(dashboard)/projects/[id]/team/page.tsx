@@ -137,7 +137,7 @@ function getRoleBadgeClasses(role: TeamRole): string {
     case 'marketing':
       return 'bg-orange-500/15 text-orange-700 border-orange-500/25';
     default:
-      return 'bg-muted text-muted-foreground border-border';
+      return 'bg-slate-100 text-slate-500 border-slate-200';
   }
 }
 
@@ -156,7 +156,7 @@ function getAvatarBg(role: TeamRole): string {
     case 'marketing':
       return 'bg-orange-500';
     default:
-      return 'bg-muted-foreground';
+      return 'bg-slate-500';
   }
 }
 
@@ -202,10 +202,10 @@ export default function TeamPage({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             Team Management
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-slate-500">
             Manage project team members, role assignments, and task allocation.
           </p>
         </div>
@@ -262,7 +262,7 @@ export default function TeamPage({
                   id="member-role"
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value as TeamRole)}
-                  className="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
                 >
                   {ROLE_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -287,14 +287,14 @@ export default function TeamPage({
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <Users className="h-5 w-5 text-primary" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
+                <Users className="h-5 w-5 text-slate-900" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">
+                <p className="text-2xl font-bold text-slate-900">
                   {teamMembers.length}
                 </p>
-                <p className="text-xs text-muted-foreground">Team Members</p>
+                <p className="text-xs text-slate-500">Team Members</p>
               </div>
             </div>
           </CardContent>
@@ -306,10 +306,10 @@ export default function TeamPage({
                 <Users className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">
+                <p className="text-2xl font-bold text-slate-900">
                   {teamMembers.filter((m) => m.status === 'Active').length}
                 </p>
-                <p className="text-xs text-muted-foreground">Active</p>
+                <p className="text-xs text-slate-500">Active</p>
               </div>
             </div>
           </CardContent>
@@ -321,8 +321,8 @@ export default function TeamPage({
                 <ListTodo className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{totalTasks}</p>
-                <p className="text-xs text-muted-foreground">Total Tasks Assigned</p>
+                <p className="text-2xl font-bold text-slate-900">{totalTasks}</p>
+                <p className="text-xs text-slate-500">Total Tasks Assigned</p>
               </div>
             </div>
           </CardContent>
@@ -347,7 +347,7 @@ export default function TeamPage({
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-foreground">{member.name}</h3>
+                  <h3 className="font-semibold text-slate-900">{member.name}</h3>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge
                       variant="outline"
@@ -362,11 +362,11 @@ export default function TeamPage({
                       {member.status}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5 mt-2 text-xs text-slate-500">
                     <Mail className="h-3 w-3" />
                     <span className="truncate">{member.email}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-500">
                     <ListTodo className="h-3 w-3" />
                     <span>{member.tasksAssigned} tasks assigned</span>
                   </div>
@@ -374,12 +374,12 @@ export default function TeamPage({
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
+              <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-200">
                 <Button variant="outline" size="sm" className="flex-1">
                   <ListTodo className="h-3.5 w-3.5" />
                   View Tasks
                 </Button>
-                <Button variant="ghost" size="sm" className="text-muted-foreground">
+                <Button variant="ghost" size="sm" className="text-slate-500">
                   <X className="h-3.5 w-3.5" />
                   Remove
                 </Button>
