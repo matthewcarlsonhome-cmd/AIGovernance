@@ -1,77 +1,108 @@
+import React, { type ReactElement } from 'react';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import type { ApiResponse } from '@/types';
+import { withRateLimit } from '@/lib/api-helpers';
+import { RATE_LIMIT_EXPORT, RATE_LIMIT_WINDOW_MS } from '@/lib/rate-limit';
+import type { FeasibilityScore, RiskClassification, RoiResults } from '@/types';
+import {
+  generateReadinessReportContent,
+  type ReadinessReportData,
+} from '@/lib/report-gen/pdf/readiness-report';
+import {
+  generateExecutiveBriefingContent,
+  type ExecutiveBriefingData,
+} from '@/lib/report-gen/pdf/executive-briefing';
+import { ReportDocument } from '@/lib/report-gen/pdf/renderer';
+import { ExecutiveBriefingDocument } from '@/lib/report-gen/pdf/executive-renderer';
+
+// ---------------------------------------------------------------------------
+// Validation
+// ---------------------------------------------------------------------------
 
 const pdfExportSchema = z.object({
   projectId: z.string().uuid('Invalid project ID'),
-  reportType: z.enum(['executive', 'legal', 'it_security', 'engineering', 'marketing']),
-  reportId: z.string().uuid('Invalid report ID').optional(),
+  reportType: z.enum(['readiness', 'executive']),
+  /** Optional: override prepared-by name */
+  preparedBy: z.string().optional(),
 });
 
-interface PdfExportData {
-  serverSideGeneration: true;
-  format: 'pdf';
-  reportType: string;
-  project: {
-    id: string;
-    name: string;
-    status: string;
-    feasibility_score: number | null;
-  };
-  feasibility: {
-    domain_scores: unknown[] | null;
-    overall_score: number | null;
-    rating: string | null;
-    recommendations: string[];
-    remediation_tasks: string[];
-  };
-  reportContent: Record<string, unknown> | null;
-  generatedAt: string;
-}
+// ---------------------------------------------------------------------------
+// Route Handler
+// ---------------------------------------------------------------------------
 
 /**
  * POST /api/export/pdf
- * Generate PDF export data for a given project and report type.
- * Returns structured JSON data that will be consumed by the
- * @react-pdf/renderer on the client or during server-side rendering.
+ *
+ * Generate a PDF report and return it as a downloadable binary file.
+ *
+ * Body:
+ *   - projectId: uuid
+ *   - reportType: 'readiness' | 'executive'
+ *   - preparedBy?: string
+ *
+ * Returns: application/pdf binary with Content-Disposition header.
  */
-export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<PdfExportData>>> {
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  // Rate limit: export endpoints
+  const rateLimitResponse = withRateLimit(request, RATE_LIMIT_EXPORT, RATE_LIMIT_WINDOW_MS);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
+    // ---- Auth ----
     const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // ---- Parse body ----
     const body = await request.json();
     const parsed = pdfExportSchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validation error', message: parsed.error.issues.map((i) => i.message).join(', ') },
+        {
+          error: 'Validation failed',
+          details: parsed.error.flatten().fieldErrors,
+        },
         { status: 400 },
       );
     }
 
-    const { projectId, reportType, reportId } = parsed.data;
+    const { projectId, reportType, preparedBy } = parsed.data;
 
-    // Fetch the project
+    // ---- Fetch project ----
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('id, name, status, feasibility_score')
+      .select('id, name, status, feasibility_score, organization_id')
       .eq('id', projectId)
       .is('deleted_at', null)
       .single();
 
     if (projectError || !project) {
       return NextResponse.json(
-        { error: 'Project not found', message: 'The specified project does not exist or has been deleted' },
+        {
+          error: 'Project not found',
+          message: 'The specified project does not exist or has been deleted',
+        },
         { status: 404 },
       );
     }
 
-    // Fetch the latest feasibility scores
+    // ---- Fetch organization name ----
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('name')
+      .eq('id', project.organization_id)
+      .single();
+
+    const clientOrg = org?.name ?? 'Organization';
+
+    // ---- Fetch feasibility scores ----
     const { data: scores } = await supabase
       .from('feasibility_scores')
       .select('*')
@@ -80,143 +111,149 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       .limit(1)
       .maybeSingle();
 
-    // Optionally fetch existing report content
-    let reportContent: Record<string, unknown> | null = null;
-    if (reportId) {
-      const { data: report } = await supabase
-        .from('generated_reports')
-        .select('content')
-        .eq('id', reportId)
-        .single();
-      reportContent = report?.content ?? null;
-    }
-
-    // Gather persona-specific data based on reportType
-    const additionalData = await gatherPersonaData(supabase, projectId, reportType);
-
-    const exportData: PdfExportData = {
-      serverSideGeneration: true,
-      format: 'pdf',
-      reportType,
-      project: {
-        id: project.id,
-        name: project.name,
-        status: project.status,
-        feasibility_score: project.feasibility_score,
-      },
-      feasibility: {
-        domain_scores: scores?.domain_scores ?? null,
-        overall_score: scores?.overall_score ?? null,
-        rating: scores?.rating ?? null,
-        recommendations: scores?.recommendations ?? [],
-        remediation_tasks: scores?.remediation_tasks ?? [],
-      },
-      reportContent: {
-        ...reportContent,
-        ...additionalData,
-      },
-      generatedAt: new Date().toISOString(),
+    // Build a FeasibilityScore object (fallback to empty defaults)
+    const feasibilityScore: FeasibilityScore = {
+      domain_scores: scores?.domain_scores ?? [],
+      overall_score: scores?.overall_score ?? 0,
+      rating: scores?.rating ?? 'not_ready',
+      recommendations: scores?.recommendations ?? [],
+      remediation_tasks: scores?.remediation_tasks ?? [],
     };
 
-    return NextResponse.json({ data: exportData });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: 'Internal server error', message }, { status: 500 });
-  }
-}
+    // ---- Fetch user display name ----
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('full_name')
+      .eq('id', user.id)
+      .single();
 
-/**
- * Gather additional data relevant to the specific persona report type.
- */
-async function gatherPersonaData(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
-  projectId: string,
-  reportType: string,
-): Promise<Record<string, unknown>> {
-  const data: Record<string, unknown> = {};
+    const authorName =
+      preparedBy ?? userProfile?.full_name ?? user.email ?? 'GovAI Studio';
 
-  switch (reportType) {
-    case 'executive': {
-      // Include ROI calculations
-      const { data: roi } = await supabase
+    const generatedAt = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    // ---- Generate report content & render PDF ----
+    let pdfBuffer: Buffer;
+    let filename: string;
+
+    if (reportType === 'readiness') {
+      const reportData: ReadinessReportData = {
+        project: {
+          name: project.name,
+          organization_id: project.organization_id,
+          status: project.status,
+        },
+        score: feasibilityScore,
+        generatedAt,
+        preparedBy: authorName,
+        clientOrg,
+      };
+
+      const content = generateReadinessReportContent(reportData);
+      const doc = React.createElement(ReportDocument, { content }) as unknown as ReactElement<DocumentProps>;
+      pdfBuffer = await renderToBuffer(doc);
+      filename = `${sanitizeFilename(project.name)}-readiness-report.pdf`;
+    } else {
+      // executive
+      // Fetch additional data for executive briefing
+      const { data: roiCalc } = await supabase
         .from('roi_calculations')
-        .select('*')
+        .select('results')
         .eq('project_id', projectId)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      data.roi = roi ?? null;
 
-      // Include risk classifications for heat map
+      const roi: RoiResults | undefined = roiCalc?.results ?? undefined;
+
       const { data: risks } = await supabase
         .from('risk_classifications')
         .select('*')
-        .eq('project_id', projectId);
-      data.risks = risks ?? [];
-      break;
-    }
-    case 'legal': {
-      // Include policies
-      const { data: policies } = await supabase
-        .from('policies')
-        .select('*')
         .eq('project_id', projectId)
-        .order('created_at', { ascending: false });
-      data.policies = policies ?? [];
+        .order('tier', { ascending: true });
 
-      // Include compliance mappings
-      const { data: compliance } = await supabase
-        .from('compliance_mappings')
-        .select('*')
-        .eq('project_id', projectId);
-      data.compliance_mappings = compliance ?? [];
-      break;
-    }
-    case 'it_security': {
-      // Include sandbox configurations
-      const { data: configs } = await supabase
-        .from('sandbox_configs')
-        .select('*, config_files(*)')
+      const topRisks: RiskClassification[] = risks ?? [];
+
+      // Build a simple timeline summary from workflow phases
+      const { data: phases } = await supabase
+        .from('workflow_phases')
+        .select('name, duration_weeks, status')
         .eq('project_id', projectId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      data.sandbox_config = configs ?? null;
+        .order('order', { ascending: true });
 
-      // Include environment validations
-      const { data: validations } = await supabase
-        .from('environment_validations')
-        .select('*')
-        .eq('project_id', projectId);
-      data.validations = validations ?? [];
-      break;
-    }
-    case 'engineering': {
-      // Include PoC metrics and tool evaluations
-      const { data: pocProjects } = await supabase
-        .from('poc_projects')
-        .select('*, poc_sprints(*)')
-        .eq('project_id', projectId);
-      data.poc_projects = pocProjects ?? [];
+      const timelineSummary: { phase: string; weeks: number; status: string }[] =
+        (phases ?? []).map(
+          (p: { name: string; duration_weeks: number; status: string }) => ({
+            phase: p.name,
+            weeks: p.duration_weeks ?? 2,
+            status: p.status ?? 'planned',
+          }),
+        );
 
-      const { data: evaluations } = await supabase
-        .from('tool_evaluations')
-        .select('*')
-        .eq('project_id', projectId);
-      data.tool_evaluations = evaluations ?? [];
-      break;
+      // Fallback timeline if no phases exist
+      const effectiveTimeline =
+        timelineSummary.length > 0
+          ? timelineSummary
+          : [
+              { phase: 'Discovery & Assessment', weeks: 2, status: 'completed' },
+              { phase: 'Governance Setup', weeks: 3, status: 'active' },
+              { phase: 'Sandbox Configuration', weeks: 2, status: 'planned' },
+              { phase: 'Pilot Execution', weeks: 4, status: 'planned' },
+              { phase: 'Evaluation & Gate Review', weeks: 2, status: 'planned' },
+            ];
+
+      const briefingData: ExecutiveBriefingData = {
+        project: { name: project.name, status: project.status },
+        score: feasibilityScore,
+        roi,
+        topRisks,
+        timelineSummary: effectiveTimeline,
+        generatedAt,
+        preparedBy: authorName,
+        clientOrg,
+      };
+
+      const content = generateExecutiveBriefingContent(briefingData);
+      const doc = React.createElement(ExecutiveBriefingDocument, { content }) as unknown as ReactElement<DocumentProps>;
+      pdfBuffer = await renderToBuffer(doc);
+      filename = `${sanitizeFilename(project.name)}-executive-briefing.pdf`;
     }
-    case 'marketing': {
-      // Include project overview data for messaging guides
-      const { data: team } = await supabase
-        .from('team_members')
-        .select('*, user:users(*)')
-        .eq('project_id', projectId);
-      data.team = team ?? [];
-      break;
-    }
+
+    // ---- Return PDF binary ----
+    const responseBody = new Uint8Array(pdfBuffer);
+    return new NextResponse(responseBody, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Length': String(pdfBuffer.length),
+        'Cache-Control': 'no-store',
+      },
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Internal server error';
+    console.error('[PDF Export Error]', error);
+    return NextResponse.json(
+      { error: 'PDF generation failed', message },
+      { status: 500 },
+    );
   }
+}
 
-  return data;
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Sanitize a string for use as a filename */
+function sanitizeFilename(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .substring(0, 80);
 }

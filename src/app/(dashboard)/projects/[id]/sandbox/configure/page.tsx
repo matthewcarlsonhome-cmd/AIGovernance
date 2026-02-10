@@ -1,7 +1,9 @@
 'use client';
 
+import * as React from 'react';
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import {
   Cloud,
   Server,
@@ -699,10 +701,25 @@ function StepReview({
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
-export default function SandboxConfigurePage(): React.JSX.Element {
-  const params = useParams();
+export default function SandboxConfigurePage({
+  params: paramsPromise,
+}: {
+  params: Promise<{ id: string }>;
+}): React.JSX.Element {
+  const { id: projectId } = React.use(paramsPromise);
   const router = useRouter();
-  const projectId = params.id as string;
+
+  // Inline fetch for any saved sandbox config
+  const { data: savedConfig, isLoading, error } = useQuery({
+    queryKey: ['sandbox-config', projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/configs/sandbox?projectId=${encodeURIComponent(projectId)}`);
+      if (!res.ok) return null;
+      const json = await res.json();
+      return json.data ?? null;
+    },
+    enabled: Boolean(projectId),
+  });
 
   const [currentStep, setCurrentStep] = useState(1);
   const [cloudProvider, setCloudProvider] = useState('aws');
@@ -716,6 +733,9 @@ export default function SandboxConfigurePage(): React.JSX.Element {
     siemIntegration: 'splunk',
     selectedModel: 'claude-sonnet-4-20250514',
   });
+
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {(error as Error).message}</p></div>;
 
   const canProceed = (): boolean => {
     switch (currentStep) {

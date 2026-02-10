@@ -32,9 +32,10 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import type { ProjectStatus, ScoreDomain } from '@/types';
+import { useProject } from '@/hooks/use-projects';
 
 /* -------------------------------------------------------------------------- */
-/*  Demo data                                                                  */
+/*  Fallback demo data                                                         */
 /* -------------------------------------------------------------------------- */
 
 const DEMO_PROJECT = {
@@ -176,7 +177,7 @@ function scoreColor(score: number): string {
   if (score >= 75) return 'text-emerald-600';
   if (score >= 60) return 'text-amber-600';
   if (score >= 40) return 'text-orange-600';
-  return 'text-destructive';
+  return 'text-red-500';
 }
 
 function ratingBadgeVariant(
@@ -197,8 +198,26 @@ export default function ProjectOverviewPage({
   params: Promise<{ id: string }>;
 }): React.ReactElement {
   const { id } = use(params);
+  const { data: fetchedProject, isLoading, error } = useProject(id);
 
-  const project = DEMO_PROJECT;
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+
+  // Merge fetched project data with demo data shape for display compatibility
+  const rawProject = fetchedProject ?? DEMO_PROJECT;
+  const project = {
+    ...DEMO_PROJECT,
+    ...(fetchedProject ? {
+      id: fetchedProject.id,
+      name: fetchedProject.name,
+      description: fetchedProject.description,
+      status: fetchedProject.status,
+      phase: fetchedProject.status?.charAt(0).toUpperCase() + fetchedProject.status?.slice(1),
+      startDate: fetchedProject.start_date ?? DEMO_PROJECT.startDate,
+      targetDate: fetchedProject.target_end_date ?? DEMO_PROJECT.targetDate,
+      feasibilityScore: fetchedProject.feasibility_score ?? DEMO_PROJECT.feasibilityScore,
+    } : {}),
+  };
   const remaining = daysRemaining(project.targetDate);
 
   return (
@@ -209,7 +228,7 @@ export default function ProjectOverviewPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
               {project.name}
             </h1>
             <Badge variant="secondary" className="capitalize">
@@ -223,7 +242,7 @@ export default function ProjectOverviewPage({
           <div className="flex items-center gap-1.5">
             <LayoutDashboard className="h-4 w-4" />
             <span>
-              Phase: <span className="font-medium text-foreground">{project.phase}</span>
+              Phase: <span className="font-medium text-slate-900">{project.phase}</span>
             </span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -236,7 +255,7 @@ export default function ProjectOverviewPage({
           </div>
           <div className="flex items-center gap-1.5">
             <Clock className="h-4 w-4" />
-            <span className="font-medium text-foreground">{remaining} days left</span>
+            <span className="font-medium text-slate-900">{remaining} days left</span>
           </div>
         </div>
       </div>
@@ -277,7 +296,7 @@ export default function ProjectOverviewPage({
               {DOMAIN_SCORES.map((d) => (
                 <div key={d.domain} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-foreground">{d.label}</span>
+                    <span className="font-medium text-slate-900">{d.label}</span>
                     <span className="text-muted-foreground">{d.score}/100</span>
                   </div>
                   <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-muted">
@@ -346,7 +365,7 @@ export default function ProjectOverviewPage({
                       <Icon className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm text-foreground">{entry.text}</p>
+                      <p className="text-sm text-slate-900">{entry.text}</p>
                       <p className="text-xs text-muted-foreground">{entry.timestamp}</p>
                     </div>
                   </div>

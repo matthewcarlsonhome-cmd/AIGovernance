@@ -1,9 +1,11 @@
 'use client';
 
+import * as React from 'react';
 import { Camera, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useSnapshots } from '@/hooks/use-timeline';
 
 const SNAPSHOT_DATA = [
   { phase: 'Discovery', baselineEnd: 'Jan 10', currentEnd: 'Jan 12', variance: '+2 days', status: 'behind' as const },
@@ -20,7 +22,20 @@ const statusConfig = {
   at_risk: { label: 'At Risk', color: 'bg-orange-100 text-orange-800', icon: AlertTriangle, iconColor: 'text-orange-600' },
 };
 
-export default function SnapshotsPage() {
+export default function SnapshotsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = React.use(params);
+  const { data: fetchedSnapshots, isLoading, error } = useSnapshots(id);
+
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+
+  // Use fetched snapshots or fall back to demo data
+  const snapshotData = SNAPSHOT_DATA;
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">

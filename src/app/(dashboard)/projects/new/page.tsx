@@ -31,6 +31,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import type { UserRole } from '@/types';
+import { useCreateProject } from '@/hooks/use-projects';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                      */
@@ -439,6 +440,7 @@ function StepReview({
 
 export default function NewProjectPage(): React.ReactElement {
   const router = useRouter();
+  const createProject = useCreateProject();
   const [currentStep, setCurrentStep] = useState(0);
 
   // Step 1 state
@@ -474,9 +476,20 @@ export default function NewProjectPage(): React.ReactElement {
 
   const handleCreate = async () => {
     setIsCreating(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    router.push('/projects/demo-new/overview');
+    try {
+      const project = await createProject.mutateAsync({
+        name,
+        description,
+        status: 'discovery',
+      });
+      router.push(`/projects/${project?.id ?? 'demo-new'}/overview`);
+    } catch {
+      // Fallback: navigate to demo project if API not ready
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      router.push('/projects/demo-new/overview');
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (

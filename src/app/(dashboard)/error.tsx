@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import * as Sentry from '@sentry/nextjs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, RefreshCw, Home, LogOut } from 'lucide-react';
@@ -54,6 +55,7 @@ export default function DashboardError({
 
   useEffect(() => {
     console.error('Dashboard error:', error);
+    Sentry.captureException(error);
   }, [error]);
 
   const { title, guidance } = getErrorGuidance(error.message || '');

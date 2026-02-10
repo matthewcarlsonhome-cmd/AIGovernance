@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Zap,
 } from 'lucide-react';
+import { useSprints } from '@/hooks/use-poc';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -154,8 +155,19 @@ function getStatusIcon(status: SprintStatus): React.ReactElement {
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
-export default function SprintEvaluationPage(): React.ReactElement {
+export default function SprintEvaluationPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): React.ReactElement {
+  const { id } = React.use(params);
+  const { data: fetchedSprints, isLoading, error } = useSprints(id);
   const [expandedSprint, setExpandedSprint] = React.useState<string | null>('s2');
+
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+
+  const sprints: Sprint[] = (fetchedSprints && fetchedSprints.length > 0) ? fetchedSprints as unknown as Sprint[] : SPRINTS;
 
   const toggleExpand = (id: string): void => {
     setExpandedSprint((prev) => (prev === id ? null : id));
@@ -192,7 +204,7 @@ export default function SprintEvaluationPage(): React.ReactElement {
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">
-                  {SPRINTS.filter((s) => s.status === 'completed').length}
+                  {sprints.filter((s) => s.status === 'completed').length}
                 </p>
                 <p className="text-xs text-muted-foreground">Sprints Completed</p>
               </div>
@@ -229,7 +241,7 @@ export default function SprintEvaluationPage(): React.ReactElement {
 
       {/* Sprint Cards */}
       <div className="space-y-4">
-        {SPRINTS.map((sprint) => {
+        {sprints.map((sprint) => {
           const isExpanded = expandedSprint === sprint.id;
           const completionPct =
             sprint.storyPointsPlanned > 0

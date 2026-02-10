@@ -1,6 +1,8 @@
 'use client';
 
+import * as React from 'react';
 import { useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Copy,
   Download,
@@ -681,7 +683,28 @@ function CodeEditor({
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
-export default function SandboxFilesPage(): React.JSX.Element {
+export default function SandboxFilesPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): React.JSX.Element {
+  const { id } = React.use(params);
+
+  // Inline fetch for any saved config files
+  const { data: savedFiles, isLoading, error } = useQuery({
+    queryKey: ['config-files', id],
+    queryFn: async () => {
+      const res = await fetch(`/api/configs/files?projectId=${encodeURIComponent(id)}`);
+      if (!res.ok) return null;
+      const json = await res.json();
+      return json.data ?? null;
+    },
+    enabled: Boolean(id),
+  });
+
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {(error as Error).message}</p></div>;
+
   const [fileContents, setFileContents] = useState<Record<ConfigFileKey, string>>(
     () =>
       Object.fromEntries(

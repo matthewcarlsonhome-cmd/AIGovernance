@@ -1,11 +1,13 @@
 'use client';
 
+import * as React from 'react';
 import { useState } from 'react';
 import { FlaskConical, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { usePocProjects } from '@/hooks/use-poc';
 
 const POC_PROJECTS = [
   {
@@ -36,8 +38,19 @@ const POC_PROJECTS = [
 
 const statusColors = { active: 'bg-emerald-100 text-emerald-800', planned: 'bg-blue-100 text-blue-800', completed: 'bg-gray-100 text-gray-800', cancelled: 'bg-red-100 text-red-800' };
 
-export default function PocProjectsPage() {
+export default function PocProjectsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = React.use(params);
+  const { data: fetchedProjects, isLoading, error } = usePocProjects(id);
   const [expanded, setExpanded] = useState<string | null>('poc-1');
+
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+
+  const pocProjects = (fetchedProjects && fetchedProjects.length > 0) ? fetchedProjects as unknown as typeof POC_PROJECTS : POC_PROJECTS;
 
   return (
     <div className="p-6 space-y-6">
@@ -53,7 +66,7 @@ export default function PocProjectsPage() {
       </div>
 
       <div className="space-y-4">
-        {POC_PROJECTS.map((poc) => (
+        {pocProjects.map((poc) => (
           <Card key={poc.id} className="cursor-pointer" onClick={() => setExpanded(expanded === poc.id ? null : poc.id)}>
             <CardHeader>
               <div className="flex items-center justify-between">

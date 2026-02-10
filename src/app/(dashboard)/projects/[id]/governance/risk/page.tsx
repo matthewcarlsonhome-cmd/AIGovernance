@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import * as React from 'react';
 import { AlertTriangle, Plus, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useRiskClassifications } from '@/hooks/use-governance';
 
 const RISKS = [
   { id: 'R-001', category: 'Data Leakage', description: 'AI model inadvertently exposes proprietary source code through API calls', tier: 'critical' as const, likelihood: 3, impact: 5, score: 15, mitigation: 'DLP rules, egress filtering, managed settings file restrictions', owner: 'CISO', status: 'mitigating' as const },
@@ -25,9 +27,20 @@ function getCellColor(score: number) {
   return 'bg-green-400/60';
 }
 
-export default function RiskPage() {
+export default function RiskPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = React.use(params);
+  const { data: fetchedRisks, isLoading, error } = useRiskClassifications(id);
   const [filterTier, setFilterTier] = useState<string>('all');
-  const filtered = filterTier === 'all' ? RISKS : RISKS.filter((r) => r.tier === filterTier);
+
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+
+  const risks = (fetchedRisks && fetchedRisks.length > 0) ? fetchedRisks as unknown as typeof RISKS : RISKS;
+  const filtered = filterTier === 'all' ? risks : risks.filter((r) => r.tier === filterTier);
 
   // Build heat map grid (5x5) — rows = impact (5 top to 1 bottom), cols = likelihood (1 left to 5 right)
   const grid: { likelihood: number; impact: number; risks: typeof RISKS }[][] = [];

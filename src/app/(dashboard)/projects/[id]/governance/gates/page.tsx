@@ -26,6 +26,7 @@ import {
   AlertTriangle,
   ArrowRight,
 } from "lucide-react";
+import { useGateReviews } from '@/hooks/use-governance';
 
 type GateStatus = "approved" | "in_review" | "locked";
 type CheckItemStatus = "checked" | "unchecked";
@@ -221,20 +222,33 @@ function getConnectorColor(currentStatus: GateStatus): string {
   }
 }
 
-export default function GateReviewPage(): React.ReactElement {
+export default function GateReviewPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): React.ReactElement {
+  const { id } = React.use(params);
+  const { data: fetchedGates, isLoading, error } = useGateReviews(id);
+
   const [expandedGate, setExpandedGate] = React.useState<string | null>(
     "gate-2"
   );
+
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+
+  // Use fetched gates or fall back to demo data
+  const gates: Gate[] = (fetchedGates && fetchedGates.length > 0) ? fetchedGates as unknown as Gate[] : GATES;
 
   const toggleGate = (gateId: string): void => {
     setExpandedGate(expandedGate === gateId ? null : gateId);
   };
 
-  const totalChecklist = GATES.reduce(
+  const totalChecklist = gates.reduce(
     (acc, gate) => acc + gate.checklist.length,
     0
   );
-  const checkedItems = GATES.reduce(
+  const checkedItems = gates.reduce(
     (acc, gate) =>
       acc + gate.checklist.filter((item) => item.status === "checked").length,
     0
@@ -267,7 +281,7 @@ export default function GateReviewPage(): React.ReactElement {
 
       {/* Horizontal Stepper */}
       <div className="flex items-center justify-center gap-0 py-4">
-        {GATES.map((gate, idx) => (
+        {gates.map((gate, idx) => (
           <React.Fragment key={gate.id}>
             {/* Gate Step */}
             <button
@@ -309,7 +323,7 @@ export default function GateReviewPage(): React.ReactElement {
             </button>
 
             {/* Connector Line */}
-            {idx < GATES.length - 1 && (
+            {idx < gates.length - 1 && (
               <div className="flex items-center px-2 -mt-12">
                 <div
                   className={cn(
@@ -334,7 +348,7 @@ export default function GateReviewPage(): React.ReactElement {
       <Separator />
 
       {/* Expanded Gate Detail */}
-      {GATES.map((gate) => {
+      {gates.map((gate) => {
         if (expandedGate !== gate.id) return null;
 
         const checkedCount = gate.checklist.filter(

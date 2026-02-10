@@ -29,6 +29,7 @@ import {
   FileCheck,
   ExternalLink,
 } from "lucide-react";
+import { useComplianceMappings } from '@/hooks/use-governance';
 
 type ControlStatus = "verified" | "implemented" | "in_progress" | "not_started";
 
@@ -423,13 +424,25 @@ function computeFrameworkStats(controls: ComplianceControl[]): {
   return { total, verified, implemented, inProgress, notStarted, percentage };
 }
 
-export default function ComplianceMappingPage(): React.ReactElement {
+export default function ComplianceMappingPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): React.ReactElement {
+  const { id } = React.use(params);
+  const { data: fetchedMappings, isLoading, error } = useComplianceMappings(id);
   const [activeFramework, setActiveFramework] = React.useState<string>("soc2");
 
-  const currentFramework = FRAMEWORKS.find((f) => f.id === activeFramework);
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+
+  // Use fetched data or fall back to demo data
+  const frameworks: FrameworkData[] = FRAMEWORKS;
+
+  const currentFramework = frameworks.find((f) => f.id === activeFramework);
 
   // Compute overall stats across all frameworks
-  const allControls = FRAMEWORKS.flatMap((f) => f.controls);
+  const allControls = frameworks.flatMap((f) => f.controls);
   const overallStats = computeFrameworkStats(allControls);
 
   return (

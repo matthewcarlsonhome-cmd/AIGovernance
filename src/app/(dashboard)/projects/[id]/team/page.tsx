@@ -23,6 +23,7 @@ import {
   X,
   UserPlus,
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -163,13 +164,38 @@ function getAvatarBg(role: TeamRole): string {
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
-export default function TeamPage(): React.ReactElement {
+export default function TeamPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): React.ReactElement {
+  const { id } = React.use(params);
+
+  // Inline fetch for team members
+  const { data: fetchedMembers, isLoading, error } = useQuery({
+    queryKey: ['team-members', id],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${encodeURIComponent(id)}/team`);
+      if (!res.ok) return null;
+      const json = await res.json();
+      return json.data ?? null;
+    },
+    enabled: Boolean(id),
+  });
+
   const [showAddForm, setShowAddForm] = React.useState(false);
   const [newName, setNewName] = React.useState('');
   const [newEmail, setNewEmail] = React.useState('');
   const [newRole, setNewRole] = React.useState<TeamRole>('engineering');
 
-  const totalTasks = TEAM_MEMBERS.reduce((sum, m) => sum + m.tasksAssigned, 0);
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {(error as Error).message}</p></div>;
+
+  const teamMembers: TeamMember[] = (fetchedMembers && Array.isArray(fetchedMembers) && fetchedMembers.length > 0)
+    ? fetchedMembers as TeamMember[]
+    : TEAM_MEMBERS;
+
+  const totalTasks = teamMembers.reduce((sum, m) => sum + m.tasksAssigned, 0);
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -266,7 +292,7 @@ export default function TeamPage(): React.ReactElement {
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">
-                  {TEAM_MEMBERS.length}
+                  {teamMembers.length}
                 </p>
                 <p className="text-xs text-muted-foreground">Team Members</p>
               </div>
@@ -281,7 +307,7 @@ export default function TeamPage(): React.ReactElement {
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">
-                  {TEAM_MEMBERS.filter((m) => m.status === 'Active').length}
+                  {teamMembers.filter((m) => m.status === 'Active').length}
                 </p>
                 <p className="text-xs text-muted-foreground">Active</p>
               </div>
@@ -305,7 +331,7 @@ export default function TeamPage(): React.ReactElement {
 
       {/* Team Member Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {TEAM_MEMBERS.map((member) => (
+        {teamMembers.map((member) => (
           <Card key={member.id}>
             <CardContent className="p-5">
               <div className="flex items-start gap-4">

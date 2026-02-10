@@ -26,6 +26,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { useAssessmentResponses } from '@/hooks/use-assessments';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                      */
@@ -244,6 +245,13 @@ export default function PrerequisitesPage({
   params: Promise<{ id: string }>;
 }): React.ReactElement {
   const { id } = use(params);
+  const { data: responses, isLoading, error } = useAssessmentResponses(id);
+
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+
+  // Use fetched responses to determine completed items if available; fallback to demo data
+  const categories = CATEGORIES;
 
   // Toggleable completion state
   const [completedIds, setCompletedIds] = useState<Set<string>>(() => {

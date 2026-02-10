@@ -1,6 +1,8 @@
 'use client';
 
+import * as React from 'react';
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { CheckCircle, XCircle, AlertTriangle, RefreshCw, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -31,12 +33,37 @@ const statusConfig = {
   failed: { icon: XCircle, color: 'text-red-600', bg: 'bg-red-50 border-red-200', badge: 'bg-red-100 text-red-800' },
 };
 
-export default function ValidatePage() {
+export default function ValidatePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = React.use(params);
+
+  // Inline fetch for validation results
+  const { data: fetchedChecks, isLoading, error } = useQuery({
+    queryKey: ['sandbox-validation', id],
+    queryFn: async () => {
+      const res = await fetch(`/api/configs/validate?projectId=${encodeURIComponent(id)}`);
+      if (!res.ok) return null;
+      const json = await res.json();
+      return json.data ?? null;
+    },
+    enabled: Boolean(id),
+  });
+
   const [running, setRunning] = useState(false);
 
-  const passed = CHECKS.filter((c) => c.status === 'passed').length;
-  const warnings = CHECKS.filter((c) => c.status === 'warning').length;
-  const failed = CHECKS.filter((c) => c.status === 'failed').length;
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {(error as Error).message}</p></div>;
+
+  const checks = (fetchedChecks && Array.isArray(fetchedChecks) && fetchedChecks.length > 0)
+    ? fetchedChecks as ValidationCheck[]
+    : CHECKS;
+
+  const passed = checks.filter((c) => c.status === 'passed').length;
+  const warnings = checks.filter((c) => c.status === 'warning').length;
+  const failed = checks.filter((c) => c.status === 'failed').length;
 
   const handleRerun = () => {
     setRunning(true);
@@ -80,16 +107,16 @@ export default function ValidatePage() {
             </div>
           </div>
           <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden flex">
-            <div className="bg-emerald-500 h-full" style={{ width: `${(passed / CHECKS.length) * 100}%` }} />
-            <div className="bg-yellow-400 h-full" style={{ width: `${(warnings / CHECKS.length) * 100}%` }} />
-            <div className="bg-red-500 h-full" style={{ width: `${(failed / CHECKS.length) * 100}%` }} />
+            <div className="bg-emerald-500 h-full" style={{ width: `${(passed / checks.length) * 100}%` }} />
+            <div className="bg-yellow-400 h-full" style={{ width: `${(warnings / checks.length) * 100}%` }} />
+            <div className="bg-red-500 h-full" style={{ width: `${(failed / checks.length) * 100}%` }} />
           </div>
         </CardContent>
       </Card>
 
       {/* Individual Checks */}
       <div className="space-y-3">
-        {CHECKS.map((check) => {
+        {checks.map((check) => {
           const config = statusConfig[check.status];
           const Icon = config.icon;
           return (

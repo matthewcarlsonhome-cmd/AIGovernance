@@ -14,6 +14,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   FileText,
   Plus,
@@ -29,6 +39,7 @@ import {
   User,
   X,
 } from "lucide-react";
+import { usePolicies } from '@/hooks/use-governance';
 
 interface PolicyVersion {
   version: string;
@@ -381,9 +392,9 @@ function getStatusBadgeClasses(status: Policy["status"]): string {
     case "in_review":
       return "bg-amber-500/15 text-amber-700 border-amber-500/25";
     case "draft":
-      return "bg-muted text-muted-foreground border-border";
+      return "bg-slate-100 text-slate-500 border-slate-200";
     default:
-      return "bg-muted text-muted-foreground border-border";
+      return "bg-slate-100 text-slate-500 border-slate-200";
   }
 }
 
@@ -424,16 +435,34 @@ function getApproverStatusClasses(
     case "rejected":
       return "text-red-700";
     default:
-      return "text-muted-foreground";
+      return "text-slate-500";
   }
 }
 
-export default function GovernancePoliciesPage(): React.ReactElement {
+export default function GovernancePoliciesPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): React.ReactElement {
+  const { id } = React.use(params);
+  const { data: fetchedPolicies, isLoading, error } = usePolicies(id);
+
   const [expandedPolicy, setExpandedPolicy] = React.useState<string | null>(
     null
   );
   const [editingPolicy, setEditingPolicy] = React.useState<string | null>(null);
   const [editContent, setEditContent] = React.useState<string>("");
+  const [showNewPolicyDialog, setShowNewPolicyDialog] = React.useState(false);
+  const [newPolicyTitle, setNewPolicyTitle] = React.useState("");
+  const [newPolicyType, setNewPolicyType] = React.useState("Acceptable Use");
+  const [newPolicyDescription, setNewPolicyDescription] = React.useState("");
+  const [localPolicies, setLocalPolicies] = React.useState<Policy[]>([]);
+
+  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+
+  const basePolicies: Policy[] = (fetchedPolicies && fetchedPolicies.length > 0) ? fetchedPolicies as unknown as Policy[] : DEMO_POLICIES;
+  const policies: Policy[] = [...basePolicies, ...localPolicies];
 
   const handleToggleExpand = (policyId: string): void => {
     if (expandedPolicy === policyId) {
@@ -456,20 +485,129 @@ export default function GovernancePoliciesPage(): React.ReactElement {
     setEditContent("");
   };
 
+  const handleCreatePolicy = (): void => {
+    if (!newPolicyTitle.trim()) return;
+    const newPolicy: Policy = {
+      id: `pol-new-${Date.now()}`,
+      title: newPolicyTitle.trim(),
+      type: newPolicyType,
+      status: "draft",
+      version: "0.1",
+      lastUpdated: new Date().toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+      description: newPolicyDescription.trim() || "New policy document",
+      content: `${newPolicyTitle.trim().toUpperCase()}\nVersion 0.1 (DRAFT) | Working Document\n\n1. PURPOSE\n\n[Enter the purpose of this policy here...]\n\n2. SCOPE\n\n[Define who and what this policy covers...]\n\n3. POLICY STATEMENTS\n\n[Add policy statements here...]\n`,
+      versions: [
+        {
+          version: "0.1",
+          date: new Date().toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }),
+          author: "Current User",
+          summary: "Initial draft",
+        },
+      ],
+      approvers: [],
+    };
+    setLocalPolicies((prev) => [...prev, newPolicy]);
+    setShowNewPolicyDialog(false);
+    setNewPolicyTitle("");
+    setNewPolicyType("Acceptable Use");
+    setNewPolicyDescription("");
+    // Auto-expand the newly created policy in edit mode
+    setExpandedPolicy(newPolicy.id);
+    setEditingPolicy(newPolicy.id);
+    setEditContent(newPolicy.content);
+  };
+
   return (
     <div className="flex flex-col gap-6 p-6">
+      {/* New Policy Dialog */}
+      <Dialog open={showNewPolicyDialog} onOpenChange={setShowNewPolicyDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Policy</DialogTitle>
+            <DialogDescription>
+              Create a new governance policy document. You can edit the full
+              content after creation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="policy-title">Policy Title</Label>
+              <Input
+                id="policy-title"
+                placeholder="e.g. AI Acceptable Use Policy"
+                value={newPolicyTitle}
+                onChange={(e) => setNewPolicyTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="policy-type">Policy Type</Label>
+              <select
+                id="policy-type"
+                value={newPolicyType}
+                onChange={(e) => setNewPolicyType(e.target.value)}
+                className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
+              >
+                <option value="Acceptable Use">Acceptable Use</option>
+                <option value="Incident Response">Incident Response</option>
+                <option value="Data Classification">Data Classification</option>
+                <option value="Risk Management">Risk Management</option>
+                <option value="Access Control">Access Control</option>
+                <option value="Compliance">Compliance</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="policy-description">Description</Label>
+              <Textarea
+                id="policy-description"
+                placeholder="Brief description of the policy's purpose and scope..."
+                value={newPolicyDescription}
+                onChange={(e) => setNewPolicyDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowNewPolicyDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreatePolicy}
+              disabled={!newPolicyTitle.trim()}
+              className="bg-slate-900 text-white hover:bg-slate-800"
+            >
+              Create Policy
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             Governance Policies
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-slate-500">
             Manage AI governance policy documents, track versions, and route
             approvals.
           </p>
         </div>
-        <Button>
+        <Button
+          onClick={() => setShowNewPolicyDialog(true)}
+          className="bg-slate-900 text-white hover:bg-slate-800"
+        >
           <Plus className="h-4 w-4" />
           New Policy
         </Button>
@@ -482,12 +620,12 @@ export default function GovernancePoliciesPage(): React.ReactElement {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <FileText className="h-5 w-5 text-primary" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
+                <FileText className="h-5 w-5 text-slate-900" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">4</p>
-                <p className="text-xs text-muted-foreground">Total Policies</p>
+                <p className="text-2xl font-bold text-slate-900">{policies.length}</p>
+                <p className="text-xs text-slate-500">Total Policies</p>
               </div>
             </div>
           </CardContent>
@@ -499,8 +637,8 @@ export default function GovernancePoliciesPage(): React.ReactElement {
                 <CheckCircle2 className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">1</p>
-                <p className="text-xs text-muted-foreground">Approved</p>
+                <p className="text-2xl font-bold text-slate-900">{policies.filter(p => p.status === 'approved').length}</p>
+                <p className="text-xs text-slate-500">Approved</p>
               </div>
             </div>
           </CardContent>
@@ -512,8 +650,8 @@ export default function GovernancePoliciesPage(): React.ReactElement {
                 <Clock className="h-5 w-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">1</p>
-                <p className="text-xs text-muted-foreground">In Review</p>
+                <p className="text-2xl font-bold text-slate-900">{policies.filter(p => p.status === 'in_review').length}</p>
+                <p className="text-xs text-slate-500">In Review</p>
               </div>
             </div>
           </CardContent>
@@ -521,12 +659,12 @@ export default function GovernancePoliciesPage(): React.ReactElement {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                <AlertCircle className="h-5 w-5 text-muted-foreground" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
+                <AlertCircle className="h-5 w-5 text-slate-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">2</p>
-                <p className="text-xs text-muted-foreground">Drafts</p>
+                <p className="text-2xl font-bold text-slate-900">{policies.filter(p => p.status === 'draft').length}</p>
+                <p className="text-xs text-slate-500">Drafts</p>
               </div>
             </div>
           </CardContent>
@@ -535,7 +673,7 @@ export default function GovernancePoliciesPage(): React.ReactElement {
 
       {/* Policy List */}
       <div className="flex flex-col gap-4">
-        {DEMO_POLICIES.map((policy) => {
+        {policies.map((policy) => {
           const isExpanded = expandedPolicy === policy.id;
           const isEditing = editingPolicy === policy.id;
 
@@ -566,7 +704,7 @@ export default function GovernancePoliciesPage(): React.ReactElement {
                     <CardDescription className="mt-1.5">
                       {policy.description}
                     </CardDescription>
-                    <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                    <div className="mt-2 flex items-center gap-4 text-xs text-slate-500">
                       <span className="flex items-center gap-1">
                         <History className="h-3 w-3" />
                         Version {policy.version}
@@ -616,7 +754,7 @@ export default function GovernancePoliciesPage(): React.ReactElement {
                       {/* Main Content Area */}
                       <div className="lg:col-span-2">
                         <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-sm font-semibold text-foreground">
+                          <h3 className="text-sm font-semibold text-slate-900">
                             Policy Document
                           </h3>
                           {isEditing && (
@@ -638,8 +776,8 @@ export default function GovernancePoliciesPage(): React.ReactElement {
                             className="min-h-[500px] font-mono text-sm leading-relaxed"
                           />
                         ) : (
-                          <div className="rounded-lg border border-border bg-muted/30 p-6">
-                            <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-foreground">
+                          <div className="rounded-lg border border-slate-200 bg-slate-100/30 p-6">
+                            <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-slate-900">
                               {policy.content}
                             </pre>
                           </div>
@@ -650,24 +788,24 @@ export default function GovernancePoliciesPage(): React.ReactElement {
                       <div className="flex flex-col gap-6">
                         {/* Approval Status */}
                         <div>
-                          <h3 className="text-sm font-semibold text-foreground mb-3">
+                          <h3 className="text-sm font-semibold text-slate-900 mb-3">
                             Approval Status
                           </h3>
-                          <div className="rounded-lg border border-border p-4 space-y-3">
+                          <div className="rounded-lg border border-slate-200 p-4 space-y-3">
                             {policy.approvers.map((approver, idx) => (
                               <div
                                 key={idx}
                                 className="flex items-center justify-between"
                               >
                                 <div className="flex items-center gap-2">
-                                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted">
-                                    <User className="h-3.5 w-3.5 text-muted-foreground" />
+                                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100">
+                                    <User className="h-3.5 w-3.5 text-slate-500" />
                                   </div>
                                   <div>
-                                    <p className="text-sm font-medium text-foreground">
+                                    <p className="text-sm font-medium text-slate-900">
                                       {approver.name}
                                     </p>
-                                    <p className="text-xs text-muted-foreground">
+                                    <p className="text-xs text-slate-500">
                                       {approver.role}
                                     </p>
                                   </div>
@@ -682,7 +820,7 @@ export default function GovernancePoliciesPage(): React.ReactElement {
                                     {approver.status}
                                   </p>
                                   {approver.date && (
-                                    <p className="text-xs text-muted-foreground">
+                                    <p className="text-xs text-slate-500">
                                       {approver.date}
                                     </p>
                                   )}
@@ -694,10 +832,10 @@ export default function GovernancePoliciesPage(): React.ReactElement {
 
                         {/* Version History */}
                         <div>
-                          <h3 className="text-sm font-semibold text-foreground mb-3">
+                          <h3 className="text-sm font-semibold text-slate-900 mb-3">
                             Version History
                           </h3>
-                          <div className="rounded-lg border border-border p-4">
+                          <div className="rounded-lg border border-slate-200 p-4">
                             <div className="space-y-4">
                               {policy.versions.map((ver, idx) => (
                                 <div key={idx} className="relative">
@@ -705,29 +843,29 @@ export default function GovernancePoliciesPage(): React.ReactElement {
                                     <div className="absolute left-[9px] top-5 h-full w-px bg-border" />
                                   )}
                                   <div className="flex gap-3">
-                                    <div className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 border-border bg-background">
+                                    <div className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 border-slate-200 bg-white">
                                       <div
                                         className={cn(
                                           "h-2 w-2 rounded-full",
                                           idx === 0
                                             ? "bg-primary"
-                                            : "bg-muted-foreground/40"
+                                            : "bg-slate-100-foreground/40"
                                         )}
                                       />
                                     </div>
                                     <div className="pb-1">
                                       <div className="flex items-center gap-2">
-                                        <span className="text-sm font-medium text-foreground">
+                                        <span className="text-sm font-medium text-slate-900">
                                           v{ver.version}
                                         </span>
-                                        <span className="text-xs text-muted-foreground">
+                                        <span className="text-xs text-slate-500">
                                           {ver.date}
                                         </span>
                                       </div>
-                                      <p className="text-xs text-muted-foreground mt-0.5">
+                                      <p className="text-xs text-slate-500 mt-0.5">
                                         {ver.author}
                                       </p>
-                                      <p className="text-xs text-muted-foreground mt-0.5">
+                                      <p className="text-xs text-slate-500 mt-0.5">
                                         {ver.summary}
                                       </p>
                                     </div>
