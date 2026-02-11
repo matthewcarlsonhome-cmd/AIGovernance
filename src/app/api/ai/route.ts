@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import { withRateLimit } from '@/lib/api-helpers';
 import { RATE_LIMIT_STRICT, RATE_LIMIT_WINDOW_MS } from '@/lib/rate-limit';
 import { PROMPT_TEMPLATES, type PromptType } from '@/lib/ai/prompts';
@@ -66,6 +66,18 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
   if (rateLimitResponse) return rateLimitResponse;
 
   try {
+    if (!isServerSupabaseConfigured()) {
+      const body = await request.json();
+      return NextResponse.json({
+        data: {
+          text: 'This is a demo response. AI content generation requires a configured Supabase instance and Anthropic API key.',
+          type: body.type ?? 'policy_draft',
+          model: 'demo-mode',
+          usage: { input_tokens: 0, output_tokens: 0 },
+        },
+      });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

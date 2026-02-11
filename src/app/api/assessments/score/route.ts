@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import { calculateDomainScore, DOMAINS, DOMAIN_WEIGHTS, getOverallRating } from '@/lib/scoring/engine';
 import { ASSESSMENT_QUESTIONS } from '@/lib/scoring/questions';
-import type { ApiResponse, AssessmentResponse, DomainScore, FeasibilityScore, ScoreDomain } from '@/types';
+import type { ApiResponse, AssessmentResponse, DomainScore, FeasibilityRating, FeasibilityScore, ScoreDomain } from '@/types';
 
 const scoreRequestSchema = z.object({
   project_id: z.string().uuid('Invalid project ID'),
@@ -17,6 +17,37 @@ const scoreRequestSchema = z.object({
  */
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<FeasibilityScore>>> {
   try {
+    if (!isServerSupabaseConfigured()) {
+      const demoScore: FeasibilityScore = {
+        domain_scores: DOMAINS.map((domain: ScoreDomain) => {
+          const pct = 70 + Math.floor(Math.random() * 20);
+          return {
+            domain,
+            score: pct,
+            maxScore: 100,
+            percentage: pct,
+            passThreshold: 60,
+            passed: pct >= 60,
+            recommendations: [`Improve ${domain} practices`],
+            remediation_tasks: [`Review ${domain} configuration`],
+          };
+        }),
+        overall_score: 76,
+        rating: 'conditional' as FeasibilityRating,
+        recommendations: [
+          'Strengthen security policies before production deployment',
+          'Enhance governance documentation for audit readiness',
+          'Improve infrastructure monitoring capabilities',
+        ],
+        remediation_tasks: [
+          'Configure DLP rules for AI-generated code',
+          'Set up automated security scanning pipeline',
+          'Document data classification policies',
+        ],
+      };
+      return NextResponse.json({ data: demoScore }, { status: 201 });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

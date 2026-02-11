@@ -62,84 +62,89 @@ interface NavSection {
 /*  Navigation data                                                    */
 /* ------------------------------------------------------------------ */
 
-const DEMO_PROJECT_ID = 'demo-1';
-const p = (path: string) => `/projects/${DEMO_PROJECT_ID}${path}`;
-
 const mainNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Projects', href: '/projects', icon: FolderKanban },
 ];
 
-const projectSections: NavSection[] = [
-  {
-    title: 'Discovery',
-    items: [
-      { label: 'Questionnaire', href: p('/discovery/questionnaire'), icon: ClipboardList },
-      { label: 'Readiness', href: p('/discovery/readiness'), icon: Target },
-      { label: 'Prerequisites', href: p('/discovery/prerequisites'), icon: CheckSquare },
-    ],
-  },
-  {
-    title: 'Governance',
-    items: [
-      { label: 'Policies', href: p('/governance/policies'), icon: FileText },
-      { label: 'Gate Reviews', href: p('/governance/gates'), icon: ShieldCheck },
-      { label: 'Compliance', href: p('/governance/compliance'), icon: Scale },
-      { label: 'Risk', href: p('/governance/risk'), icon: AlertTriangle },
-      { label: 'RACI Matrix', href: p('/governance/raci'), icon: Grid3X3 },
-    ],
-  },
-  {
-    title: 'Sandbox',
-    items: [
-      { label: 'Configure', href: p('/sandbox/configure'), icon: Settings },
-      { label: 'Config Files', href: p('/sandbox/files'), icon: Code },
-      { label: 'Validation', href: p('/sandbox/validate'), icon: CheckCircle },
-    ],
-  },
-  {
-    title: 'PoC',
-    items: [
-      { label: 'Projects', href: p('/poc/projects'), icon: FlaskConical },
-      { label: 'Sprints', href: p('/poc/sprints'), icon: Timer },
-      { label: 'Compare Tools', href: p('/poc/compare'), icon: GitCompare },
-      { label: 'Metrics', href: p('/poc/metrics'), icon: TrendingUp },
-    ],
-  },
-  {
-    title: 'Timeline',
-    items: [
-      { label: 'Gantt Chart', href: p('/timeline/gantt'), icon: CalendarRange },
-      { label: 'Milestones', href: p('/timeline/milestones'), icon: Flag },
-      { label: 'Snapshots', href: p('/timeline/snapshots'), icon: Camera },
-    ],
-  },
-  {
-    title: 'Reports',
-    items: [
-      { label: 'Generate', href: p('/reports/generate'), icon: FileOutput },
-      { label: 'History', href: p('/reports/history'), icon: History },
-    ],
-  },
-];
+function buildProjectSections(projectId: string): NavSection[] {
+  const p = (path: string) => `/projects/${projectId}${path}`;
+  return [
+    {
+      title: 'Discovery',
+      items: [
+        { label: 'Questionnaire', href: p('/discovery/questionnaire'), icon: ClipboardList },
+        { label: 'Readiness', href: p('/discovery/readiness'), icon: Target },
+        { label: 'Prerequisites', href: p('/discovery/prerequisites'), icon: CheckSquare },
+      ],
+    },
+    {
+      title: 'Governance',
+      items: [
+        { label: 'Policies', href: p('/governance/policies'), icon: FileText },
+        { label: 'Gate Reviews', href: p('/governance/gates'), icon: ShieldCheck },
+        { label: 'Compliance', href: p('/governance/compliance'), icon: Scale },
+        { label: 'Risk', href: p('/governance/risk'), icon: AlertTriangle },
+        { label: 'RACI Matrix', href: p('/governance/raci'), icon: Grid3X3 },
+      ],
+    },
+    {
+      title: 'Sandbox',
+      items: [
+        { label: 'Configure', href: p('/sandbox/configure'), icon: Settings },
+        { label: 'Config Files', href: p('/sandbox/files'), icon: Code },
+        { label: 'Validation', href: p('/sandbox/validate'), icon: CheckCircle },
+      ],
+    },
+    {
+      title: 'PoC',
+      items: [
+        { label: 'Projects', href: p('/poc/projects'), icon: FlaskConical },
+        { label: 'Sprints', href: p('/poc/sprints'), icon: Timer },
+        { label: 'Compare Tools', href: p('/poc/compare'), icon: GitCompare },
+        { label: 'Metrics', href: p('/poc/metrics'), icon: TrendingUp },
+      ],
+    },
+    {
+      title: 'Timeline',
+      items: [
+        { label: 'Gantt Chart', href: p('/timeline/gantt'), icon: CalendarRange },
+        { label: 'Milestones', href: p('/timeline/milestones'), icon: Flag },
+        { label: 'Snapshots', href: p('/timeline/snapshots'), icon: Camera },
+      ],
+    },
+    {
+      title: 'Reports',
+      items: [
+        { label: 'Generate', href: p('/reports/generate'), icon: FileOutput },
+        { label: 'History', href: p('/reports/history'), icon: History },
+      ],
+    },
+  ];
+}
 
-const projectSetupItem: NavItem = {
-  label: 'Setup Guide',
-  href: p('/setup'),
-  icon: Rocket,
-};
+function buildProjectItems(projectId: string) {
+  const p = (path: string) => `/projects/${projectId}${path}`;
+  return {
+    setupItem: { label: 'Setup Guide', href: p('/setup'), icon: Rocket } as NavItem,
+    overviewItem: { label: 'Overview', href: p('/overview'), icon: BarChart3 } as NavItem,
+    extraItems: [
+      { label: 'ROI Calculator', href: p('/roi'), icon: DollarSign },
+      { label: 'Meetings', href: p('/meetings'), icon: Calendar },
+      { label: 'Team', href: p('/team'), icon: Users },
+    ] as NavItem[],
+  };
+}
 
-const projectOverviewItem: NavItem = {
-  label: 'Overview',
-  href: p('/overview'),
-  icon: BarChart3,
-};
-
-const projectExtraItems: NavItem[] = [
-  { label: 'ROI Calculator', href: p('/roi'), icon: DollarSign },
-  { label: 'Meetings', href: p('/meetings'), icon: Calendar },
-  { label: 'Team', href: p('/team'), icon: Users },
-];
+/** Extract the project ID from the current URL pathname, if present. */
+function extractProjectId(pathname: string): string | null {
+  const match = pathname.match(/^\/projects\/([^/]+)/);
+  if (!match) return null;
+  const id = match[1];
+  // Exclude "new" — that's the create-project page, not a real project
+  if (id === 'new') return null;
+  return id;
+}
 
 /* ------------------------------------------------------------------ */
 /*  Sidebar nav link                                                   */
@@ -292,6 +297,11 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const projectId = extractProjectId(pathname);
+
+  // Build project-scoped nav only when viewing a real project
+  const projectSections = projectId ? buildProjectSections(projectId) : [];
+  const projectNav = projectId ? buildProjectItems(projectId) : null;
 
   return (
     <div className="flex h-screen overflow-hidden bg-white">
@@ -331,38 +341,58 @@ export default function DashboardLayout({
             ))}
           </div>
 
-          <Separator />
+          {projectNav && (
+            <>
+              <Separator />
 
-          {/* Current Project */}
-          <div className="space-y-3">
-            {!collapsed && (
-              <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                Current Project
-              </p>
-            )}
+              {/* Current Project */}
+              <div className="space-y-3">
+                {!collapsed && (
+                  <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    Current Project
+                  </p>
+                )}
 
-            {/* Setup Guide */}
-            <NavLink item={projectSetupItem} collapsed={collapsed} pathname={pathname} />
+                {/* Setup Guide */}
+                <NavLink item={projectNav.setupItem} collapsed={collapsed} pathname={pathname} />
 
-            {/* Overview */}
-            <NavLink item={projectOverviewItem} collapsed={collapsed} pathname={pathname} />
+                {/* Overview */}
+                <NavLink item={projectNav.overviewItem} collapsed={collapsed} pathname={pathname} />
 
-            {/* Sections */}
-            {projectSections.map((section) => (
-              <CollapsibleSection
-                key={section.title}
-                section={section}
-                collapsed={collapsed}
-                pathname={pathname}
-              />
-            ))}
+                {/* Sections */}
+                {projectSections.map((section) => (
+                  <CollapsibleSection
+                    key={section.title}
+                    section={section}
+                    collapsed={collapsed}
+                    pathname={pathname}
+                  />
+                ))}
 
-            {/* Extra items */}
-            <Separator />
-            {projectExtraItems.map((item) => (
-              <NavLink key={item.href} item={item} collapsed={collapsed} pathname={pathname} />
-            ))}
-          </div>
+                {/* Extra items */}
+                <Separator />
+                {projectNav.extraItems.map((item) => (
+                  <NavLink key={item.href} item={item} collapsed={collapsed} pathname={pathname} />
+                ))}
+              </div>
+            </>
+          )}
+
+          {!projectNav && (
+            <>
+              <Separator />
+              {!collapsed && (
+                <div className="px-3 py-4 text-center">
+                  <p className="text-xs text-slate-400">
+                    Select a project to see navigation options
+                  </p>
+                  <Link href="/projects" className="text-xs text-slate-600 hover:text-slate-900 underline mt-1 inline-block">
+                    View Projects
+                  </Link>
+                </div>
+              )}
+            </>
+          )}
         </nav>
 
         {/* Bottom area */}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import type { ApiResponse } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -30,6 +30,16 @@ export async function POST(
   request: NextRequest,
 ): Promise<NextResponse<ApiResponse<{ signedUrl: string; path: string }>>> {
   try {
+    if (!isServerSupabaseConfigured()) {
+      const body = await request.json();
+      return NextResponse.json({
+        data: {
+          signedUrl: `https://demo.storage.example.com/upload/${body.bucket ?? 'evidence'}/${body.filePath ?? 'demo-file'}`,
+          path: body.filePath ?? 'demo-file',
+        },
+      });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -82,6 +92,17 @@ export async function GET(
   request: NextRequest,
 ): Promise<NextResponse<ApiResponse<{ signedUrl: string }>>> {
   try {
+    if (!isServerSupabaseConfigured()) {
+      const { searchParams } = new URL(request.url);
+      const bucket = searchParams.get('bucket') ?? 'evidence';
+      const filePath = searchParams.get('filePath') ?? 'demo-file';
+      return NextResponse.json({
+        data: {
+          signedUrl: `https://demo.storage.example.com/download/${bucket}/${filePath}`,
+        },
+      });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

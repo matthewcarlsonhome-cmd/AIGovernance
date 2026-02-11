@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import type { ApiResponse, RaciEntry, RaciMatrix } from '@/types';
 
 const raciEntrySchema = z.object({
@@ -31,6 +31,20 @@ export async function GET(
 ): Promise<NextResponse<ApiResponse<RaciMatrixWithEntries>>> {
   try {
     const { id } = await context.params;
+
+    if (!isServerSupabaseConfigured()) {
+      return NextResponse.json({
+        data: {
+          id,
+          project_id: 'proj-demo-001',
+          phase: 'Discovery',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          entries: [],
+        },
+      });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -89,6 +103,28 @@ export async function PUT(
 ): Promise<NextResponse<ApiResponse<RaciMatrixWithEntries>>> {
   try {
     const { id } = await context.params;
+
+    if (!isServerSupabaseConfigured()) {
+      const body = await request.json();
+      const now = new Date().toISOString();
+      return NextResponse.json({
+        data: {
+          id,
+          project_id: 'proj-demo-001',
+          phase: 'Discovery',
+          created_at: now,
+          updated_at: now,
+          entries: (body.entries ?? []).map((e: Record<string, unknown>, i: number) => ({
+            id: `entry-demo-${Date.now()}-${i}`,
+            matrix_id: id,
+            ...e,
+            created_at: now,
+            updated_at: now,
+          })),
+        },
+      });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -186,6 +222,11 @@ export async function DELETE(
 ): Promise<NextResponse<ApiResponse<{ deleted: boolean }>>> {
   try {
     const { id } = await context.params;
+
+    if (!isServerSupabaseConfigured()) {
+      return NextResponse.json({ data: { deleted: true } });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

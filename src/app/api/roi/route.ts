@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import { calculateRoi, calculateSensitivity } from '@/lib/scoring/roi-calculator';
 import type { ApiResponse, RoiCalculation } from '@/types';
 
@@ -24,6 +24,10 @@ const roiInputsSchema = z.object({
  */
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<RoiCalculation | null>>> {
   try {
+    if (!isServerSupabaseConfigured()) {
+      return NextResponse.json({ data: null });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -69,6 +73,26 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
  */
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<RoiCalculation>>> {
   try {
+    if (!isServerSupabaseConfigured()) {
+      const body = await request.json();
+      const inputs = body.inputs ?? {};
+      const results = calculateRoi(inputs);
+      const sensitivityData = calculateSensitivity(inputs);
+      const now = new Date().toISOString();
+      return NextResponse.json({
+        data: {
+          id: `roi-demo-${Date.now()}`,
+          project_id: body.project_id ?? 'proj-demo-001',
+          inputs,
+          results,
+          sensitivity_data: sensitivityData,
+          calculated_by: 'demo-user',
+          created_at: now,
+          updated_at: now,
+        },
+      }, { status: 201 });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
