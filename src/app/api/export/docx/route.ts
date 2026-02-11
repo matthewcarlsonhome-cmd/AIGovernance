@@ -10,8 +10,7 @@ import { generateMeetingSummaryContent } from '@/lib/report-gen/docx/meeting-sum
 import { renderProposalDocument } from '@/lib/report-gen/docx/proposal-renderer';
 import { renderLegalDocument } from '@/lib/report-gen/docx/legal-renderer';
 import { renderMeetingDocument } from '@/lib/report-gen/docx/meeting-renderer';
-import type { Database } from '@/lib/supabase/database.types';
-import type { ApiResponse } from '@/types';
+import type { ApiResponse, DomainScore } from '@/types';
 import type {
   FeasibilityScore,
   RoiResults,
@@ -23,8 +22,8 @@ import type {
   ActionItem,
 } from '@/types';
 
-/** Typed Supabase client used throughout this module's helper functions. */
-type TypedSupabaseClient = SupabaseClient<Database>;
+/** Supabase client type used throughout this module's helper functions. */
+type TypedSupabaseClient = SupabaseClient;
 
 // ────────────────────────────────────────────────────────────
 // Validation
@@ -222,11 +221,11 @@ async function gatherProposalData(
 
   const score: FeasibilityScore = scores
     ? {
-        domain_scores: scores.domain_scores ?? [],
+        domain_scores: (scores.domain_scores ?? []) as DomainScore[],
         overall_score: scores.overall_score ?? 0,
         rating: scores.rating ?? 'not_ready',
-        recommendations: scores.recommendations ?? [],
-        remediation_tasks: scores.remediation_tasks ?? [],
+        recommendations: (scores.recommendations ?? []) as string[],
+        remediation_tasks: (scores.remediation_tasks ?? []) as string[],
       }
     : {
         domain_scores: [],
@@ -245,7 +244,7 @@ async function gatherProposalData(
     .limit(1)
     .maybeSingle();
 
-  const roi: RoiResults | undefined = roiCalc?.results ?? undefined;
+  const roi: RoiResults | undefined = (roiCalc?.results as RoiResults) ?? undefined;
 
   // Timeline tasks
   const { data: tasks } = await supabase
@@ -254,7 +253,7 @@ async function gatherProposalData(
     .eq('project_id', projectId)
     .order('start_date', { ascending: true });
 
-  return { score, roi, tasks: tasks ?? [] };
+  return { score, roi, tasks: (tasks ?? []) as TimelineTask[] };
 }
 
 async function gatherLegalData(
@@ -282,9 +281,9 @@ async function gatherLegalData(
   ]);
 
   return {
-    policies: policiesRes.data ?? [],
-    complianceMappings: complianceRes.data ?? [],
-    risks: risksRes.data ?? [],
+    policies: (policiesRes.data ?? []) as Policy[],
+    complianceMappings: (complianceRes.data ?? []) as ComplianceMapping[],
+    risks: (risksRes.data ?? []) as RiskClassification[],
   };
 }
 
@@ -309,7 +308,7 @@ async function gatherMeetingData(
   }
 
   const { data: meetings } = await meetingQuery;
-  const meeting: MeetingNote = meetings?.[0] ?? {
+  const meeting: MeetingNote = (meetings?.[0] as MeetingNote) ?? {
     id: '',
     project_id: projectId,
     title: 'Meeting Summary',
@@ -317,6 +316,8 @@ async function gatherMeetingData(
     meeting_type: 'general' as const,
     attendees: [],
     notes: 'No meeting notes found for this project.',
+    summary: null,
+    created_by: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -328,7 +329,7 @@ async function gatherMeetingData(
     .eq('meeting_id', meeting.id)
     .order('priority', { ascending: true });
 
-  return { meeting, actionItems: actionItems ?? [] };
+  return { meeting, actionItems: (actionItems ?? []) as ActionItem[] };
 }
 
 // ────────────────────────────────────────────────────────────

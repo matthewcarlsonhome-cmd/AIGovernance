@@ -391,7 +391,15 @@ export default function ReadinessPage({
       {/* Action Buttons */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-3">
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2" onClick={() => {
+            const blob = new Blob(['Readiness Assessment Report\n==========================\n\nThis is a demo export. In production, the full PDF report would be generated using @react-pdf/renderer.\n\nOverall Score: See dashboard for current scores.\nDomains: Infrastructure, Security, Governance, Engineering, Business'], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'readiness-assessment-report.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+          }}>
             <Download className="h-4 w-4" />
             Download Report
           </Button>

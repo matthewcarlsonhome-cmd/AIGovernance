@@ -581,7 +581,7 @@ export default function DashboardPage() {
                           >
                             {getPhaseLabel(project.status)}
                           </Badge>
-                          <HealthBadge score={project.feasibility_score} />
+                          <HealthBadge score={project.feasibility_score ?? undefined} />
                         </div>
                       </div>
                       {project.feasibility_score ? (

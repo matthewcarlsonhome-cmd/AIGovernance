@@ -300,7 +300,10 @@ describe('Scoring Engine - Extended', () => {
         domain: 'infrastructure',
         text: 'High number',
         type: 'number',
+        options: null,
         weight: 1,
+        scoring: null,
+        help_text: null,
         required: true,
         order: 1,
       };
@@ -314,7 +317,10 @@ describe('Scoring Engine - Extended', () => {
         domain: 'infrastructure',
         text: 'Negative number',
         type: 'number',
+        options: null,
         weight: 1,
+        scoring: null,
+        help_text: null,
         required: true,
         order: 1,
       };
@@ -331,6 +337,7 @@ describe('Scoring Engine - Extended', () => {
         options: ['A', 'B'],
         weight: 1,
         scoring: { A: 100, B: 50 },
+        help_text: null,
         required: true,
         order: 1,
       };
@@ -347,6 +354,7 @@ describe('Scoring Engine - Extended', () => {
         options: ['Known'],
         weight: 1,
         scoring: { Known: 100 },
+        help_text: null,
         required: true,
         order: 1,
       };
@@ -364,6 +372,7 @@ describe('Scoring Engine - Extended', () => {
         options: ['A', 'B', 'C'],
         weight: 2,
         scoring: { A: 100, B: 0 },
+        help_text: null,
         required: true,
         order: 1,
       };
@@ -393,6 +402,7 @@ describe('Scoring Engine - Extended', () => {
           options: ['Yes', 'No'],
           weight: 1,
           scoring: { Yes: 100, No: 0 },
+          help_text: null,
           required: true,
           order: 1,
         },
@@ -414,6 +424,7 @@ describe('Scoring Engine - Extended', () => {
           options: ['Yes', 'No'],
           weight: 1,
           scoring: { Yes: 100, No: 0 },
+          help_text: null,
           required: true,
           order: 1,
         },

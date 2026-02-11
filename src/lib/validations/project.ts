@@ -30,9 +30,7 @@ export const projectDetailsSchema = z.object({
     .max(255, 'Project name must be 255 characters or fewer.'),
   description: z
     .string()
-    .max(2000, 'Description must be 2000 characters or fewer.')
-    .optional()
-    .default(''),
+    .max(2000, 'Description must be 2000 characters or fewer.'),
   industry: z
     .string()
     .min(1, 'Please select an industry.'),

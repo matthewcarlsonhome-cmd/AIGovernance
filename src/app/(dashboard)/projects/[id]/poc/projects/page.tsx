@@ -7,6 +7,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { usePocProjects } from '@/hooks/use-poc';
 
 const POC_PROJECTS = [
@@ -46,24 +57,102 @@ export default function PocProjectsPage({
   const { id } = React.use(params);
   const { data: fetchedProjects, isLoading, error } = usePocProjects(id);
   const [expanded, setExpanded] = useState<string | null>('poc-1');
+  const [showNewDialog, setShowNewDialog] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newTool, setNewTool] = useState('Claude Code');
+  const [newDescription, setNewDescription] = useState('');
+  const [newSprints, setNewSprints] = useState(2);
+  const [localProjects, setLocalProjects] = useState<typeof POC_PROJECTS>([]);
 
   if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
   if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
 
-  const pocProjects = (fetchedProjects && fetchedProjects.length > 0) ? fetchedProjects as unknown as typeof POC_PROJECTS : POC_PROJECTS;
+  const baseProjects = (fetchedProjects && fetchedProjects.length > 0) ? fetchedProjects as unknown as typeof POC_PROJECTS : POC_PROJECTS;
+  const pocProjects = [...baseProjects, ...localProjects];
+
+  const handleCreatePoc = (): void => {
+    if (!newName.trim()) return;
+    const poc = {
+      id: `poc-local-${Date.now()}`,
+      name: newName.trim(),
+      tool: newTool,
+      status: 'planned' as const,
+      score: 0,
+      description: newDescription.trim() || 'New PoC project',
+      sprints: newSprints,
+      completedSprints: 0,
+      team: [] as string[],
+      criteria: [
+        { name: 'Code Quality', score: 0, weight: 25 },
+        { name: 'Velocity Impact', score: 0, weight: 25 },
+        { name: 'Security Compliance', score: 0, weight: 20 },
+        { name: 'Developer Satisfaction', score: 0, weight: 15 },
+        { name: 'Cost Efficiency', score: 0, weight: 15 },
+      ],
+    };
+    setLocalProjects((prev) => [...prev, poc]);
+    setShowNewDialog(false);
+    setNewName('');
+    setNewTool('Claude Code');
+    setNewDescription('');
+    setNewSprints(2);
+    setExpanded(poc.id);
+  };
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <FlaskConical className="h-6 w-6 text-primary" />
+            <FlaskConical className="h-6 w-6 text-slate-900" />
             PoC Projects
           </h1>
-          <p className="text-muted-foreground mt-1">Proof-of-concept definitions with selection scoring</p>
+          <p className="text-slate-500 mt-1">Proof-of-concept definitions with selection scoring</p>
         </div>
-        <Button><Plus className="h-4 w-4 mr-2" /> New PoC Project</Button>
+        <Button onClick={() => setShowNewDialog(true)} className="bg-slate-900 text-white hover:bg-slate-800"><Plus className="h-4 w-4 mr-2" /> New PoC Project</Button>
       </div>
+
+      {/* New PoC Dialog */}
+      <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>New PoC Project</DialogTitle>
+            <DialogDescription>Define a new proof-of-concept evaluation project.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="poc-name">Project Name</Label>
+              <Input id="poc-name" placeholder="e.g. GitHub Copilot Evaluation" value={newName} onChange={(e) => setNewName(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="poc-tool">AI Tool</Label>
+                <select id="poc-tool" value={newTool} onChange={(e) => setNewTool(e.target.value)} className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400">
+                  <option value="Claude Code">Claude Code</option>
+                  <option value="OpenAI Codex">OpenAI Codex</option>
+                  <option value="GitHub Copilot">GitHub Copilot</option>
+                  <option value="Cursor">Cursor</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="poc-sprints">Number of Sprints</Label>
+                <select id="poc-sprints" value={newSprints} onChange={(e) => setNewSprints(Number(e.target.value))} className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400">
+                  {[1, 2, 3, 4, 5].map((n) => (<option key={n} value={n}>{n}</option>))}
+                </select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="poc-desc">Description</Label>
+              <Textarea id="poc-desc" placeholder="Describe the evaluation scope and goals..." value={newDescription} onChange={(e) => setNewDescription(e.target.value)} rows={3} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewDialog(false)}>Cancel</Button>
+            <Button onClick={handleCreatePoc} disabled={!newName.trim()} className="bg-slate-900 text-white hover:bg-slate-800">Create PoC Project</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="space-y-4">
         {pocProjects.map((poc) => (
@@ -79,11 +168,11 @@ export default function PocProjectsPage({
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold">{poc.score}</div>
-                  <div className="text-xs text-muted-foreground">Selection Score</div>
+                  <div className="text-xs text-slate-500">Selection Score</div>
                 </div>
               </div>
-              <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-                <span>Tool: <strong className="text-foreground">{poc.tool}</strong></span>
+              <div className="flex gap-4 mt-2 text-sm text-slate-500">
+                <span>Tool: <strong className="text-slate-900">{poc.tool}</strong></span>
                 <span>Sprints: {poc.completedSprints}/{poc.sprints}</span>
                 <span>Team: {poc.team.join(', ')}</span>
               </div>
@@ -95,7 +184,7 @@ export default function PocProjectsPage({
                   {poc.criteria.map((c) => (
                     <div key={c.name} className="space-y-1">
                       <div className="flex justify-between text-sm">
-                        <span>{c.name} <span className="text-muted-foreground">({c.weight}%)</span></span>
+                        <span>{c.name} <span className="text-slate-500">({c.weight}%)</span></span>
                         <span className="font-medium">{c.score}/100</span>
                       </div>
                       <Progress value={c.score} className="h-2" />

@@ -40,6 +40,7 @@ import {
   Calendar,
   DollarSign,
   Camera,
+  Rocket,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -121,6 +122,12 @@ const projectSections: NavSection[] = [
     ],
   },
 ];
+
+const projectSetupItem: NavItem = {
+  label: 'Setup Guide',
+  href: p('/setup'),
+  icon: Rocket,
+};
 
 const projectOverviewItem: NavItem = {
   label: 'Overview',
@@ -333,6 +340,9 @@ export default function DashboardLayout({
                 Current Project
               </p>
             )}
+
+            {/* Setup Guide */}
+            <NavLink item={projectSetupItem} collapsed={collapsed} pathname={pathname} />
 
             {/* Overview */}
             <NavLink item={projectOverviewItem} collapsed={collapsed} pathname={pathname} />

@@ -8,6 +8,9 @@ const TEST_PROJECT: Project = {
   description: 'A test project',
   organization_id: 'org-test',
   status: 'discovery',
+  feasibility_score: null,
+  start_date: null,
+  target_end_date: null,
   created_at: '2025-01-01T00:00:00Z',
   updated_at: '2025-01-01T00:00:00Z',
 };

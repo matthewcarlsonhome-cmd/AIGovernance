@@ -37,10 +37,10 @@ export default function MilestonesPage({
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Flag className="h-6 w-6 text-primary" />
+          <Flag className="h-6 w-6 text-slate-900" />
           Project Milestones
         </h1>
-        <p className="text-muted-foreground mt-1">Key deliverables and gate review checkpoints</p>
+        <p className="text-slate-500 mt-1">Key deliverables and gate review checkpoints</p>
       </div>
 
       {/* Vertical Timeline */}
@@ -61,12 +61,12 @@ export default function MilestonesPage({
               {/* Content */}
               <div className="flex-1 pb-2">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium text-muted-foreground">{ms.date}</span>
+                  <span className="text-sm font-medium text-slate-500">{ms.date}</span>
                   {ms.gate && <Badge className={config.badge}>{ms.gate}</Badge>}
                   <Badge variant="outline" className={config.badge}>{ms.status === 'reached' ? 'Reached' : ms.status === 'upcoming' ? 'Upcoming' : 'Planned'}</Badge>
                 </div>
                 <h3 className="text-lg font-semibold mt-1">{ms.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{ms.description}</p>
+                <p className="text-sm text-slate-500 mt-1">{ms.description}</p>
               </div>
             </div>
           );

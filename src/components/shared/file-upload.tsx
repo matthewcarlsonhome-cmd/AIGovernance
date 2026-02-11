@@ -209,9 +209,9 @@ export function FileUpload({
         className={cn(
           'relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors',
           isDragOver
-            ? 'border-primary bg-primary/5'
-            : 'border-muted-foreground/25 hover:border-muted-foreground/40',
-          state === 'error' && 'border-destructive/50 bg-destructive/5',
+            ? 'border-slate-900 bg-slate-50'
+            : 'border-slate-300 hover:border-slate-400',
+          state === 'error' && 'border-red-300 bg-red-50',
           state === 'success' && 'border-emerald-500/50 bg-emerald-500/5',
         )}
       >
@@ -227,11 +227,11 @@ export function FileUpload({
 
         {state === 'idle' && (
           <>
-            <Upload className="h-10 w-10 text-muted-foreground/60 mb-3" />
-            <p className="text-sm font-medium text-foreground">
+            <Upload className="h-10 w-10 text-slate-400 mb-3" />
+            <p className="text-sm font-medium text-slate-900">
               Drag and drop a file here, or click to browse
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               {accept ? `Accepted: ${accept}` : 'Any file type'} &middot; Max {maxSizeMB} MB
             </p>
             <Button
@@ -249,12 +249,12 @@ export function FileUpload({
 
         {state === 'uploading' && (
           <div className="w-full max-w-xs space-y-3 text-center">
-            <File className="h-8 w-8 text-primary mx-auto" />
-            <p className="text-sm font-medium text-foreground truncate">
+            <File className="h-8 w-8 text-slate-900 mx-auto" />
+            <p className="text-sm font-medium text-slate-900 truncate">
               {fileName}
             </p>
             <Progress value={progress} className="h-2" />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-slate-500">
               Uploading... {progress}%
             </p>
           </div>
@@ -263,7 +263,7 @@ export function FileUpload({
         {state === 'success' && (
           <div className="w-full max-w-xs space-y-3 text-center">
             <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto" />
-            <p className="text-sm font-medium text-foreground truncate">
+            <p className="text-sm font-medium text-slate-900 truncate">
               {fileName}
             </p>
             <p className="text-xs text-emerald-600">
@@ -282,11 +282,11 @@ export function FileUpload({
 
         {state === 'error' && (
           <div className="w-full max-w-xs space-y-3 text-center">
-            <AlertCircle className="h-8 w-8 text-destructive mx-auto" />
-            <p className="text-sm font-medium text-destructive">
+            <AlertCircle className="h-8 w-8 text-red-500 mx-auto" />
+            <p className="text-sm font-medium text-red-500">
               Upload Failed
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-slate-500">
               {errorMessage}
             </p>
             <Button

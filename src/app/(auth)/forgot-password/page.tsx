@@ -129,11 +129,11 @@ export default function ForgotPasswordPage() {
               <CheckCircle className="h-6 w-6 text-green-600" />
             </div>
             <div className="text-center space-y-2">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-slate-500">
                 We sent a password reset link to
               </p>
               <p className="text-sm font-medium">{submittedEmail}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-500">
                 If you don&apos;t see it, check your spam folder. The link expires in 24 hours.
               </p>
             </div>
@@ -161,7 +161,7 @@ export default function ForgotPasswordPage() {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                         <Input
                           type="email"
                           placeholder="name@company.com"
@@ -190,7 +190,7 @@ export default function ForgotPasswordPage() {
       <CardFooter>
         <Link
           href="/login"
-          className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors w-full"
+          className="flex items-center justify-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors w-full"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to sign in

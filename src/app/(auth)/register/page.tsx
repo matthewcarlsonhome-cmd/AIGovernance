@@ -176,7 +176,7 @@ export default function RegisterPage() {
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                         <Input
                           type="text"
                           placeholder="Jane Smith"
@@ -200,7 +200,7 @@ export default function RegisterPage() {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                         <Input
                           type="email"
                           placeholder="name@company.com"
@@ -224,7 +224,7 @@ export default function RegisterPage() {
                     <FormLabel>Organization Name</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                         <Input
                           type="text"
                           placeholder="Acme Corp"
@@ -248,7 +248,7 @@ export default function RegisterPage() {
                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                         <Input
                           type="password"
                           placeholder="At least 8 characters"
@@ -272,7 +272,7 @@ export default function RegisterPage() {
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                         <Input
                           type="password"
                           placeholder="Re-enter your password"
@@ -300,11 +300,11 @@ export default function RegisterPage() {
         )}
       </CardContent>
       <CardFooter>
-        <p className="text-sm text-muted-foreground text-center w-full">
+        <p className="text-sm text-slate-500 text-center w-full">
           Already have an account?{' '}
           <Link
             href="/login"
-            className="font-medium text-primary hover:underline"
+            className="font-medium text-slate-900 hover:underline"
           >
             Sign in
           </Link>

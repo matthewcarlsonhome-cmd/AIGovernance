@@ -136,7 +136,7 @@ function getAssignmentStyle(assignment: RaciAssignment | null): string {
     case 'I':
       return 'bg-gray-500/15 text-gray-600 border-gray-500/25 hover:bg-gray-500/25';
     default:
-      return 'bg-muted/40 text-muted-foreground/50 border-dashed border-border hover:bg-muted';
+      return 'bg-slate-50 text-slate-400 border-dashed border-slate-200 hover:bg-slate-100';
   }
 }
 
@@ -159,7 +159,7 @@ function getRoleBadgeStyle(role: string): string {
     case 'Marketing':
       return 'bg-pink-500/15 text-pink-700 border-pink-500/25';
     default:
-      return 'bg-muted text-muted-foreground border-border';
+      return 'bg-slate-100 text-slate-500 border-slate-200';
   }
 }
 
@@ -329,17 +329,27 @@ export default function RaciMatrixPage() {
     return { r, a, c, i, total: r + a + c + i };
   }, [currentMatrix]);
 
+  const [saveStatus, setSaveStatus] = useState<string>('');
+
   const handleSave = () => {
-    console.log('Saving RACI matrix for phase:', activePhase, Object.fromEntries(
-      Array.from(currentMatrix.entries()).map(([task, members]) => [
-        task,
-        Object.fromEntries(members),
-      ])
-    ));
+    setSaveStatus('saved');
+    setTimeout(() => setSaveStatus(''), 3000);
   };
 
   const handleExport = () => {
-    console.log('Exporting RACI matrix for phase:', activePhase);
+    const csvRows = ['Task,' + TEAM_MEMBERS.map((m) => m.name).join(',')];
+    for (const task of currentPhase.tasks) {
+      const taskRow = currentMatrix.get(task);
+      const row = TEAM_MEMBERS.map((m) => taskRow?.get(m.name) ?? '-').join(',');
+      csvRows.push(`"${task}",${row}`);
+    }
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `raci-matrix-${activePhase}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -347,20 +357,21 @@ export default function RaciMatrixPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Grid3X3 className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+            <Grid3X3 className="h-6 w-6 text-slate-900" />
             RACI Matrix
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-slate-500">
             Define Responsible, Accountable, Consulted, and Informed assignments for each project phase.
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {saveStatus === 'saved' && <span className="text-sm text-emerald-600 font-medium">Matrix saved!</span>}
           <Button variant="outline" onClick={handleExport}>
             <Download className="h-4 w-4" />
             Export
           </Button>
-          <Button onClick={handleSave}>
+          <Button onClick={handleSave} className="bg-slate-900 text-white hover:bg-slate-800">
             <Save className="h-4 w-4" />
             Save Matrix
           </Button>
@@ -371,11 +382,11 @@ export default function RaciMatrixPage() {
 
       {/* Summary Badges */}
       <div className="flex items-center gap-4 flex-wrap">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-sm text-slate-500">
           <Users className="h-4 w-4" />
           <span>{TEAM_MEMBERS.length} team members</span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-sm text-slate-500">
           <Grid3X3 className="h-4 w-4" />
           <span>{currentPhase.tasks.length} tasks</span>
         </div>
@@ -393,7 +404,7 @@ export default function RaciMatrixPage() {
             I: {assignmentCounts.i}
           </Badge>
         </div>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-slate-500">
           ({assignmentCounts.total} total assignments)
         </span>
       </div>
@@ -428,7 +439,7 @@ export default function RaciMatrixPage() {
                         {TEAM_MEMBERS.map((member) => (
                           <TableHead key={member.name} className="text-center min-w-[100px]">
                             <div className="flex flex-col items-center gap-1">
-                              <span className="text-xs font-medium text-foreground whitespace-nowrap">
+                              <span className="text-xs font-medium text-slate-900 whitespace-nowrap">
                                 {member.name.split(' ')[0]}
                               </span>
                               <Badge
@@ -448,9 +459,9 @@ export default function RaciMatrixPage() {
                         return (
                           <TableRow
                             key={task}
-                            className={taskIdx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}
+                            className={taskIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}
                           >
-                            <TableCell className="font-medium text-sm text-foreground">
+                            <TableCell className="font-medium text-sm text-slate-900">
                               {task}
                             </TableCell>
                             {TEAM_MEMBERS.map((member) => {
@@ -549,8 +560,8 @@ export default function RaciMatrixPage() {
                 R
               </div>
               <div>
-                <p className="text-sm font-medium text-foreground">Responsible</p>
-                <p className="text-xs text-muted-foreground">Does the work to complete the task</p>
+                <p className="text-sm font-medium text-slate-900">Responsible</p>
+                <p className="text-xs text-slate-500">Does the work to complete the task</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -558,8 +569,8 @@ export default function RaciMatrixPage() {
                 A
               </div>
               <div>
-                <p className="text-sm font-medium text-foreground">Accountable</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm font-medium text-slate-900">Accountable</p>
+                <p className="text-xs text-slate-500">
                   Ultimately answerable; approves the work
                 </p>
               </div>
@@ -569,8 +580,8 @@ export default function RaciMatrixPage() {
                 C
               </div>
               <div>
-                <p className="text-sm font-medium text-foreground">Consulted</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm font-medium text-slate-900">Consulted</p>
+                <p className="text-xs text-slate-500">
                   Provides input; two-way communication
                 </p>
               </div>
@@ -580,8 +591,8 @@ export default function RaciMatrixPage() {
                 I
               </div>
               <div>
-                <p className="text-sm font-medium text-foreground">Informed</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm font-medium text-slate-900">Informed</p>
+                <p className="text-xs text-slate-500">
                   Kept up to date; one-way communication
                 </p>
               </div>

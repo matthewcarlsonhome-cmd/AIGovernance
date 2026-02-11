@@ -76,14 +76,13 @@ export async function PUT(
       );
     }
 
-    const updatePayload = {
-      value: parsed.data.value,
-      responded_by: user.id,
-      updated_at: new Date().toISOString(),
-    };
-    const { data: updated, error } = await (supabase
-      .from('assessment_responses') as any)
-      .update(updatePayload)
+    const { data: updated, error } = await supabase
+      .from('assessment_responses')
+      .update({
+        value: parsed.data.value,
+        responded_by: user.id,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', responseId)
       .select()
       .single();

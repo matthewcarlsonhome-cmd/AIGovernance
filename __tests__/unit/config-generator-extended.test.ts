@@ -66,7 +66,7 @@ describe('Config Generator - Extended', () => {
     });
 
     it('should use default vpc_cidr when not provided', () => {
-      const config = { ...DEFAULT_CONFIG, vpc_cidr: undefined };
+      const config = { ...DEFAULT_CONFIG, vpc_cidr: null };
       const result = generateDockerCompose(config);
       expect(result.content).toContain('10.100.0.0/16');
     });
@@ -293,7 +293,7 @@ describe('Config Generator - Extended', () => {
     });
 
     it('should use default vpc_cidr when not provided', () => {
-      const config = { ...DEFAULT_CONFIG, vpc_cidr: undefined };
+      const config = { ...DEFAULT_CONFIG, vpc_cidr: null };
       const result = generateRequirementsToml(config);
       expect(result.content).toContain('vpc_cidr = "10.100.0.0/16"');
     });

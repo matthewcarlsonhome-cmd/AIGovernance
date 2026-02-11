@@ -21,12 +21,12 @@ export default function ErrorBoundary({
       <Card className="w-full max-w-md">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <AlertTriangle className="h-5 w-5 text-red-500" />
             <CardTitle>Something went wrong</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-slate-500">
             {error.message || 'An unexpected error occurred. Please try again.'}
           </p>
         </CardContent>
