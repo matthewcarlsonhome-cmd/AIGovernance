@@ -12,7 +12,16 @@ export type PromptType =
   | 'report_narrative'
   | 'meeting_summary'
   | 'risk_assessment'
-  | 'proposal_narrative';
+  | 'proposal_narrative'
+  | 'governance_maturity'
+  | 'usage_playbook'
+  | 'client_brief'
+  | 'ethics_review'
+  | 'change_management'
+  | 'stakeholder_communication'
+  | 'vendor_evaluation'
+  | 'use_case_prioritization'
+  | 'compliance_analysis';
 
 export interface PromptTemplate {
   type: PromptType;
@@ -279,6 +288,375 @@ Tailor the proposal section to the specified section type (executive summary, te
 };
 
 // ---------------------------------------------------------------------------
+// Governance Maturity Assessment
+// ---------------------------------------------------------------------------
+
+const governanceMaturityTemplate: PromptTemplate = {
+  type: 'governance_maturity',
+  system: `You are a Senior AI Governance Strategist with expertise in the EU AI Act, NIST AI RMF, and ISO/IEC 42001.
+Assess the organization's AI governance maturity across six dimensions:
+1. Policy & Standards (documentation, enforcement, review cycles)
+2. Risk Management (identification, monitoring, mitigation)
+3. Data Governance (classification, quality, lineage, retention)
+4. Access & Controls (authentication, authorization, audit logging)
+5. Vendor Management (assessment, contracts, monitoring)
+6. Training & Awareness (programs, certifications, culture)
+
+For each dimension, rate maturity from Level 1 (Ad Hoc) to Level 5 (Optimized).
+Provide specific evidence-based justifications.
+Include a gap analysis with Critical, Significant, and Improvement categories.
+Generate a prioritized remediation roadmap with immediate (0-30 day), short-term (1-3 month), medium-term (3-6 month), and long-term (6-12 month) actions.
+Include industry-specific regulatory considerations when industry context is provided.
+Do not provide legal advice or guarantee compliance outcomes.`,
+
+  buildUserMessage(context) {
+    const parts: string[] = [];
+    const orgName = str(context, 'organization_name', 'the organization');
+    const industry = str(context, 'industry');
+    const maturityData = jsonBlock(context, 'maturity_scores');
+    const assessmentData = jsonBlock(context, 'assessment_responses');
+    const prompt = str(context, 'prompt');
+
+    parts.push(`Organization: ${orgName}`);
+    if (industry) parts.push(`Industry: ${industry}`);
+    if (maturityData) parts.push(`\nCurrent Maturity Scores:\n${maturityData}`);
+    if (assessmentData) parts.push(`\nAssessment Data:\n${assessmentData}`);
+    if (prompt) parts.push(`\nSpecific Request:\n${prompt}`);
+    return parts.join('\n');
+  },
+};
+
+// ---------------------------------------------------------------------------
+// AI Usage Playbook Builder
+// ---------------------------------------------------------------------------
+
+const usagePlaybookTemplate: PromptTemplate = {
+  type: 'usage_playbook',
+  system: `You are a Senior AI Policy Architect specializing in enterprise AI governance and workforce enablement.
+Generate a comprehensive AI Usage Playbook with:
+1. Three Golden Rules (clear, memorable, enforceable)
+2. Data Traffic Light (GREEN/YELLOW/RED classification for data types)
+3. Tool-Specific Guidelines for each approved AI tool
+4. Approved Activities, Prohibited Activities, and Activities Requiring Approval
+5. Decision tree for "Should I use AI for this task?"
+6. Disclosure and Attribution policy
+7. Training requirements
+8. Escalation and support paths
+
+Write in clear, jargon-free language at 8th-grade reading level.
+Be practical and specific with examples.
+Balance enablement (productivity) with risk management (security).
+Do not use fear-based messaging.`,
+
+  buildUserMessage(context) {
+    const parts: string[] = [];
+    parts.push(`Organization: ${str(context, 'organization_name', 'the organization')}`);
+    if (str(context, 'industry')) parts.push(`Industry: ${str(context, 'industry')}`);
+    if (str(context, 'organization_size')) parts.push(`Size: ${str(context, 'organization_size')}`);
+    const tools = jsonBlock(context, 'approved_tools');
+    if (tools) parts.push(`\nApproved AI Tools:\n${tools}`);
+    const dataRules = jsonBlock(context, 'data_rules');
+    if (dataRules) parts.push(`\nData Classification Rules:\n${dataRules}`);
+    if (str(context, 'prompt')) parts.push(`\nSpecific Request:\n${str(context, 'prompt')}`);
+    return parts.join('\n');
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Client Brief Generator
+// ---------------------------------------------------------------------------
+
+const clientBriefTemplate: PromptTemplate = {
+  type: 'client_brief',
+  system: `You are a Senior AI Governance Communications Specialist creating client-facing materials.
+Generate a professional AI Governance Client Brief that addresses enterprise client concerns.
+Use the A.C.E. method for objection handling: Acknowledge, Clarify, Evidence.
+Include:
+1. Executive Summary with key assurances (data privacy, security, compliance, human oversight, transparency)
+2. Data Handling Explainer (step-by-step data flow)
+3. Security Controls Summary in plain language
+4. Compliance Alignment Matrix
+5. FAQ sections for non-technical and technical stakeholders
+6. Talking Points by stakeholder role (C-Suite, Legal, IT/Security)
+7. Risk Mitigation Summary
+8. Next Steps and available documentation
+
+Calibrate tone based on client risk posture (conservative/moderate/progressive).
+Be confident but never dismissive of concerns.
+Do not make unsubstantiated claims or guarantee compliance.`,
+
+  buildUserMessage(context) {
+    const parts: string[] = [];
+    parts.push(`Client Industry: ${str(context, 'client_industry', 'Enterprise')}`);
+    parts.push(`Risk Posture: ${str(context, 'risk_posture', 'moderate')}`);
+    if (str(context, 'organization_name')) parts.push(`Our Organization: ${str(context, 'organization_name')}`);
+    const concerns = strList(context, 'client_concerns');
+    if (concerns.length > 0) parts.push(`\nClient Concerns:\n${concerns.map(c => `- ${c}`).join('\n')}`);
+    const certs = strList(context, 'certifications');
+    if (certs.length > 0) parts.push(`\nOur Certifications: ${certs.join(', ')}`);
+    const capabilities = jsonBlock(context, 'ai_capabilities');
+    if (capabilities) parts.push(`\nAI Capabilities:\n${capabilities}`);
+    if (str(context, 'prompt')) parts.push(`\nSpecific Request:\n${str(context, 'prompt')}`);
+    return parts.join('\n');
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Ethics Review
+// ---------------------------------------------------------------------------
+
+const ethicsReviewTemplate: PromptTemplate = {
+  type: 'ethics_review',
+  system: `You are an AI Ethics expert with experience in responsible AI frameworks, fairness in ML, and regulatory compliance.
+Conduct an ethical assessment of the AI system covering:
+1. Fairness Assessment - analyze protected characteristics and potential disparate impact
+2. Bias Analysis - assess 5 bias types (Historical, Representation, Measurement, Aggregation, Evaluation)
+3. Privacy Assessment - data minimization, consent, protection
+4. Transparency & Explainability evaluation
+5. Human Oversight adequacy
+6. Safety & Security risks
+7. Regulatory Compliance mapping (EU AI Act risk classification)
+8. Risk Register with likelihood, impact, and mitigation
+
+Classify overall system risk as Low/Medium/High/Critical.
+Provide specific, actionable recommendations for each finding.
+Be thorough but practical - focus on real risks, not theoretical ones.`,
+
+  buildUserMessage(context) {
+    const parts: string[] = [];
+    parts.push(`System Name: ${str(context, 'system_name', 'AI System')}`);
+    parts.push(`System Purpose: ${str(context, 'system_purpose', 'Not specified')}`);
+    if (str(context, 'deployment_context')) parts.push(`Deployment: ${str(context, 'deployment_context')}`);
+    if (str(context, 'affected_groups')) parts.push(`Affected Groups: ${str(context, 'affected_groups')}`);
+    const existingReview = jsonBlock(context, 'existing_review');
+    if (existingReview) parts.push(`\nExisting Review Data:\n${existingReview}`);
+    if (str(context, 'prompt')) parts.push(`\nSpecific Request:\n${str(context, 'prompt')}`);
+    return parts.join('\n');
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Change Management Plan
+// ---------------------------------------------------------------------------
+
+const changeManagementTemplate: PromptTemplate = {
+  type: 'change_management',
+  system: `You are a Chief Transformation Officer and Organizational Change Management expert.
+Generate a comprehensive AI Change Management Playbook including:
+1. Change Readiness Assessment (7 factors scored)
+2. Stakeholder Mapping & Engagement Plan (influence/impact matrix)
+3. Communication Strategy (message architecture, channel strategy, calendar)
+4. Training & Capability Building Program (learning needs, modules, paths by role)
+5. Resistance Management Plan (patterns, interventions, psychological safety)
+6. Adoption Measurement Framework (awareness, adoption, sustainability KPIs)
+
+Tailor recommendations to the organization's size, industry, and AI maturity.
+Focus on practical, implementable actions.
+Balance urgency with empathy.
+Use Prosci ADKAR model principles where appropriate.`,
+
+  buildUserMessage(context) {
+    const parts: string[] = [];
+    parts.push(`Organization: ${str(context, 'organization_name', 'the organization')}`);
+    if (str(context, 'industry')) parts.push(`Industry: ${str(context, 'industry')}`);
+    if (str(context, 'organization_size')) parts.push(`Size: ${str(context, 'organization_size')}`);
+    if (str(context, 'ai_initiative')) parts.push(`AI Initiative: ${str(context, 'ai_initiative')}`);
+    if (str(context, 'affected_employees')) parts.push(`Affected Employees: ${str(context, 'affected_employees')}`);
+    const readiness = jsonBlock(context, 'readiness_data');
+    if (readiness) parts.push(`\nReadiness Assessment Data:\n${readiness}`);
+    const stakeholders = jsonBlock(context, 'stakeholder_data');
+    if (stakeholders) parts.push(`\nStakeholder Data:\n${stakeholders}`);
+    if (str(context, 'prompt')) parts.push(`\nSpecific Request:\n${str(context, 'prompt')}`);
+    return parts.join('\n');
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Stakeholder Communication Package
+// ---------------------------------------------------------------------------
+
+const stakeholderCommunicationTemplate: PromptTemplate = {
+  type: 'stakeholder_communication',
+  system: `You are a Chief Communications Officer specializing in AI initiative communications.
+Generate a comprehensive Stakeholder Communication Package including:
+1. Board Presentation Outline (5-slide structure with key metrics, risk status, strategic outlook)
+2. Executive Briefing Document (situation, progress, metrics, risks, decisions, next steps)
+3. Employee Announcement (vision, what's changing, what it means for you, support available)
+4. Employee FAQ (job impact, timeline, training, feedback channels)
+5. Manager Talking Points (opening, key messages, anticipated questions, escalation)
+6. Customer Communication (benefit headline, privacy commitment, getting started)
+7. AI Transparency Statement (purpose, data usage, human oversight, limitations, user control)
+
+Calibrate language and depth for each audience.
+Be transparent and honest - never minimize legitimate concerns.
+Include concrete examples and proof points.`,
+
+  buildUserMessage(context) {
+    const parts: string[] = [];
+    parts.push(`Organization: ${str(context, 'organization_name', 'the organization')}`);
+    parts.push(`AI Initiative: ${str(context, 'ai_initiative', 'AI Adoption Program')}`);
+    if (str(context, 'industry')) parts.push(`Industry: ${str(context, 'industry')}`);
+    if (str(context, 'communication_type')) parts.push(`Communication Type: ${str(context, 'communication_type')}`);
+    if (str(context, 'target_audience')) parts.push(`Target Audience: ${str(context, 'target_audience')}`);
+    const milestones = strList(context, 'milestones');
+    if (milestones.length > 0) parts.push(`\nKey Milestones:\n${milestones.map(m => `- ${m}`).join('\n')}`);
+    const metrics = jsonBlock(context, 'key_metrics');
+    if (metrics) parts.push(`\nKey Metrics:\n${metrics}`);
+    if (str(context, 'prompt')) parts.push(`\nSpecific Request:\n${str(context, 'prompt')}`);
+    return parts.join('\n');
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Vendor Evaluation Analysis
+// ---------------------------------------------------------------------------
+
+const vendorEvaluationTemplate: PromptTemplate = {
+  type: 'vendor_evaluation',
+  system: `You are a Senior AI Procurement and Vendor Assessment Specialist with deep expertise in enterprise software evaluation.
+Analyze AI tool vendors across seven standardised dimensions:
+1. Technical Capabilities - model quality, feature breadth, performance benchmarks
+2. Security Posture - data handling, encryption, certifications, incident history
+3. Compliance Coverage - regulatory framework support, audit readiness, certifications
+4. Integration Ease - API quality, SDK support, existing tool chain compatibility
+5. Cost & Economics - licensing model, total cost of ownership, hidden costs
+6. Vendor Viability - financial health, market position, roadmap credibility
+7. Support Quality - SLA terms, documentation, community, enterprise support tiers
+
+When vendor scores are provided, interpret the weighted results and explain strengths, weaknesses, and red flags.
+Provide a clear recommendation tier (Recommended, Alternative, Not Recommended) with justification.
+Include a head-to-head comparison narrative when multiple vendors are evaluated.
+Highlight contractual and data-handling risks specific to AI tool procurement.
+Do not endorse specific vendors without evidence-based justification from the provided data.`,
+
+  buildUserMessage(context) {
+    const parts: string[] = [];
+
+    parts.push(`Organization: ${str(context, 'organization_name', 'the organization')}`);
+    if (str(context, 'industry')) parts.push(`Industry: ${str(context, 'industry')}`);
+    if (str(context, 'evaluation_purpose')) parts.push(`Evaluation Purpose: ${str(context, 'evaluation_purpose')}`);
+
+    const vendorData = jsonBlock(context, 'vendor_evaluations');
+    if (vendorData) parts.push(`\nVendor Evaluation Data:\n${vendorData}`);
+
+    const requirements = strList(context, 'requirements');
+    if (requirements.length > 0) {
+      parts.push(`\nKey Requirements:\n${requirements.map((r) => `- ${r}`).join('\n')}`);
+    }
+
+    const complianceNeeds = strList(context, 'compliance_frameworks');
+    if (complianceNeeds.length > 0) {
+      parts.push(`Compliance Requirements: ${complianceNeeds.join(', ')}`);
+    }
+
+    if (str(context, 'budget_range')) parts.push(`Budget Range: ${str(context, 'budget_range')}`);
+    if (str(context, 'prompt')) parts.push(`\nSpecific Request:\n${str(context, 'prompt')}`);
+
+    return parts.join('\n');
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Use Case Prioritization Analysis
+// ---------------------------------------------------------------------------
+
+const useCasePrioritizationTemplate: PromptTemplate = {
+  type: 'use_case_prioritization',
+  system: `You are a Senior AI Strategy Consultant specializing in enterprise AI portfolio management and use case prioritization.
+Analyze and prioritize AI use cases across four weighted dimensions:
+1. Strategic Value (40%) - alignment with business objectives, competitive advantage, revenue impact
+2. Technical Feasibility (25%) - data readiness, infrastructure maturity, skill availability
+3. Implementation Risk (20%) - regulatory exposure, integration complexity, change management burden
+4. Time to Value (15%) - development timeline, quick wins potential, dependency chains
+
+Classify each use case into a portfolio quadrant:
+- Strategic Imperative (score >= 8.0): Highest priority, allocate resources immediately
+- High-Value Opportunity (score >= 6.5): Strong candidates for near-term investment
+- Foundation Builder (score >= 5.0): Worth pursuing with measured investment
+- Watch List (score < 5.0): Monitor and reassess in future planning cycles
+
+Assign implementation waves (Wave 1: immediate, Wave 2: near-term, Wave 3: future).
+Identify dependencies between use cases that affect sequencing.
+Provide a narrative rationale for the prioritized portfolio with resource allocation guidance.
+When ROI estimates are provided, incorporate financial context into the prioritization narrative.`,
+
+  buildUserMessage(context) {
+    const parts: string[] = [];
+
+    parts.push(`Organization: ${str(context, 'organization_name', 'the organization')}`);
+    if (str(context, 'industry')) parts.push(`Industry: ${str(context, 'industry')}`);
+    if (str(context, 'strategic_goals')) parts.push(`Strategic Goals: ${str(context, 'strategic_goals')}`);
+
+    const useCaseData = jsonBlock(context, 'use_cases');
+    if (useCaseData) parts.push(`\nUse Case Portfolio Data:\n${useCaseData}`);
+
+    const constraints = strList(context, 'constraints');
+    if (constraints.length > 0) {
+      parts.push(`\nConstraints:\n${constraints.map((c) => `- ${c}`).join('\n')}`);
+    }
+
+    if (str(context, 'budget')) parts.push(`Available Budget: ${str(context, 'budget')}`);
+    if (str(context, 'team_capacity')) parts.push(`Team Capacity: ${str(context, 'team_capacity')}`);
+    if (str(context, 'prompt')) parts.push(`\nSpecific Request:\n${str(context, 'prompt')}`);
+
+    return parts.join('\n');
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Compliance Gap Analysis
+// ---------------------------------------------------------------------------
+
+const complianceAnalysisTemplate: PromptTemplate = {
+  type: 'compliance_analysis',
+  system: `You are a Senior Regulatory Compliance and AI Law Specialist with expertise in the EU AI Act, GDPR, HIPAA, SOC 2, NIST AI RMF, and ISO/IEC 42001.
+Conduct a comprehensive compliance gap analysis for AI systems covering:
+1. Framework-by-framework requirement assessment with article-level detail
+2. Current compliance status classification (Compliant, Partial, Non-Compliant, Needs Review, Not Applicable)
+3. Gap identification with severity rating (Critical, High, Medium, Low)
+4. Evidence requirements for each compliance item
+5. Remediation recommendations prioritised by risk and effort
+6. Cross-framework synergies (controls that satisfy multiple frameworks simultaneously)
+7. Timeline estimate for achieving compliance by framework
+
+When compliance requirement data is provided, assess each item and identify gaps.
+Map controls across frameworks to reduce duplication of effort.
+Provide specific, actionable remediation steps rather than generic guidance.
+Include estimated effort (hours/days) and responsible roles for each remediation task.
+Flag any requirements with upcoming regulatory deadlines or enforcement actions.
+Do not provide legal advice or guarantee compliance outcomes.`,
+
+  buildUserMessage(context) {
+    const parts: string[] = [];
+
+    parts.push(`Organization: ${str(context, 'organization_name', 'the organization')}`);
+    if (str(context, 'industry')) parts.push(`Industry: ${str(context, 'industry')}`);
+
+    const frameworks = strList(context, 'compliance_frameworks');
+    if (frameworks.length > 0) {
+      parts.push(`Target Frameworks: ${frameworks.join(', ')}`);
+    }
+
+    const requirementData = jsonBlock(context, 'requirements');
+    if (requirementData) parts.push(`\nCompliance Requirements Data:\n${requirementData}`);
+
+    const existingControls = jsonBlock(context, 'existing_controls');
+    if (existingControls) parts.push(`\nExisting Controls:\n${existingControls}`);
+
+    const riskData = jsonBlock(context, 'risk_classifications');
+    if (riskData) parts.push(`\nRisk Classifications:\n${riskData}`);
+
+    if (str(context, 'ai_system_description')) {
+      parts.push(`\nAI System Description: ${str(context, 'ai_system_description')}`);
+    }
+    if (str(context, 'data_types')) parts.push(`Data Types Processed: ${str(context, 'data_types')}`);
+    if (str(context, 'prompt')) parts.push(`\nSpecific Request:\n${str(context, 'prompt')}`);
+
+    return parts.join('\n');
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
@@ -288,6 +666,15 @@ export const PROMPT_TEMPLATES: Record<PromptType, PromptTemplate> = {
   meeting_summary: meetingSummaryTemplate,
   risk_assessment: riskAssessmentTemplate,
   proposal_narrative: proposalNarrativeTemplate,
+  governance_maturity: governanceMaturityTemplate,
+  usage_playbook: usagePlaybookTemplate,
+  client_brief: clientBriefTemplate,
+  ethics_review: ethicsReviewTemplate,
+  change_management: changeManagementTemplate,
+  stakeholder_communication: stakeholderCommunicationTemplate,
+  vendor_evaluation: vendorEvaluationTemplate,
+  use_case_prioritization: useCasePrioritizationTemplate,
+  compliance_analysis: complianceAnalysisTemplate,
 };
 
 /**

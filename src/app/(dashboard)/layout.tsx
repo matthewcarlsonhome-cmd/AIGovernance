@@ -36,13 +36,19 @@ import {
   PanelLeft,
   ChevronDown,
   ChevronRight,
-  Calculator,
   Grid3X3,
   Calendar,
   DollarSign,
   Camera,
   Rocket,
   HelpCircle,
+  Heart,
+  BookOpen,
+  Network,
+  RefreshCw,
+  Beaker,
+  ListOrdered,
+  PackageSearch,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -87,6 +93,9 @@ function buildProjectSections(projectId: string): NavSection[] {
         { label: 'Gate Reviews', href: p('/governance/gates'), icon: ShieldCheck },
         { label: 'Compliance', href: p('/governance/compliance'), icon: Scale },
         { label: 'Risk', href: p('/governance/risk'), icon: AlertTriangle },
+        { label: 'Ethics Review', href: p('/governance/ethics'), icon: Heart },
+        { label: 'AI Playbook', href: p('/governance/playbook'), icon: BookOpen },
+        { label: 'Data Flows', href: p('/governance/data-flows'), icon: Network },
         { label: 'RACI Matrix', href: p('/governance/raci'), icon: Grid3X3 },
       ],
     },
@@ -105,6 +114,9 @@ function buildProjectSections(projectId: string): NavSection[] {
         { label: 'Sprints', href: p('/poc/sprints'), icon: Timer },
         { label: 'Compare Tools', href: p('/poc/compare'), icon: GitCompare },
         { label: 'Metrics', href: p('/poc/metrics'), icon: TrendingUp },
+        { label: 'Pilot Design', href: p('/poc/pilot-design'), icon: Beaker },
+        { label: 'Prioritize', href: p('/poc/prioritize'), icon: ListOrdered },
+        { label: 'Vendor Eval', href: p('/poc/vendor-eval'), icon: PackageSearch },
       ],
     },
     {
@@ -113,6 +125,12 @@ function buildProjectSections(projectId: string): NavSection[] {
         { label: 'Gantt Chart', href: p('/timeline/gantt'), icon: CalendarRange },
         { label: 'Milestones', href: p('/timeline/milestones'), icon: Flag },
         { label: 'Snapshots', href: p('/timeline/snapshots'), icon: Camera },
+      ],
+    },
+    {
+      title: 'Change Mgmt',
+      items: [
+        { label: 'Change Plan', href: p('/change-management'), icon: RefreshCw },
       ],
     },
     {

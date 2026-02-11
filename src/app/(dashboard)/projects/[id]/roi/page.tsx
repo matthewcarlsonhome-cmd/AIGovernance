@@ -41,10 +41,11 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-import type { RoiInputs, RoiResults, SensitivityRow } from '@/types';
+import type { RoiInputs, RoiResults, SensitivityRow, EnhancedRoiInputs, EnhancedRoiResults } from '@/types';
 import {
   calculateRoi,
   calculateSensitivity,
+  calculateEnhancedRoi,
   formatCurrency,
   formatPercent,
 } from '@/lib/scoring/roi-calculator';
@@ -198,6 +199,19 @@ export default function RoiCalculatorPage(): React.ReactElement {
   const [inputs, setInputs] = React.useState<RoiInputs>(DEFAULT_INPUTS);
   const [results, setResults] = React.useState<RoiResults | null>(null);
   const [sensitivity, setSensitivity] = React.useState<SensitivityRow[]>([]);
+  const [showEnhanced, setShowEnhanced] = React.useState(false);
+  const [enhancedResults, setEnhancedResults] = React.useState<EnhancedRoiResults | null>(null);
+  const [enhancedExtras, setEnhancedExtras] = React.useState({
+    infrastructure_cost: 15000,
+    data_engineering_cost: 10000,
+    change_management_cost: 8000,
+    ongoing_infrastructure: 2000,
+    ongoing_support_fte: 0.25,
+    support_fte_salary: 120000,
+    revenue_increase_pct: 5,
+    error_reduction_pct: 30,
+    error_cost_annual: 50000,
+  });
 
   /* ---- Debounced auto-calculate ---- */
   const debouncedInputs = useDebounce(inputs, DEBOUNCE_MS);
@@ -531,6 +545,180 @@ export default function RoiCalculatorPage(): React.ReactElement {
       {/* ------------------------------------------------------------------ */}
       {/*  Sensitivity Analysis                                               */}
       {/* ------------------------------------------------------------------ */}
+      {/* ------------------------------------------------------------------ */}
+      {/*  Enhanced TCO & Scenario Analysis Toggle                            */}
+      {/* ------------------------------------------------------------------ */}
+      {results && (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => {
+              setShowEnhanced(!showEnhanced);
+              if (!showEnhanced && !enhancedResults) {
+                const enhanced = calculateEnhancedRoi({ ...inputs, ...enhancedExtras });
+                setEnhancedResults(enhanced);
+              }
+            }}
+          >
+            <TrendingUp className="h-4 w-4" />
+            {showEnhanced ? 'Hide' : 'Show'} TCO & Scenario Analysis
+          </Button>
+        </div>
+      )}
+
+      {showEnhanced && enhancedResults && (
+        <>
+          <Separator />
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-1">
+              <TrendingUp className="h-5 w-5 text-slate-900" />
+              Total Cost of Ownership
+            </h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Full lifecycle cost analysis including infrastructure, support, and change management.
+            </p>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Initial Investment</p>
+                  <p className="text-xl font-bold text-slate-900">{formatCurrency(enhancedResults.tco_initial)}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Annual Operating</p>
+                  <p className="text-xl font-bold text-slate-900">{formatCurrency(enhancedResults.tco_annual)}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">3-Year TCO</p>
+                  <p className="text-xl font-bold text-red-600">{formatCurrency(enhancedResults.tco_three_year)}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Internal Rate of Return</p>
+                  <p className="text-xl font-bold text-emerald-600">{enhancedResults.irr}%</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Benefit Breakdown */}
+            <Card className="mb-6">
+              <CardHeader><CardTitle className="text-base">Annual Benefit Breakdown</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {[
+                    { label: 'Productivity Gains', value: enhancedResults.benefit_breakdown.productivity, color: 'bg-emerald-500' },
+                    { label: 'Revenue Impact', value: enhancedResults.benefit_breakdown.revenue, color: 'bg-blue-500' },
+                    { label: 'Error Reduction Savings', value: enhancedResults.benefit_breakdown.error_savings, color: 'bg-purple-500' },
+                    { label: 'Cost Reduction', value: enhancedResults.benefit_breakdown.cost_reduction, color: 'bg-amber-500' },
+                  ].map((item) => {
+                    const total = enhancedResults.benefit_breakdown.productivity + enhancedResults.benefit_breakdown.revenue + enhancedResults.benefit_breakdown.error_savings;
+                    const pct = total > 0 ? Math.round((Math.abs(item.value) / total) * 100) : 0;
+                    return (
+                      <div key={item.label} className="flex items-center gap-3">
+                        <div className={`w-3 h-3 rounded-full ${item.color}`} />
+                        <span className="text-sm text-slate-600 w-44">{item.label}</span>
+                        <div className="flex-1 bg-slate-100 rounded-full h-2">
+                          <div className={`h-2 rounded-full ${item.color}`} style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="text-sm font-medium text-slate-900 w-28 text-right">{formatCurrency(item.value)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Scenario Analysis */}
+            <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-1 mt-8">
+              <BarChart3 className="h-5 w-5 text-slate-900" />
+              Scenario Analysis
+            </h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Probability-weighted scenarios from optimistic to pessimistic.
+            </p>
+            <Card className="mb-6">
+              <CardContent className="pt-6">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Scenario</TableHead>
+                      <TableHead className="text-right">Probability</TableHead>
+                      <TableHead className="text-right">Revenue Mult.</TableHead>
+                      <TableHead className="text-right">Cost Mult.</TableHead>
+                      <TableHead className="text-right">3-Year NPV</TableHead>
+                      <TableHead className="text-right">ROI %</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {enhancedResults.scenarios.map((s) => (
+                      <TableRow key={s.scenario} className={s.scenario === 'base' ? 'bg-slate-50 font-medium' : ''}>
+                        <TableCell>
+                          <Badge variant={
+                            s.scenario === 'optimistic' ? 'default' :
+                            s.scenario === 'base' ? 'secondary' :
+                            s.scenario === 'conservative' ? 'outline' : 'destructive'
+                          }>
+                            {s.scenario.charAt(0).toUpperCase() + s.scenario.slice(1)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">{(s.probability * 100).toFixed(0)}%</TableCell>
+                        <TableCell className="text-right">{s.revenue_multiplier.toFixed(2)}x</TableCell>
+                        <TableCell className="text-right">{s.cost_multiplier.toFixed(2)}x</TableCell>
+                        <TableCell className={cn('text-right font-semibold', s.npv >= 0 ? 'text-emerald-600' : 'text-red-600')}>
+                          {formatCurrency(s.npv)}
+                        </TableCell>
+                        <TableCell className={cn('text-right', s.roi >= 0 ? 'text-emerald-600' : 'text-red-600')}>
+                          {formatPercent(s.roi)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <div className="mt-4 p-3 bg-slate-50 rounded-lg">
+                  <p className="text-sm text-slate-700">
+                    <strong>Expected NPV (probability-weighted):</strong>{' '}
+                    <span className={enhancedResults.expected_npv >= 0 ? 'text-emerald-600 font-bold' : 'text-red-600 font-bold'}>
+                      {formatCurrency(enhancedResults.expected_npv)}
+                    </span>
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 5-Year Cash Flow */}
+            <Card>
+              <CardHeader><CardTitle className="text-base">5-Year Cash Flow Projection</CardTitle></CardHeader>
+              <CardContent>
+                <div className="flex items-end gap-2 h-40">
+                  {enhancedResults.five_year_cashflows.map((cf, i) => {
+                    const max = Math.max(...enhancedResults.five_year_cashflows.map(Math.abs));
+                    const height = max > 0 ? (Math.abs(cf) / max) * 100 : 0;
+                    return (
+                      <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                        <span className={cn('text-xs font-medium', cf >= 0 ? 'text-emerald-600' : 'text-red-600')}>
+                          {formatCurrency(cf)}
+                        </span>
+                        <div
+                          className={cn('w-full rounded-t', cf >= 0 ? 'bg-emerald-500' : 'bg-red-400')}
+                          style={{ height: `${height}%`, minHeight: '4px' }}
+                        />
+                        <span className="text-xs text-slate-500">Y{i + 1}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
+
       {sensitivity.length > 0 && (
         <>
           <Separator />

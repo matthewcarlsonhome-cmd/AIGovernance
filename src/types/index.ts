@@ -484,6 +484,403 @@ export interface NavItem {
   roles?: UserRole[];
 }
 
+// Industry types
+export type Industry = 'financial_services' | 'healthcare' | 'government' | 'technology' | 'manufacturing' | 'retail' | 'education' | 'other';
+
+// Maturity Assessment types
+export type MaturityDimension = 'policy_standards' | 'risk_management' | 'data_governance' | 'access_controls' | 'vendor_management' | 'training_awareness';
+export type MaturityLevel = 1 | 2 | 3 | 4 | 5;
+
+export interface MaturitySubScores {
+  documentation: number;
+  implementation: number;
+  enforcement: number;
+  measurement: number;
+  improvement: number;
+}
+
+export interface MaturityDimensionScore {
+  dimension: MaturityDimension;
+  level: MaturityLevel;
+  score: number;
+  subscores: MaturitySubScores;
+  key_gap: string;
+}
+
+export interface MaturityAssessment {
+  id: string;
+  project_id: string;
+  dimension_scores: MaturityDimensionScore[];
+  overall_score: number;
+  overall_level: MaturityLevel;
+  industry: Industry | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Enhanced Risk types
+export type RiskCategory = 'model_algorithm' | 'operational' | 'ethical_fairness' | 'regulatory_compliance' | 'security_privacy' | 'strategic_business' | 'third_party';
+
+export interface RiskHeatMapCell {
+  likelihood: number;
+  impact: number;
+  score: number;
+  rating: RiskTier;
+  risks: string[];
+}
+
+export interface RiskAssessmentSummary {
+  total_risks: number;
+  by_tier: Record<RiskTier, number>;
+  by_category: Record<RiskCategory, number>;
+  heat_map: RiskHeatMapCell[][];
+  top_risks: RiskClassification[];
+}
+
+// Enhanced Compliance types
+export type ComplianceStatus = 'compliant' | 'partial' | 'non_compliant' | 'needs_review' | 'not_applicable';
+
+export interface ComplianceRequirement {
+  id: string;
+  framework: string;
+  article: string;
+  requirement: string;
+  status: ComplianceStatus;
+  evidence: string | null;
+  gap: string | null;
+  priority: RiskTier;
+}
+
+export interface PrivacyImpactItem {
+  id: string;
+  data_type: string;
+  purpose: string;
+  legal_basis: string;
+  retention: string;
+  access: string;
+  risk_level: RiskTier;
+}
+
+// Vendor Evaluation types
+export type VendorDimension = 'capabilities' | 'security' | 'compliance' | 'integration' | 'economics' | 'viability' | 'support';
+
+export interface VendorScore {
+  dimension: VendorDimension;
+  score: number;
+  max_score: number;
+  notes: string;
+}
+
+export interface VendorEvaluation {
+  id: string;
+  project_id: string;
+  vendor_name: string;
+  dimension_scores: VendorScore[];
+  overall_score: number;
+  recommendation: 'recommended' | 'alternative' | 'not_recommended';
+  red_flags: string[];
+  strengths: string[];
+  weaknesses: string[];
+  tco_estimate: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Enhanced ROI types
+export interface EnhancedRoiInputs extends RoiInputs {
+  infrastructure_cost: number;
+  data_engineering_cost: number;
+  change_management_cost: number;
+  ongoing_infrastructure: number;
+  ongoing_support_fte: number;
+  support_fte_salary: number;
+  revenue_increase_pct: number;
+  error_reduction_pct: number;
+  error_cost_annual: number;
+}
+
+export interface ScenarioAnalysis {
+  scenario: 'optimistic' | 'base' | 'conservative' | 'pessimistic';
+  probability: number;
+  revenue_multiplier: number;
+  cost_multiplier: number;
+  npv: number;
+  roi: number;
+}
+
+export interface EnhancedRoiResults extends RoiResults {
+  tco_initial: number;
+  tco_annual: number;
+  tco_three_year: number;
+  irr: number;
+  scenarios: ScenarioAnalysis[];
+  expected_npv: number;
+  five_year_cashflows: number[];
+  benefit_breakdown: { revenue: number; cost_reduction: number; error_savings: number; productivity: number };
+}
+
+// Ethics Review types
+export type BiasType = 'historical' | 'representation' | 'measurement' | 'aggregation' | 'evaluation';
+export type FairnessMetricType = 'demographic_parity' | 'equalized_odds' | 'predictive_parity' | 'individual_fairness';
+
+export interface EthicsReview {
+  id: string;
+  project_id: string;
+  system_name: string;
+  system_purpose: string;
+  risk_classification: RiskTier;
+  bias_assessments: BiasAssessment[];
+  fairness_metrics: FairnessMetric[];
+  privacy_items: PrivacyImpactItem[];
+  transparency_level: 'black_box' | 'interpretable' | 'explainable';
+  human_oversight_controls: string[];
+  recommendations: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BiasAssessment {
+  type: BiasType;
+  risk_level: RiskTier;
+  evidence: string;
+  mitigation: string;
+}
+
+export interface FairnessMetric {
+  type: FairnessMetricType;
+  target: string;
+  current: string | null;
+  status: ComplianceStatus;
+}
+
+// Change Management types
+export interface ChangeReadinessFactor {
+  factor: string;
+  score: number;
+  weight: number;
+  notes: string;
+}
+
+export interface StakeholderGroup {
+  group: string;
+  influence: 'high' | 'medium' | 'low';
+  impact: 'high' | 'medium' | 'low';
+  current_position: 'champion' | 'advocate' | 'supporter' | 'neutral' | 'skeptic' | 'resistant';
+  target_position: 'champion' | 'advocate' | 'supporter' | 'neutral';
+  strategy: string;
+}
+
+export interface ChangeManagementPlan {
+  id: string;
+  project_id: string;
+  readiness_score: number;
+  readiness_factors: ChangeReadinessFactor[];
+  stakeholder_groups: StakeholderGroup[];
+  communication_channels: CommunicationChannel[];
+  training_modules: TrainingModule[];
+  resistance_risks: ResistanceRisk[];
+  adoption_metrics: AdoptionMetric[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommunicationChannel {
+  audience: string;
+  message_theme: string;
+  channel: string;
+  frequency: string;
+  owner: string;
+}
+
+export interface TrainingModule {
+  module: string;
+  audience: string;
+  format: string;
+  duration: string;
+  prerequisites: string;
+}
+
+export interface ResistanceRisk {
+  type: string;
+  indicators: string;
+  root_cause: string;
+  response_strategy: string;
+  intensity: 'passive' | 'skeptical' | 'active' | 'aggressive';
+}
+
+export interface AdoptionMetric {
+  category: 'awareness' | 'adoption' | 'sustainability';
+  metric: string;
+  target: string;
+  measurement_method: string;
+}
+
+// Pilot Program types
+export type PilotType = 'poc' | 'pov' | 'limited_pilot' | 'full_pilot';
+
+export interface PilotDesign {
+  id: string;
+  project_id: string;
+  pilot_type: PilotType;
+  objectives: PilotObjective[];
+  participant_criteria: ParticipantCriterion[];
+  success_criteria: SuccessCriterion[];
+  quantitative_metrics: PilotMetric[];
+  go_nogo_gates: GoNoGoGate[];
+  risk_register: PilotRisk[];
+  kill_switch_criteria: string[];
+  scale_recommendation: 'full_scale' | 'phased' | 'extended' | 'pivot' | 'discontinue' | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PilotObjective {
+  category: 'technical' | 'business' | 'user' | 'operational' | 'strategic';
+  description: string;
+  priority: 'must_have' | 'should_have' | 'nice_to_have';
+}
+
+export interface ParticipantCriterion {
+  criterion: string;
+  weight: number;
+  ideal_profile: string;
+}
+
+export interface SuccessCriterion {
+  criteria: string;
+  type: 'must_have' | 'should_have' | 'could_have';
+  threshold: string;
+  status: 'not_measured' | 'met' | 'not_met' | 'partial';
+  evidence: string;
+}
+
+export interface PilotMetric {
+  metric: string;
+  baseline: string;
+  target: string;
+  actual: string | null;
+  method: string;
+}
+
+export interface GoNoGoGate {
+  criteria: string;
+  threshold: string;
+  status: 'pass' | 'fail' | 'pending';
+  evidence: string;
+}
+
+export interface PilotRisk {
+  risk: string;
+  likelihood: RiskTier;
+  impact: RiskTier;
+  mitigation: string;
+  contingency: string;
+}
+
+// Use Case Prioritization types
+export type PriorityDimension = 'strategic_value' | 'technical_feasibility' | 'implementation_risk' | 'time_to_value';
+export type PortfolioQuadrant = 'strategic_imperative' | 'high_value' | 'foundation_builder' | 'watch_list';
+
+export interface UseCasePriority {
+  id: string;
+  project_id: string;
+  name: string;
+  description: string;
+  sponsor: string;
+  department: string;
+  dimension_scores: UseCaseDimensionScore[];
+  composite_score: number;
+  quadrant: PortfolioQuadrant;
+  implementation_wave: 1 | 2 | 3;
+  dependencies: string[];
+  roi_estimate: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UseCaseDimensionScore {
+  dimension: PriorityDimension;
+  score: number;
+  weight: number;
+  notes: string;
+}
+
+// Data Flow types
+export interface DataFlowSystem {
+  id: string;
+  project_id: string;
+  name: string;
+  type: string;
+  data_types: string[];
+  ai_integration: boolean;
+  ai_service: string | null;
+  integration_type: 'direct_api' | 'embedded' | 'middleware' | 'on_premise' | 'rag_vector' | null;
+  data_classification: 'public' | 'internal' | 'confidential' | 'restricted';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DataFlowRiskPoint {
+  id: string;
+  project_id: string;
+  system_id: string;
+  risk_description: string;
+  data_type: string;
+  threat: string;
+  score: number;
+  current_control: string | null;
+  recommended_control: string;
+  status: 'open' | 'mitigated' | 'accepted';
+}
+
+export interface VendorAssessment {
+  id: string;
+  project_id: string;
+  vendor_name: string;
+  service: string;
+  data_access: string[];
+  risk_rating: RiskTier;
+  has_dpa: boolean;
+  has_training_optout: boolean;
+  has_deletion_rights: boolean;
+  has_audit_rights: boolean;
+  key_concerns: string[];
+}
+
+// AI Usage Playbook types
+export type DataTrafficLight = 'green' | 'yellow' | 'red';
+
+export interface PlaybookTool {
+  name: string;
+  status: 'approved' | 'restricted' | 'prohibited';
+  data_handling: string;
+  approved_for: string[];
+  not_approved_for: string[];
+  access_method: string;
+}
+
+export interface PlaybookDataRule {
+  data_type: string;
+  classification: DataTrafficLight;
+  consumer_ai: boolean;
+  enterprise_ai: boolean;
+  notes: string;
+}
+
+export interface AIUsagePlaybook {
+  id: string;
+  project_id: string;
+  golden_rules: string[];
+  tools: PlaybookTool[];
+  data_rules: PlaybookDataRule[];
+  approved_activities: string[];
+  prohibited_activities: string[];
+  requires_approval: string[];
+  disclosure_policy: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // API Response types
 export interface ApiResponse<T = unknown> {
   data?: T;
