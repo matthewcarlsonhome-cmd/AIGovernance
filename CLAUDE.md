@@ -69,13 +69,21 @@ src/
             generate/     # Report builder (select persona + sections)
             history/      # Previously generated reports
           team/           # Team member management + roles
+          setup/          # Project setup guide (phase checklist, onboarding)
       settings/           # Org settings, billing, integrations
     api/
       assessments/        # Assessment CRUD + scoring engine
       reports/            # Report generation endpoints
-      configs/            # Sandbox config generation
+      configs/            # Sandbox config generation + validation
       ai/                 # Claude API integration endpoints
       export/             # DOCX/PDF export endpoints
+      meetings/           # Meeting CRUD + action items
+      poc/                # Tool evaluations persistence
+      projects/[id]/team/ # Team member CRUD per project
+      raci/               # RACI matrix CRUD
+      roi/                # ROI calculation
+      storage/            # File upload
+      timeline/           # Tasks, milestones, snapshots
   components/
     ui/                   # shadcn/ui base components (DO NOT EDIT directly)
     shared/               # Shared components used across features
@@ -222,5 +230,100 @@ Reports in `lib/report-gen/` generate persona-specific content:
 - **Engineering:** Tool comparison, metrics, setup guides (Markdown + PDF)
 - **Marketing:** Messaging guide, FAQ, change management narrative (DOCX, editable)
 
+## Development Pitfalls & Lessons Learned
+
+### DO NOT import packages that are not installed
+Before importing any package, check `package.json` to confirm it is listed as a
+dependency. Packages referenced in CLAUDE.md under "Technology Stack" or
+"aspirational" sections may not be installed yet. Common offenders:
+- `@sentry/nextjs` — listed as a future goal, **not installed**
+- Always verify with `npm ls <package>` or check `package.json` before importing
+
+### Next.js useSearchParams requires Suspense
+Any page that calls `useSearchParams()` must wrap the consuming component in
+`<Suspense>`. Without this, static generation / prerendering will fail with:
+```
+useSearchParams() should be wrapped in a suspense boundary
+```
+Pattern:
+```tsx
+export default function Page() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <PageContent />   {/* useSearchParams() lives here */}
+    </Suspense>
+  );
+}
+```
+
+### Tailwind CSS 4 — avoid CSS variable classes
+`bg-primary`, `text-foreground`, `text-muted-foreground`, etc. rely on CSS
+custom properties (`--primary`, `--foreground`) that are only defined if a
+`@theme inline {}` block maps them. In this project, **use explicit Tailwind
+classes instead**:
+| Avoid | Use instead |
+|---|---|
+| `bg-primary` | `bg-slate-900` |
+| `text-primary-foreground` | `text-white` |
+| `text-foreground` | `text-slate-900` |
+| `text-muted-foreground` | `text-slate-500` |
+| `bg-muted` | `bg-slate-100` |
+| `border-border` | `border-slate-200` |
+| `bg-destructive` | `bg-red-600` |
+
+### API Route Patterns
+All API routes in this project follow this pattern:
+1. **Zod validation** on all inputs (body or query params)
+2. **Demo mode fallback** — check `isServerSupabaseConfigured()` and return
+   hardcoded demo data when Supabase is not configured
+3. **Auth check** — `supabase.auth.getUser()` when Supabase is configured
+4. **Consistent error shape** — `{ error: string, message?: string }`
+5. **Next.js 15 route params** — `params: Promise<{ id: string }>` (must await)
+
+### Test Data Must Match Types Exactly
+When writing test fixtures, include **all required properties** from the
+TypeScript interface. Common missed fields:
+- `TimelineTask`: `description`, `assigned_to`, `is_critical_path`, `gate_review_id`, `color`
+- `AssessmentQuestion`: `options`, `scoring`, `help_text`
+- `Project`: `feasibility_score`, `start_date`, `target_end_date`
+- `SandboxConfig`: `vpc_cidr` (use `null` not `undefined`)
+
+### No `ignoreBuildErrors`
+TypeScript strict mode is enforced. **Never** add `typescript.ignoreBuildErrors`
+to `next.config.ts`. All type errors must be fixed in source.
+
+## API Routes Reference
+```
+GET/POST          /api/assessments
+GET/PATCH/DELETE  /api/assessments/[id]
+POST              /api/assessments/score
+GET/POST          /api/configs
+GET/PATCH/DELETE  /api/configs/[id]
+GET/POST          /api/configs/validate
+POST              /api/ai
+GET/POST          /api/export/pdf
+POST              /api/export/docx
+GET/POST          /api/meetings
+GET/PATCH/DELETE  /api/meetings/[id]
+GET/POST          /api/meetings/[id]/actions
+PATCH/DELETE      /api/meetings/[id]/actions/[actionId]
+GET/POST          /api/poc/tool-evaluations
+GET/POST          /api/projects
+GET/PATCH/DELETE  /api/projects/[id]
+GET/POST/DELETE   /api/projects/[id]/team
+GET/POST          /api/raci
+GET/PATCH/DELETE  /api/raci/[id]
+GET/POST          /api/reports
+GET/PATCH/DELETE  /api/reports/[id]
+GET/POST          /api/roi
+POST              /api/storage
+GET/POST          /api/timeline/tasks
+PATCH/DELETE      /api/timeline/tasks/[id]
+GET/POST          /api/timeline/milestones
+GET/POST          /api/timeline/snapshots
+```
+
 ## Current Sprint
-[Update this section each sprint with current objectives]
+Sprint focus: Codex handoff brief alignment — API routes, setup experience,
+strict TypeScript, build-passing CI. Sentry integration is deferred (not
+installed).
