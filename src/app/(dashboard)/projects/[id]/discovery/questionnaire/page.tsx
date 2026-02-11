@@ -30,7 +30,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import type { ScoreDomain, QuestionType } from '@/types';
+import type { ScoreDomain, QuestionType, AssessmentQuestion, AssessmentResponse } from '@/types';
+import { calculateFeasibilityScore } from '@/lib/scoring/engine';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                      */
@@ -535,6 +536,54 @@ function isQuestionAnswered(q: InlineQuestion, responses: Responses): boolean {
   return false;
 }
 
+/** Convert inline questions to AssessmentQuestion format for the scoring engine */
+function toAssessmentQuestions(questions: InlineQuestion[]): AssessmentQuestion[] {
+  return questions.map((q, idx) => {
+    const scoring: Record<string, number> = {};
+    if (q.options) {
+      for (const opt of q.options) {
+        // Convert option scores (1-5) to 0-100 scale for the engine
+        scoring[opt.label] = (opt.score / 5) * 100;
+      }
+    }
+    return {
+      id: q.id,
+      section: q.domain,
+      domain: q.domain,
+      text: q.text,
+      type: q.type,
+      options: q.options?.map((o) => o.label) ?? null,
+      weight: q.weight,
+      scoring,
+      help_text: q.helpText ?? null,
+      required: q.required,
+      order: idx,
+    };
+  });
+}
+
+/** Convert user responses to AssessmentResponse format for the scoring engine */
+function toAssessmentResponses(
+  responses: Responses,
+  projectId: string
+): AssessmentResponse[] {
+  const now = new Date().toISOString();
+  return Object.entries(responses)
+    .filter(([, v]) => v !== undefined && v !== null && v !== '')
+    .map(([questionId, value]) => ({
+      id: `resp-${questionId}`,
+      project_id: projectId,
+      question_id: questionId,
+      value: value as string | string[],
+      responded_by: null,
+      created_at: now,
+      updated_at: now,
+    }));
+}
+
+const SCORES_STORAGE_KEY = 'govai_readiness_scores';
+const RESPONSES_STORAGE_KEY = 'govai_questionnaire_responses';
+
 /* -------------------------------------------------------------------------- */
 /*  Question renderers                                                         */
 /* -------------------------------------------------------------------------- */
@@ -679,6 +728,25 @@ export default function QuestionnairePage({
   const [responses, setResponses] = useState<Responses>({});
   const [isCalculating, setIsCalculating] = useState(false);
 
+  // Load saved responses from localStorage on mount
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`${RESPONSES_STORAGE_KEY}_${id}`);
+      if (saved) {
+        setResponses(JSON.parse(saved));
+      }
+    } catch {
+      // ignore
+    }
+  }, [id]);
+
+  // Auto-save responses to localStorage as user answers
+  React.useEffect(() => {
+    if (Object.keys(responses).length > 0) {
+      localStorage.setItem(`${RESPONSES_STORAGE_KEY}_${id}`, JSON.stringify(responses));
+    }
+  }, [responses, id]);
+
   const activeDomain = DOMAINS[activeDomainIdx];
   const domainQuestions = questionsForDomain(activeDomain.key);
 
@@ -716,7 +784,17 @@ export default function QuestionnairePage({
 
   const handleCalculateScore = async () => {
     setIsCalculating(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    // Convert to engine format and calculate scores
+    const engineQuestions = toAssessmentQuestions(QUESTIONS);
+    const engineResponses = toAssessmentResponses(responses, id);
+    const feasibilityScore = calculateFeasibilityScore(engineResponses, engineQuestions);
+
+    // Save scores to localStorage for the readiness page to read
+    localStorage.setItem(`${SCORES_STORAGE_KEY}_${id}`, JSON.stringify(feasibilityScore));
+
+    // Brief delay for UX feedback
+    await new Promise((resolve) => setTimeout(resolve, 500));
     router.push(`/projects/${id}/discovery/readiness`);
   };
 

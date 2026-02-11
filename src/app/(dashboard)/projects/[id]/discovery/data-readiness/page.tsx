@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Radar,
   RadarChart,
@@ -33,6 +34,9 @@ import {
   Clock,
   FileSearch,
   Download,
+  Plus,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -44,6 +48,17 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import type {
   DataReadinessDimension,
   DataReadinessLevel,
@@ -916,31 +931,455 @@ function RoadmapTab({ audit }: { audit: DataReadinessAudit }): React.ReactElemen
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Storage                                                                    */
+/* -------------------------------------------------------------------------- */
+
+const DATA_READINESS_KEY = 'govai_data_readiness';
+
+function buildAuditFromDimensions(
+  projectId: string,
+  dimensionScores: DataReadinessDimensionScore[],
+  assets: DataAsset[],
+  qualityMetrics: DataQualityMetric[],
+  dataopsMaturity: number
+): DataReadinessAudit {
+  const overall = calculateOverallReadiness(dimensionScores);
+  const level = classifyReadinessLevel(overall);
+  const roadmapItems = generateRemediationRoadmap(dimensionScores);
+  const now = new Date().toISOString();
+  return {
+    id: `dra-${Date.now()}`,
+    project_id: projectId,
+    overall_score: overall,
+    readiness_level: level,
+    dimension_scores: dimensionScores,
+    data_assets: assets,
+    quality_metrics: qualityMetrics,
+    dataops_maturity: dataopsMaturity,
+    remediation_roadmap: roadmapItems,
+    created_at: now,
+    updated_at: now,
+  };
+}
+
+const DIMENSION_KEYS: DataReadinessDimension[] = [
+  'availability',
+  'quality',
+  'accessibility',
+  'governance',
+  'security',
+  'operations',
+];
+
+/* -------------------------------------------------------------------------- */
+/*  Dimension Edit Dialog                                                      */
+/* -------------------------------------------------------------------------- */
+
+function DimensionEditDialog({
+  open,
+  onClose,
+  onSave,
+  dimension,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSave: (ds: DataReadinessDimensionScore) => void;
+  dimension: DataReadinessDimensionScore | null;
+}): React.ReactElement {
+  const [score, setScore] = useState(50);
+  const [findingsText, setFindingsText] = useState('');
+  const [recsText, setRecsText] = useState('');
+
+  useEffect(() => {
+    if (open && dimension) {
+      setScore(dimension.score);
+      setFindingsText(dimension.findings.join('\n'));
+      setRecsText(dimension.recommendations.join('\n'));
+    }
+  }, [open, dimension]);
+
+  const handleSave = () => {
+    if (!dimension) return;
+    onSave({
+      ...dimension,
+      score: Math.min(100, Math.max(0, score)),
+      findings: findingsText.split('\n').map((s) => s.trim()).filter((s) => s.length > 0),
+      recommendations: recsText.split('\n').map((s) => s.trim()).filter((s) => s.length > 0),
+    });
+    onClose();
+  };
+
+  if (!dimension) return <></>;
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-slate-900">
+            Edit {DIMENSION_LABELS[dimension.dimension]} Score
+          </DialogTitle>
+          <DialogDescription className="text-slate-500">
+            Rate this dimension and document your findings
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div>
+            <Label className="text-slate-700">Score (0-100)</Label>
+            <div className="flex items-center gap-3 mt-1">
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={score}
+                onChange={(e) => setScore(Number(e.target.value))}
+                className="flex-1 h-2 accent-slate-700"
+              />
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                value={score}
+                onChange={(e) => setScore(Math.min(100, Math.max(0, Number(e.target.value))))}
+                className="w-20 text-center border-slate-200"
+              />
+            </div>
+          </div>
+          <div>
+            <Label className="text-slate-700">Findings (one per line)</Label>
+            <Textarea
+              value={findingsText}
+              onChange={(e) => setFindingsText(e.target.value)}
+              rows={4}
+              placeholder="Enter key findings for this dimension..."
+              className="mt-1 border-slate-200"
+            />
+          </div>
+          <div>
+            <Label className="text-slate-700">Recommendations (one per line)</Label>
+            <Textarea
+              value={recsText}
+              onChange={(e) => setRecsText(e.target.value)}
+              rows={4}
+              placeholder="Enter recommendations..."
+              className="mt-1 border-slate-200"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} className="border-slate-200 text-slate-700">
+            Cancel
+          </Button>
+          <Button onClick={handleSave} className="bg-slate-900 text-white hover:bg-slate-800">
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Data Asset Dialog                                                          */
+/* -------------------------------------------------------------------------- */
+
+function AssetDialog({
+  open,
+  onClose,
+  onSave,
+  initial,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSave: (asset: DataAsset) => void;
+  initial: DataAsset | null;
+}): React.ReactElement {
+  const [name, setName] = useState('');
+  const [type, setType] = useState<DataAsset['type']>('database');
+  const [domain, setDomain] = useState('');
+  const [owner, setOwner] = useState('');
+  const [classification, setClassification] = useState<DataAsset['classification']>('internal');
+  const [aiRelevance, setAiRelevance] = useState<DataAsset['ai_relevance']>('both');
+  const [qualityScore, setQualityScore] = useState(70);
+
+  useEffect(() => {
+    if (open && initial) {
+      setName(initial.name);
+      setType(initial.type);
+      setDomain(initial.domain);
+      setOwner(initial.owner);
+      setClassification(initial.classification);
+      setAiRelevance(initial.ai_relevance);
+      setQualityScore(initial.quality_score);
+    } else if (open && !initial) {
+      setName('');
+      setType('database');
+      setDomain('');
+      setOwner('');
+      setClassification('internal');
+      setAiRelevance('both');
+      setQualityScore(70);
+    }
+  }, [open, initial]);
+
+  const handleSave = () => {
+    if (!name.trim()) return;
+    onSave({
+      id: initial?.id ?? `da-${Date.now()}`,
+      name: name.trim(),
+      type,
+      domain: domain.trim() || 'General',
+      owner: owner.trim() || 'Unassigned',
+      classification,
+      ai_relevance: aiRelevance,
+      quality_score: qualityScore,
+    });
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-slate-900">
+            {initial ? 'Edit Data Asset' : 'Add Data Asset'}
+          </DialogTitle>
+          <DialogDescription className="text-slate-500">
+            Catalog a data asset and assess its quality for AI readiness
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <div>
+            <Label className="text-slate-700">Asset Name *</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Customer Master Database" className="mt-1 border-slate-200" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-slate-700">Type</Label>
+              <select value={type} onChange={(e) => setType(e.target.value as DataAsset['type'])} className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
+                <option value="database">Database</option>
+                <option value="data_lake">Data Lake</option>
+                <option value="api">API</option>
+                <option value="file_system">File System</option>
+                <option value="streaming">Streaming</option>
+                <option value="feature_store">Feature Store</option>
+              </select>
+            </div>
+            <div>
+              <Label className="text-slate-700">Domain</Label>
+              <Input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="e.g., Customer" className="mt-1 border-slate-200" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-slate-700">Owner</Label>
+              <Input value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="e.g., Data Engineering" className="mt-1 border-slate-200" />
+            </div>
+            <div>
+              <Label className="text-slate-700">Classification</Label>
+              <select value={classification} onChange={(e) => setClassification(e.target.value as DataAsset['classification'])} className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
+                <option value="public">Public</option>
+                <option value="internal">Internal</option>
+                <option value="confidential">Confidential</option>
+                <option value="restricted">Restricted</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-slate-700">AI Relevance</Label>
+              <select value={aiRelevance} onChange={(e) => setAiRelevance(e.target.value as DataAsset['ai_relevance'])} className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
+                <option value="training">Training</option>
+                <option value="inference">Inference</option>
+                <option value="both">Training & Inference</option>
+                <option value="none">None</option>
+              </select>
+            </div>
+            <div>
+              <Label className="text-slate-700">Quality Score (0-100)</Label>
+              <Input type="number" min={0} max={100} value={qualityScore} onChange={(e) => setQualityScore(Number(e.target.value))} className="mt-1 border-slate-200" />
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} className="border-slate-200 text-slate-700">Cancel</Button>
+          <Button onClick={handleSave} className="bg-slate-900 text-white hover:bg-slate-800" disabled={!name.trim()}>
+            {initial ? 'Update' : 'Add'} Asset
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Page Component                                                             */
 /* -------------------------------------------------------------------------- */
 
-export default function DataReadinessPage(): React.ReactElement {
+export default function DataReadinessPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): React.ReactElement {
+  const { id: projectId } = React.use(params);
+
   const [activeTab, setActiveTab] = useState<TabId>('overview');
-  const audit = DEMO_AUDIT;
+  const [audit, setAudit] = useState<DataReadinessAudit | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [editingDim, setEditingDim] = useState<DataReadinessDimensionScore | null>(null);
+  const [dimDialogOpen, setDimDialogOpen] = useState(false);
+  const [assetDialogOpen, setAssetDialogOpen] = useState(false);
+  const [editingAsset, setEditingAsset] = useState<DataAsset | null>(null);
+
+  // Load from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`${DATA_READINESS_KEY}_${projectId}`);
+      if (saved) {
+        setAudit(JSON.parse(saved));
+      }
+    } catch {
+      // ignore
+    }
+    setLoaded(true);
+  }, [projectId]);
+
+  // Persist
+  const persist = (a: DataReadinessAudit) => {
+    localStorage.setItem(`${DATA_READINESS_KEY}_${projectId}`, JSON.stringify(a));
+  };
+
+  // Start new audit with empty dimensions
+  const startNewAudit = () => {
+    const emptyDimensions: DataReadinessDimensionScore[] = DIMENSION_KEYS.map((dim) => ({
+      dimension: dim,
+      score: 0,
+      weight: DIMENSION_WEIGHTS[dim],
+      findings: [],
+      recommendations: [],
+    }));
+    const newAudit = buildAuditFromDimensions(projectId, emptyDimensions, [], [], 0);
+    setAudit(newAudit);
+    persist(newAudit);
+  };
+
+  // Save dimension score
+  const handleSaveDimension = (ds: DataReadinessDimensionScore) => {
+    if (!audit) return;
+    const updatedDims = audit.dimension_scores.map((d) =>
+      d.dimension === ds.dimension ? ds : d
+    );
+    const updated = buildAuditFromDimensions(
+      projectId,
+      updatedDims,
+      audit.data_assets,
+      audit.quality_metrics,
+      audit.dataops_maturity
+    );
+    updated.id = audit.id;
+    updated.created_at = audit.created_at;
+    setAudit(updated);
+    persist(updated);
+  };
+
+  // Save data asset
+  const handleSaveAsset = (asset: DataAsset) => {
+    if (!audit) return;
+    const existingIdx = audit.data_assets.findIndex((a) => a.id === asset.id);
+    const updatedAssets =
+      existingIdx >= 0
+        ? audit.data_assets.map((a) => (a.id === asset.id ? asset : a))
+        : [...audit.data_assets, asset];
+    const updated = buildAuditFromDimensions(
+      projectId,
+      audit.dimension_scores,
+      updatedAssets,
+      audit.quality_metrics,
+      audit.dataops_maturity
+    );
+    updated.id = audit.id;
+    updated.created_at = audit.created_at;
+    setAudit(updated);
+    persist(updated);
+  };
+
+  // Delete data asset
+  const handleDeleteAsset = (assetId: string) => {
+    if (!audit) return;
+    const updatedAssets = audit.data_assets.filter((a) => a.id !== assetId);
+    const updated = buildAuditFromDimensions(
+      projectId,
+      audit.dimension_scores,
+      updatedAssets,
+      audit.quality_metrics,
+      audit.dataops_maturity
+    );
+    updated.id = audit.id;
+    updated.created_at = audit.created_at;
+    setAudit(updated);
+    persist(updated);
+  };
+
+  if (!loaded) return <></>;
+
+  // Empty state
+  if (!audit) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Data Readiness Audit
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Assess your organization&apos;s data maturity for AI initiatives across 6 dimensions
+          </p>
+        </div>
+        <Card className="border-dashed border-2 border-slate-300">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <Database className="h-12 w-12 text-slate-300 mb-4" />
+            <h2 className="text-lg font-semibold text-slate-700 mb-2">No Data Readiness Audit Yet</h2>
+            <p className="text-sm text-slate-500 mb-6 max-w-md">
+              Start your data readiness audit to assess 6 key dimensions: availability, quality,
+              accessibility, governance, security, and operations. Scores are auto-calculated with
+              weighted aggregation.
+            </p>
+            <Button
+              className="bg-slate-900 text-white hover:bg-slate-800"
+              onClick={startNewAudit}
+            >
+              <Plus className="h-4 w-4 mr-1.5" />
+              Start Data Readiness Audit
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Page header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Data Readiness Audit
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Assess your organization&apos;s data maturity for AI initiatives across 6 dimensions
-        </p>
-      </div>
-
-      {/* Demo notice */}
-      <div className="mb-6 flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
-        <Database className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
-        <p className="text-sm text-blue-800">
-          Showing sample audit data. Connect your data sources and complete the assessment to see actual readiness scores.
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Data Readiness Audit
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Assess your organization&apos;s data maturity for AI initiatives across 6 dimensions
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="gap-2 border-slate-200 text-slate-700"
+            onClick={() => {
+              setAssetDialogOpen(true);
+              setEditingAsset(null);
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            Add Asset
+          </Button>
+        </div>
       </div>
 
       {/* Tab navigation */}
@@ -965,11 +1404,99 @@ export default function DataReadinessPage(): React.ReactElement {
         })}
       </div>
 
+      {/* Dimension edit hint */}
+      {activeTab === 'dimensions' && (
+        <div className="mb-4 flex items-start gap-3 rounded-lg border border-blue-100 bg-blue-50 p-3">
+          <Pencil className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+          <p className="text-xs text-blue-700">
+            Click on any dimension card below to edit its score, findings, and recommendations.
+          </p>
+        </div>
+      )}
+
       {/* Tab content */}
       {activeTab === 'overview' && <OverviewTab audit={audit} />}
-      {activeTab === 'dimensions' && <DimensionsTab audit={audit} />}
+      {activeTab === 'dimensions' && (
+        <div>
+          <DimensionsTab audit={audit} />
+          {/* Make dimension cards clickable for editing */}
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {audit.dimension_scores.map((ds) => {
+              const Icon = DIMENSION_ICONS[ds.dimension];
+              return (
+                <button
+                  key={ds.dimension}
+                  onClick={() => {
+                    setEditingDim(ds);
+                    setDimDialogOpen(true);
+                  }}
+                  className="rounded-lg border border-slate-200 p-3 text-left hover:border-slate-400 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Icon className="h-4 w-4 text-slate-500" />
+                    <span className="text-sm font-medium text-slate-700">
+                      Edit {DIMENSION_LABELS[ds.dimension]}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={cn('text-lg font-bold', scoreColor(ds.score))}>{ds.score}</span>
+                    <span className="text-xs text-slate-400">/100</span>
+                    <Pencil className="ml-auto h-3.5 w-3.5 text-slate-400" />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
       {activeTab === 'quality' && <QualityTab audit={audit} />}
-      {activeTab === 'assets' && <AssetsTab audit={audit} />}
+      {activeTab === 'assets' && (
+        <div>
+          <AssetsTab audit={audit} />
+          {/* Add/edit/delete controls for assets */}
+          <div className="mt-4">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3">Manage Assets</h3>
+            <div className="space-y-2">
+              {audit.data_assets.map((asset) => (
+                <div
+                  key={asset.id}
+                  className="flex items-center justify-between rounded-lg border border-slate-200 p-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <Database className="h-4 w-4 text-slate-400" />
+                    <div>
+                      <span className="text-sm font-medium text-slate-700">{asset.name}</span>
+                      <span className="ml-2 text-xs text-slate-400">{asset.domain}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        setEditingAsset(asset);
+                        setAssetDialogOpen(true);
+                      }}
+                      className="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteAsset(asset.id)}
+                      className="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {audit.data_assets.length === 0 && (
+                <p className="text-sm text-slate-400 text-center py-4">
+                  No data assets cataloged yet. Click &quot;Add Asset&quot; to get started.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {activeTab === 'roadmap' && <RoadmapTab audit={audit} />}
 
       {/* Footer actions */}
@@ -998,7 +1525,7 @@ export default function DataReadinessPage(): React.ReactElement {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'data-readiness-audit-report.txt';
+            a.download = `data-readiness-audit-${projectId}.txt`;
             a.click();
             URL.revokeObjectURL(url);
           }}
@@ -1007,6 +1534,27 @@ export default function DataReadinessPage(): React.ReactElement {
           Export Report
         </Button>
       </div>
+
+      {/* Dialogs */}
+      <DimensionEditDialog
+        open={dimDialogOpen}
+        onClose={() => {
+          setDimDialogOpen(false);
+          setEditingDim(null);
+        }}
+        onSave={handleSaveDimension}
+        dimension={editingDim}
+      />
+
+      <AssetDialog
+        open={assetDialogOpen}
+        onClose={() => {
+          setAssetDialogOpen(false);
+          setEditingAsset(null);
+        }}
+        onSave={handleSaveAsset}
+        initial={editingAsset}
+      />
     </div>
   );
 }
