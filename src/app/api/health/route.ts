@@ -90,13 +90,13 @@ export async function GET(): Promise<NextResponse> {
         .from('users')
         .select('id, organization_id')
         .eq('id', health.user_id)
-        .single();
+        .maybeSingle();
 
       if (profile) {
         health.user_profile_exists = true;
         health.organization_id = profile.organization_id;
       } else {
-        health.errors.push('No user profile row in the "users" table for the authenticated user');
+        health.errors.push('No user profile row in the "users" table for the authenticated user. Reload the page to trigger auto-creation.');
       }
     }
 
@@ -106,7 +106,7 @@ export async function GET(): Promise<NextResponse> {
         .from('organizations')
         .select('id')
         .eq('id', health.organization_id)
-        .single();
+        .maybeSingle();
       health.organization_exists = !!org;
       if (!org) {
         health.errors.push('User references an organization that does not exist');
@@ -116,10 +116,10 @@ export async function GET(): Promise<NextResponse> {
         .from('organizations')
         .select('id')
         .limit(1)
-        .single();
+        .maybeSingle();
       health.organization_exists = !!anyOrg;
       if (!anyOrg) {
-        health.errors.push('No organizations exist in the database');
+        health.errors.push('No organizations exist in the database. Reload the page to trigger auto-creation.');
       }
     }
   } catch (err) {

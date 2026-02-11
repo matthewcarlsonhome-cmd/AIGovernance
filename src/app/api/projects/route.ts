@@ -173,24 +173,45 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         .from('users')
         .select('organization_id')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       if (profileErr) {
         console.error('[POST /api/projects] User profile lookup failed:', profileErr.message);
       }
       organizationId = userProfile?.organization_id ?? undefined;
     }
 
-    // If still no org, try to find any organization the user has access to
+    // If still no org, try to find any existing organization
     if (!organizationId) {
-      const { data: orgs, error: orgErr } = await db
+      const { data: existingOrg, error: orgErr } = await db
         .from('organizations')
         .select('id')
         .limit(1)
-        .single();
+        .maybeSingle();
       if (orgErr) {
         console.error('[POST /api/projects] Org lookup failed:', orgErr.message);
       }
-      organizationId = orgs?.id ?? undefined;
+      organizationId = existingOrg?.id ?? undefined;
+    }
+
+    // Last resort: create an organization if none exist
+    if (!organizationId) {
+      console.log('[POST /api/projects] No organization found, creating one...');
+      const emailDomain = (user.email ?? 'example.com').split('@')[1] ?? 'example';
+      const orgSlug = `${emailDomain.replace(/[^a-z0-9-]/gi, '-').toLowerCase()}-${Date.now()}`;
+      const { data: newOrg, error: newOrgErr } = await db
+        .from('organizations')
+        .insert({ name: 'My Organization', slug: orgSlug })
+        .select('id')
+        .single();
+      if (newOrgErr) {
+        console.error('[POST /api/projects] Failed to create org:', newOrgErr.message);
+        return NextResponse.json(
+          { error: 'Failed to create project', message: 'No organization available. Please refresh the page and try again.' },
+          { status: 500 },
+        );
+      }
+      organizationId = newOrg.id;
+      console.log('[POST /api/projects] Created org:', organizationId);
     }
 
     // Build insert payload — only include columns we know exist
