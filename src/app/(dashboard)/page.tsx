@@ -31,6 +31,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useProjects } from '@/hooks/use-projects';
+import { useHealth } from '@/hooks/use-health';
 import type { Project } from '@/types';
 import { format } from 'date-fns';
 import {
@@ -352,6 +353,70 @@ function DashboardSkeleton() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Setup status banner                                                */
+/* ------------------------------------------------------------------ */
+
+function SetupStatusBanner() {
+  const { data: health, isLoading } = useHealth();
+
+  if (isLoading || !health) return null;
+  if (health.status === 'healthy') return null;
+
+  const checks = [
+    { label: 'Database connected', ok: health.database_connected },
+    { label: 'Authentication working', ok: health.auth_working },
+    { label: 'Service role key configured', ok: health.service_role_configured },
+    { label: 'User profile created', ok: health.user_profile_exists },
+    { label: 'Organization exists', ok: health.organization_exists },
+  ];
+
+  const failedChecks = checks.filter((c) => !c.ok);
+
+  if (failedChecks.length === 0) return null;
+
+  return (
+    <Card className="border-amber-200 bg-amber-50">
+      <CardContent className="pt-5">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-amber-800">
+              Setup incomplete — {failedChecks.length} issue{failedChecks.length !== 1 ? 's' : ''} detected
+            </p>
+            <ul className="mt-2 space-y-1">
+              {checks.map((c) => (
+                <li key={c.label} className="flex items-center gap-2 text-sm">
+                  {c.ok ? (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-amber-600" />
+                  )}
+                  <span className={c.ok ? 'text-slate-600' : 'text-amber-800 font-medium'}>
+                    {c.label}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {!health.service_role_configured && (
+              <p className="text-xs text-amber-700 mt-3">
+                Add <code className="bg-amber-100 px-1 rounded">SUPABASE_SERVICE_ROLE_KEY</code> to
+                your <code className="bg-amber-100 px-1 rounded">.env.local</code> file to fix RLS policy issues.
+                Find it in your Supabase project settings under API keys.
+              </p>
+            )}
+            {health.user_email && (
+              <p className="text-xs text-slate-500 mt-2">
+                Logged in as: {health.user_email}
+              </p>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -360,20 +425,37 @@ export default function DashboardPage() {
 
   if (isLoading) return <DashboardSkeleton />;
 
+  // Treat errors as empty state (e.g., RLS issues, first-time setup)
   if (error) {
     return (
       <div className="space-y-8">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
-          <p className="text-slate-500">AI Governance overview</p>
-        </div>
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
-          <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+        <SetupStatusBanner />
+        <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-red-800">Failed to load projects</p>
-            <p className="text-sm text-red-700 mt-1">{error.message}</p>
+            <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
+            <p className="text-slate-500">AI Governance overview</p>
           </div>
+          <Link href="/projects/new">
+            <Button className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
+              <Plus className="h-4 w-4" />
+              New Project
+            </Button>
+          </Link>
         </div>
+        <Card className="p-12 text-center">
+          <FolderKanban className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-slate-900">Get started with GovAI Studio</h3>
+          <p className="text-sm text-slate-500 mt-2 max-w-md mx-auto">
+            Create your first AI governance project to begin assessing readiness, setting up
+            policies, configuring sandboxes, and tracking your implementation.
+          </p>
+          <Link href="/projects/new" className="mt-6 inline-block">
+            <Button size="lg" className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
+              <Plus className="h-5 w-5" />
+              Create Your First Project
+            </Button>
+          </Link>
+        </Card>
       </div>
     );
   }
@@ -430,6 +512,9 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {/* Setup status banner */}
+      <SetupStatusBanner />
+
       {/* Welcome */}
       <div className="flex items-center justify-between">
         <div>

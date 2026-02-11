@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
+import { createServerSupabaseClient, createServiceRoleClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import type { ApiResponse, User } from '@/types';
 
 /**
@@ -22,15 +22,19 @@ export async function GET(): Promise<NextResponse<ApiResponse<User>>> {
       return NextResponse.json({ data: demoUser });
     }
 
-    const supabase = await createServerSupabaseClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Auth check with cookie-based client
+    const authClient = await createServerSupabaseClient();
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Use service role client for data operations (bypasses RLS)
+    const db = await createServiceRoleClient();
+
     // Try to get the full user profile from the users table
-    const { data: profile, error: profileErr } = await supabase
+    const { data: profile, error: profileErr } = await db
       .from('users')
       .select('*')
       .eq('id', user.id)
@@ -54,7 +58,7 @@ export async function GET(): Promise<NextResponse<ApiResponse<User>>> {
     // Try to find an existing organization, or create one
     let organizationId = user.user_metadata?.organization_id ?? '';
     if (!organizationId) {
-      const { data: existingOrg } = await supabase
+      const { data: existingOrg } = await db
         .from('organizations')
         .select('id')
         .limit(1)
@@ -64,7 +68,7 @@ export async function GET(): Promise<NextResponse<ApiResponse<User>>> {
         organizationId = existingOrg.id;
       } else {
         // Create a default organization for the user
-        const { data: newOrg } = await supabase
+        const { data: newOrg } = await db
           .from('organizations')
           .insert({ name: 'My Organization' })
           .select('id')
@@ -88,7 +92,7 @@ export async function GET(): Promise<NextResponse<ApiResponse<User>>> {
     };
 
     // Attempt to insert the profile into the users table
-    const { data: inserted, error: insertErr } = await supabase
+    const { data: inserted, error: insertErr } = await db
       .from('users')
       .insert(newProfile)
       .select()

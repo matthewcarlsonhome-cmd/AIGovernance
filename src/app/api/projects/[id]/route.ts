@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
+import { createServerSupabaseClient, createServiceRoleClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import type { ApiResponse, Project } from '@/types';
 
 /* ------------------------------------------------------------------ */
@@ -83,13 +83,14 @@ export async function GET(
       });
     }
 
-    const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const authClient = await createServerSupabaseClient();
+    const { data: { user } } = await authClient.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data, error } = await supabase
+    const db = await createServiceRoleClient();
+    const { data, error } = await db
       .from('projects')
       .select('*')
       .eq('id', id)
@@ -146,13 +147,14 @@ export async function PUT(
       });
     }
 
-    const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const authClient = await createServerSupabaseClient();
+    const { data: { user } } = await authClient.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: updated, error } = await supabase
+    const db = await createServiceRoleClient();
+    const { data: updated, error } = await db
       .from('projects')
       .update({ ...parsed.data, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -190,15 +192,17 @@ export async function DELETE(
       return NextResponse.json({ data: { deleted: true } });
     }
 
-    const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const authClient = await createServerSupabaseClient();
+    const { data: { user } } = await authClient.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const db = await createServiceRoleClient();
+
     // Try soft-delete first, fall back to hard-delete
     const now = new Date().toISOString();
-    const { error: softErr } = await supabase
+    const { error: softErr } = await db
       .from('projects')
       .update({ deleted_at: now, updated_at: now })
       .eq('id', id);
@@ -206,7 +210,7 @@ export async function DELETE(
     if (softErr) {
       // Soft-delete failed (maybe no deleted_at column), try hard delete
       console.error('[DELETE /api/projects/[id]] Soft-delete failed:', softErr.message);
-      const { error: hardErr } = await supabase
+      const { error: hardErr } = await db
         .from('projects')
         .delete()
         .eq('id', id);

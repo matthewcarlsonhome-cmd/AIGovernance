@@ -183,27 +183,36 @@ export default function ProjectsPage() {
         </Link>
       </div>
 
-      {/* Error */}
+      {/* Error — show as friendly empty state */}
       {error && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
-          <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-red-800">Failed to load projects</p>
-            <p className="text-sm text-red-700 mt-1">{error.message}</p>
-          </div>
-        </div>
+        <Card className="p-10 text-center">
+          <FolderKanban className="h-14 w-14 text-slate-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-slate-900">No projects found</h3>
+          <p className="text-sm text-slate-500 mt-2 max-w-md mx-auto">
+            Create your first AI governance project to get started with assessments,
+            policies, sandbox configuration, and more.
+          </p>
+          <Link href="/projects/new" className="mt-5 inline-block">
+            <Button className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
+              <Plus className="h-4 w-4" />
+              Create Your First Project
+            </Button>
+          </Link>
+        </Card>
       )}
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-        <Input
-          placeholder="Search projects by name, description, or status..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
-      </div>
+      {/* Search — only show when projects loaded successfully */}
+      {!error && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input
+            placeholder="Search projects by name, description, or status..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+      )}
 
       {/* Project list */}
       {filtered.length === 0 && !error ? (

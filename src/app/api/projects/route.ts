@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
+import { createServerSupabaseClient, createServiceRoleClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import type { ApiResponse, Project } from '@/types';
 
 /* ------------------------------------------------------------------ */
@@ -75,19 +75,22 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       return NextResponse.json({ data: filtered });
     }
 
-    const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    // Auth check with cookie-based client
+    const authClient = await createServerSupabaseClient();
+    const { data: { user } } = await authClient.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Use service role client for data queries (bypasses RLS)
+    const db = await createServiceRoleClient();
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 100);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
-    // First try with deleted_at filter; fall back to without it if column doesn't exist
-    let query = supabase
+    let query = db
       .from('projects')
       .select('*')
       .order('created_at', { ascending: false })
@@ -99,7 +102,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
     let { data, error } = await query;
 
-    // If the query failed (e.g., table doesn't exist), log and return error
     if (error) {
       console.error('[GET /api/projects] Supabase error:', error.message, error.code);
       return NextResponse.json(
@@ -154,16 +156,20 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       return NextResponse.json({ data: demoProject }, { status: 201 });
     }
 
-    const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    // Auth check with cookie-based client
+    const authClient = await createServerSupabaseClient();
+    const { data: { user } } = await authClient.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Use service role client for data operations (bypasses RLS)
+    const db = await createServiceRoleClient();
+
     // Resolve organization_id: use provided value, or look up from user profile
     let organizationId = parsed.data.organization_id;
     if (!organizationId) {
-      const { data: userProfile, error: profileErr } = await supabase
+      const { data: userProfile, error: profileErr } = await db
         .from('users')
         .select('organization_id')
         .eq('id', user.id)
@@ -176,7 +182,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     // If still no org, try to find any organization the user has access to
     if (!organizationId) {
-      const { data: orgs, error: orgErr } = await supabase
+      const { data: orgs, error: orgErr } = await db
         .from('organizations')
         .select('id')
         .limit(1)
@@ -203,7 +209,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       insertPayload.target_end_date = parsed.data.target_end_date ?? null;
     }
 
-    const { data: created, error } = await supabase
+    const { data: created, error } = await db
       .from('projects')
       .insert(insertPayload)
       .select()
