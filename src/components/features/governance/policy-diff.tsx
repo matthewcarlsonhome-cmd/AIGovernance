@@ -238,14 +238,14 @@ export function PolicyDiff({
   }, [oldContent, newContent]);
 
   return (
-    <div className="w-full rounded-lg border bg-background overflow-hidden">
+    <div className="w-full rounded-lg border bg-white overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-3 bg-slate-50 dark:bg-slate-900/50">
         <div className="flex items-center gap-4">
-          <h3 className="text-sm font-semibold text-foreground">
+          <h3 className="text-sm font-semibold text-slate-900">
             Policy Version Diff
           </h3>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
             <span className="rounded bg-red-100 px-2 py-0.5 font-mono text-red-700 dark:bg-red-900/40 dark:text-red-300">
               {oldVersion}
             </span>
@@ -270,10 +270,10 @@ export function PolicyDiff({
         <table className="w-full text-xs font-mono border-collapse">
           <thead>
             <tr className="border-b bg-slate-50/50 dark:bg-slate-900/30">
-              <th className="w-1/2 px-4 py-2 text-left text-xs font-semibold text-muted-foreground">
+              <th className="w-1/2 px-4 py-2 text-left text-xs font-semibold text-slate-500">
                 {oldVersion} (Previous)
               </th>
-              <th className="w-1/2 px-4 py-2 text-left text-xs font-semibold text-muted-foreground border-l">
+              <th className="w-1/2 px-4 py-2 text-left text-xs font-semibold text-slate-500 border-l">
                 {newVersion} (Current)
               </th>
             </tr>
@@ -337,7 +337,7 @@ export function PolicyDiff({
 
       {/* Footer summary */}
       {diffLineList.length === 0 && (
-        <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+        <div className="px-4 py-8 text-center text-sm text-slate-500">
           No differences found between {oldVersion} and {newVersion}.
         </div>
       )}

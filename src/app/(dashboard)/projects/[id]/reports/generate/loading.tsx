@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse rounded bg-muted ${className || ''}`} />;
+  return <div className={`animate-pulse rounded bg-slate-100 ${className || ''}`} />;
 }
 
 export default function ReportsGenerateLoading() {

@@ -5,10 +5,10 @@ export interface Organization {
   id: string;
   name: string;
   slug: string;
-  industry?: string;
-  size?: string;
-  logo_url?: string;
-  settings?: Record<string, unknown>;
+  industry: string | null;
+  size: string | null;
+  logo_url: string | null;
+  settings: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }
@@ -19,7 +19,7 @@ export interface User {
   full_name: string;
   role: UserRole;
   organization_id: string;
-  avatar_url?: string;
+  avatar_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -42,10 +42,10 @@ export interface Project {
   description: string;
   organization_id: string;
   status: ProjectStatus;
-  feasibility_score?: number;
-  start_date?: string;
-  target_end_date?: string;
-  actual_end_date?: string;
+  feasibility_score: number | null;
+  start_date: string | null;
+  target_end_date: string | null;
+  actual_end_date?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -59,11 +59,11 @@ export interface AssessmentQuestion {
   domain: ScoreDomain;
   text: string;
   type: QuestionType;
-  options?: string[];
+  options: string[] | null;
   weight: number;
-  scoring?: Record<string, number>;
-  branches?: Record<string, string[]>;
-  help_text?: string;
+  scoring: Record<string, number> | null;
+  branches?: Record<string, string[]> | null;
+  help_text: string | null;
   required: boolean;
   order: number;
 }
@@ -73,7 +73,7 @@ export interface AssessmentResponse {
   project_id: string;
   question_id: string;
   value: string | string[] | number;
-  responded_by?: string;
+  responded_by?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -113,8 +113,8 @@ export interface Policy {
   status: PolicyStatus;
   content: string;
   version: number;
-  approved_by?: string;
-  approved_at?: string;
+  approved_by: string | null;
+  approved_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -124,8 +124,8 @@ export interface PolicyVersion {
   policy_id: string;
   version: number;
   content: string;
-  change_summary?: string;
-  created_by?: string;
+  change_summary: string | null;
+  created_by: string | null;
   created_at: string;
 }
 
@@ -139,8 +139,8 @@ export interface GateReview {
   status: GateStatus;
   evidence_checklist: GateEvidence[];
   approvers: GateApprover[];
-  notes?: string;
-  reviewed_at?: string;
+  notes: string | null;
+  reviewed_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -169,8 +169,8 @@ export interface ComplianceMapping {
   control_name: string;
   description: string;
   status: 'not_started' | 'in_progress' | 'implemented' | 'verified' | 'not_applicable';
-  evidence?: string;
-  notes?: string;
+  evidence: string | null;
+  notes: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -186,7 +186,7 @@ export interface RiskClassification {
   likelihood: number;
   impact: number;
   mitigation: string;
-  owner?: string;
+  owner: string | null;
   status: 'open' | 'mitigating' | 'accepted' | 'closed';
   created_at: string;
   updated_at: string;
@@ -201,9 +201,9 @@ export interface SandboxConfig {
   project_id: string;
   cloud_provider: CloudProvider;
   sandbox_model: SandboxModel;
-  vpc_cidr?: string;
-  region?: string;
-  ai_provider?: string;
+  vpc_cidr: string | null;
+  region: string | null;
+  ai_provider: string | null;
   settings: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -225,8 +225,8 @@ export interface EnvironmentValidation {
   check_name: string;
   check_category: string;
   status: 'pass' | 'warning' | 'fail' | 'pending';
-  message?: string;
-  details?: Record<string, unknown>;
+  message: string | null;
+  details: Record<string, unknown> | null;
   validated_at: string;
 }
 
@@ -238,19 +238,19 @@ export interface TimelineTask {
   id: string;
   project_id: string;
   title: string;
-  description?: string;
+  description: string | null;
   phase: string;
   start_date: string;
   end_date: string;
   duration_days: number;
-  assigned_to?: string;
+  assigned_to: string | null;
   status: TaskStatus;
   dependencies: TaskDependency[];
   progress_percent: number;
   is_milestone: boolean;
-  is_critical_path?: boolean;
-  gate_review_id?: string;
-  color?: string;
+  is_critical_path: boolean;
+  gate_review_id: string | null;
+  color: string | null;
 }
 
 export interface TaskDependency {
@@ -262,20 +262,20 @@ export interface TimelineMilestone {
   id: string;
   project_id: string;
   title: string;
-  description?: string;
+  description: string | null;
   date: string;
   status: 'pending' | 'completed' | 'missed' | 'at_risk';
-  gate_number?: GateNumber;
+  gate_number: GateNumber | null;
 }
 
 export interface TimelineSnapshot {
   id: string;
   project_id: string;
   name: string;
-  description?: string;
+  description: string | null;
   snapshot_data: Record<string, unknown>;
   captured_at: string;
-  captured_by?: string;
+  captured_by: string | null;
 }
 
 // PoC types
@@ -286,8 +286,8 @@ export interface PocProject {
   description: string;
   tool: 'claude_code' | 'openai_codex' | 'other';
   status: 'planned' | 'active' | 'completed' | 'cancelled';
-  selection_score?: number;
-  criteria?: PocCriterion[];
+  selection_score: number | null;
+  criteria: PocCriterion[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -306,9 +306,9 @@ export interface PocSprint {
   end_date: string;
   status: 'planned' | 'active' | 'completed';
   goals: string[];
-  velocity?: number;
-  satisfaction?: number;
-  notes?: string;
+  velocity: number | null;
+  satisfaction: number | null;
+  notes: string | null;
 }
 
 export interface PocMetric {
@@ -318,7 +318,7 @@ export interface PocMetric {
   baseline_value: number;
   ai_assisted_value: number;
   unit: string;
-  notes?: string;
+  notes: string | null;
 }
 
 export interface ToolEvaluation {
@@ -328,7 +328,7 @@ export interface ToolEvaluation {
   category: string;
   score: number;
   max_score: number;
-  notes?: string;
+  notes: string | null;
 }
 
 // Report types
@@ -340,7 +340,7 @@ export interface ReportTemplate {
   id: string;
   persona: ReportPersona;
   title: string;
-  description?: string;
+  description: string | null;
   sections: ReportSection[];
   format: ReportFormat;
 }
@@ -356,19 +356,19 @@ export interface ReportSection {
 export interface GeneratedReport {
   id: string;
   project_id: string;
-  template_id?: string;
+  template_id: string | null;
   persona: ReportPersona;
   title: string;
   status: ReportStatus;
-  content?: Record<string, unknown>;
-  file_url?: string;
-  file_size?: number;
-  generated_by?: string;
+  content: Record<string, unknown> | null;
+  file_url: string | null;
+  file_size: number | null;
+  generated_by: string | null;
   generated_at: string;
   updated_at: string;
 }
 
-// Meeting & Action Item types (NEW)
+// Meeting & Action Item types
 export type MeetingType = 'discovery' | 'gate_review' | 'executive_briefing' | 'sprint_review' | 'general' | 'kickoff' | 'retrospective';
 
 export interface MeetingNote {
@@ -378,9 +378,9 @@ export interface MeetingNote {
   meeting_date: string;
   meeting_type: MeetingType;
   attendees: MeetingAttendee[];
-  notes?: string;
-  summary?: string;
-  created_by?: string;
+  notes: string | null;
+  summary: string | null;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -400,19 +400,19 @@ export interface ActionItem {
   meeting_id: string;
   project_id: string;
   title: string;
-  description?: string;
-  assigned_to?: string;
-  assigned_to_name?: string;
+  description: string | null;
+  assigned_to: string | null;
+  assigned_to_name: string | null;
   status: ActionItemStatus;
   priority: ActionItemPriority;
-  due_date?: string;
-  linked_task_id?: string;
-  completed_at?: string;
+  due_date: string | null;
+  linked_task_id: string | null;
+  completed_at: string | null;
   created_at: string;
   updated_at: string;
 }
 
-// RACI types (NEW)
+// RACI types
 export type RaciAssignment = 'R' | 'A' | 'C' | 'I';
 
 export interface RaciMatrix {
@@ -427,15 +427,15 @@ export interface RaciEntry {
   id: string;
   matrix_id: string;
   task_name: string;
-  task_id?: string;
-  user_id?: string;
+  task_id: string | null;
+  user_id: string | null;
   user_name: string;
   assignment: RaciAssignment;
   created_at: string;
   updated_at: string;
 }
 
-// ROI types (NEW)
+// ROI types
 export interface RoiInputs {
   team_size: number;
   avg_salary: number;
@@ -461,8 +461,8 @@ export interface RoiCalculation {
   project_id: string;
   inputs: RoiInputs;
   results: RoiResults;
-  sensitivity_data?: SensitivityRow[];
-  calculated_by?: string;
+  sensitivity_data: SensitivityRow[] | null;
+  calculated_by: string | null;
   created_at: string;
   updated_at: string;
 }

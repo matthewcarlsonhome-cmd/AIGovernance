@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse rounded bg-muted ${className || ''}`} />;
+  return <div className={`animate-pulse rounded bg-slate-100 ${className || ''}`} />;
 }
 
 export default function RACILoading() {
@@ -24,7 +24,7 @@ export default function RACILoading() {
         <CardContent>
           {/* Table header */}
           <div className="border rounded-lg overflow-hidden">
-            <div className="grid grid-cols-7 gap-0 bg-muted/50 p-3 border-b">
+            <div className="grid grid-cols-7 gap-0 bg-slate-100/50 p-3 border-b">
               <Skeleton className="h-4 w-24 col-span-2" />
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex justify-center">

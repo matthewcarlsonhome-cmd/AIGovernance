@@ -260,14 +260,14 @@ export function CommandPalette(): React.JSX.Element {
       >
         {/* Search input */}
         <div className="flex items-center gap-3 border-b px-4 py-3">
-          <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <Search className="h-4 w-4 shrink-0 text-slate-500" />
           <input
             ref={inputRef}
             type="text"
             placeholder="Type a command or search..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-500"
           />
           <kbd className="hidden sm:inline-flex h-5 items-center gap-0.5 rounded border bg-slate-100 px-1.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400">
             ESC
@@ -277,7 +277,7 @@ export function CommandPalette(): React.JSX.Element {
         {/* Results list */}
         <div ref={listRef} className="max-h-80 overflow-y-auto py-2">
           {flatItems.length === 0 && (
-            <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+            <div className="px-4 py-8 text-center text-sm text-slate-500">
               No results found for &quot;{query}&quot;
             </div>
           )}
@@ -290,7 +290,7 @@ export function CommandPalette(): React.JSX.Element {
 
             const sectionContent = (
               <div key={sectionName} className="mb-1">
-                <div className="px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                <div className="px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                   {sectionName}
                 </div>
                 {items.map((item, itemIdx) => {
@@ -309,11 +309,11 @@ export function CommandPalette(): React.JSX.Element {
                       className={cn(
                         'flex w-full items-center gap-3 px-4 py-2 text-sm transition-colors',
                         isActive
-                          ? 'bg-accent text-accent-foreground'
-                          : 'text-foreground hover:bg-accent/50'
+                          ? 'bg-slate-100 text-slate-900'
+                          : 'text-slate-900 hover:bg-slate-50'
                       )}
                     >
-                      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <Icon className="h-4 w-4 shrink-0 text-slate-500" />
                       <span className="flex-1 text-left truncate">{item.label}</span>
                       {item.shortcut && <ShortcutBadge shortcut={item.shortcut} />}
                     </button>
@@ -328,7 +328,7 @@ export function CommandPalette(): React.JSX.Element {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t px-4 py-2 text-[11px] text-muted-foreground">
+        <div className="flex items-center justify-between border-t px-4 py-2 text-[11px] text-slate-500">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
               <kbd className="inline-flex h-4 min-w-4 items-center justify-center rounded border bg-slate-100 px-0.5 text-[10px] dark:bg-slate-800 dark:border-slate-700">

@@ -505,7 +505,7 @@ function StepSecurity({
               onChange={(e) =>
                 onChange({ ...config, siemIntegration: e.target.value })
               }
-              className="flex h-9 w-full max-w-xs items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
+              className="flex h-9 w-full max-w-xs items-center rounded-md border border-slate-200 bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
             >
               {SIEM_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -541,7 +541,7 @@ function StepSecurity({
             onChange={(e) =>
               onChange({ ...config, selectedModel: e.target.value })
             }
-            className="flex h-9 w-full max-w-xs items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
+            className="flex h-9 w-full max-w-xs items-center rounded-md border border-slate-200 bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
           >
             {AI_MODELS.map((model) => (
               <option key={model.value} value={model.value}>

@@ -36,17 +36,31 @@ export default function SnapshotsPage({
   // Use fetched snapshots or fall back to demo data
   const snapshotData = SNAPSHOT_DATA;
 
+  const [baselineSaved, setBaselineSaved] = React.useState(false);
+  const [savedBaselines, setSavedBaselines] = React.useState<string[]>(['Original Plan - Jan 6, 2026']);
+
+  const handleSaveBaseline = (): void => {
+    const now = new Date();
+    const label = `Baseline - ${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    setSavedBaselines((prev) => [...prev, label]);
+    setBaselineSaved(true);
+    setTimeout(() => setBaselineSaved(false), 3000);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Camera className="h-6 w-6 text-primary" />
+            <Camera className="h-6 w-6 text-slate-900" />
             Schedule Baseline Comparison
           </h1>
-          <p className="text-muted-foreground mt-1">Compare current schedule against saved baselines</p>
+          <p className="text-slate-500 mt-1">Compare current schedule against saved baselines</p>
         </div>
-        <Button><Camera className="h-4 w-4 mr-2" /> Save New Baseline</Button>
+        <div className="flex items-center gap-2">
+          {baselineSaved && <span className="text-xs text-emerald-600 font-medium">Baseline saved!</span>}
+          <Button onClick={handleSaveBaseline} className="bg-slate-900 text-white hover:bg-slate-800"><Camera className="h-4 w-4 mr-2" /> Save New Baseline</Button>
+        </div>
       </div>
 
       {/* Summary */}
@@ -56,7 +70,7 @@ export default function SnapshotsPage({
             <AlertTriangle className="h-5 w-5 text-yellow-600" />
             <div>
               <p className="font-semibold">Schedule is 2 days behind baseline</p>
-              <p className="text-sm text-muted-foreground">Critical path impact: <span className="font-medium text-emerald-700">Low</span> — Evaluation and Readout phases remain on track.</p>
+              <p className="text-sm text-slate-500">Critical path impact: <span className="font-medium text-emerald-700">Low</span> — Evaluation and Readout phases remain on track.</p>
             </div>
           </div>
         </CardContent>
@@ -66,16 +80,16 @@ export default function SnapshotsPage({
       <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Baseline</p>
+            <p className="text-xs text-slate-500 uppercase tracking-wider">Baseline</p>
             <p className="font-semibold">Original Plan</p>
-            <p className="text-sm text-muted-foreground">Saved Jan 6, 2026</p>
+            <p className="text-sm text-slate-500">Saved Jan 6, 2026</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Current Schedule</p>
+            <p className="text-xs text-slate-500 uppercase tracking-wider">Current Schedule</p>
             <p className="font-semibold">Active Plan</p>
-            <p className="text-sm text-muted-foreground">As of Feb 9, 2026</p>
+            <p className="text-sm text-slate-500">As of Feb 9, 2026</p>
           </CardContent>
         </Card>
       </div>
@@ -99,9 +113,9 @@ export default function SnapshotsPage({
                 const config = statusConfig[row.status];
                 const StatusIcon = config.icon;
                 return (
-                  <tr key={row.phase} className="border-b hover:bg-muted/50">
+                  <tr key={row.phase} className="border-b hover:bg-slate-50">
                     <td className="py-3 px-3 font-medium">{row.phase}</td>
-                    <td className="py-3 px-3 text-muted-foreground">{row.baselineEnd}</td>
+                    <td className="py-3 px-3 text-slate-500">{row.baselineEnd}</td>
                     <td className="py-3 px-3">{row.currentEnd}</td>
                     <td className="py-3 px-3">
                       <span className={row.status !== 'on_track' ? 'text-yellow-700 font-medium' : 'text-emerald-700'}>{row.variance}</span>

@@ -190,7 +190,7 @@ export default function LoginPage() {
             <Separator className="w-full" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">
+            <span className="bg-white px-2 text-slate-500">
               Or continue with
             </span>
           </div>
@@ -206,7 +206,7 @@ export default function LoginPage() {
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                       <Input
                         type="email"
                         placeholder="name@company.com"
@@ -230,14 +230,14 @@ export default function LoginPage() {
                     <FormLabel>Password</FormLabel>
                     <Link
                       href="/forgot-password"
-                      className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                      className="text-xs text-slate-500 hover:text-slate-900 transition-colors"
                     >
                       Forgot password?
                     </Link>
                   </div>
                   <FormControl>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                       <Input
                         type="password"
                         placeholder="Enter your password"
@@ -263,11 +263,11 @@ export default function LoginPage() {
         </Form>
       </CardContent>
       <CardFooter>
-        <p className="text-sm text-muted-foreground text-center w-full">
+        <p className="text-sm text-slate-500 text-center w-full">
           Don&apos;t have an account?{' '}
           <Link
             href="/register"
-            className="font-medium text-primary hover:underline"
+            className="font-medium text-slate-900 hover:underline"
           >
             Create account
           </Link>

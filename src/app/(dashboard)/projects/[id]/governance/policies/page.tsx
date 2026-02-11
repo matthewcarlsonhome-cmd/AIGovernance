@@ -485,6 +485,19 @@ export default function GovernancePoliciesPage({
     setEditContent("");
   };
 
+  const handleSaveEdit = (): void => {
+    if (!editingPolicy) return;
+    setLocalPolicies((prev) =>
+      prev.map((p) =>
+        p.id === editingPolicy
+          ? { ...p, content: editContent, lastUpdated: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) }
+          : p
+      )
+    );
+    setEditingPolicy(null);
+    setEditContent("");
+  };
+
   const handleCreatePolicy = (): void => {
     if (!newPolicyTitle.trim()) return;
     const newPolicy: Policy = {
@@ -737,7 +750,15 @@ export default function GovernancePoliciesPage({
                       <Pencil className="h-3.5 w-3.5" />
                       Edit
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => {
+                      const blob = new Blob([`${policy.title}\nStatus: ${policy.status}\nVersion: ${policy.version}\nLast Updated: ${policy.lastUpdated}\n\n${policy.content}`], { type: 'text/plain' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `${policy.title.replace(/\s+/g, '_')}.txt`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}>
                       <Download className="h-3.5 w-3.5" />
                       Export
                     </Button>
@@ -763,7 +784,7 @@ export default function GovernancePoliciesPage({
                                 <X className="h-3.5 w-3.5" />
                                 Cancel
                               </Button>
-                              <Button size="sm">
+                              <Button size="sm" onClick={handleSaveEdit} className="bg-slate-900 text-white hover:bg-slate-800">
                                 Save Changes
                               </Button>
                             </div>

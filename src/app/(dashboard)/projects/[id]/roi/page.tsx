@@ -115,13 +115,13 @@ function ResultMetricCard({
   const colorMap = {
     positive: 'text-emerald-600',
     negative: 'text-red-600',
-    neutral: 'text-foreground',
+    neutral: 'text-slate-900',
   } as const;
 
   const bgMap = {
     positive: 'bg-emerald-500/10',
     negative: 'bg-red-500/10',
-    neutral: 'bg-primary/10',
+    neutral: 'bg-slate-100',
   } as const;
 
   return (
@@ -141,11 +141,11 @@ function ResultMetricCard({
                   ? 'text-emerald-600'
                   : variant === 'negative'
                     ? 'text-red-600'
-                    : 'text-primary'
+                    : 'text-slate-900'
               )}
             />
           </div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
             {label}
           </p>
         </div>
@@ -156,7 +156,7 @@ function ResultMetricCard({
           {badge}
         </div>
         {sub && (
-          <p className="mt-1 text-xs text-muted-foreground">{sub}</p>
+          <p className="mt-1 text-xs text-slate-500">{sub}</p>
         )}
       </CardContent>
     </Card>
@@ -178,11 +178,11 @@ function SensitivityTooltip({
 }): React.ReactElement | null {
   if (!active || !payload || payload.length === 0) return null;
   return (
-    <div className="rounded-lg border bg-card px-3 py-2 shadow-md">
-      <p className="text-xs font-medium text-muted-foreground mb-1">
+    <div className="rounded-lg border bg-white px-3 py-2 shadow-md">
+      <p className="text-xs font-medium text-slate-500 mb-1">
         Velocity Lift: {label}
       </p>
-      <p className="text-sm font-bold text-foreground">
+      <p className="text-sm font-bold text-slate-900">
         3-Year NPV: {formatCurrency(payload[0].value)}
       </p>
     </div>
@@ -224,10 +224,44 @@ export default function RoiCalculatorPage(): React.ReactElement {
     setSensitivity(s);
   }
 
-  /* ---- Export stub ---- */
+  /* ---- Export ---- */
   function handleExport(): void {
-    // eslint-disable-next-line no-console
-    console.log('Export PDF triggered', { inputs, results, sensitivity });
+    if (!results) return;
+    const lines = [
+      'ROI Calculator Export',
+      '====================',
+      '',
+      'Input Parameters:',
+      `  Team Size: ${inputs.team_size}`,
+      `  Average Salary: ${formatCurrency(inputs.avg_salary)}`,
+      `  Current Velocity: ${inputs.current_velocity} pts/sprint`,
+      `  Projected Velocity Lift: ${inputs.projected_velocity_lift}%`,
+      `  License Cost/User/Month: ${formatCurrency(inputs.license_cost_per_user)}`,
+      `  Implementation Cost: ${formatCurrency(inputs.implementation_cost)}`,
+      `  Training Cost: ${formatCurrency(inputs.training_cost)}`,
+      '',
+      'Results:',
+      `  Monthly Savings: ${formatCurrency(results.monthly_savings)}`,
+      `  Annual Savings: ${formatCurrency(results.annual_savings)}`,
+      `  Total Annual Cost: ${formatCurrency(results.total_annual_cost)}`,
+      `  Net Annual Benefit: ${formatCurrency(results.net_annual_benefit)}`,
+      `  Payback Period: ${paybackLabel(results.payback_months)}`,
+      `  ROI: ${formatPercent(results.roi_percentage)}`,
+      `  3-Year NPV: ${formatCurrency(results.three_year_npv)}`,
+      '',
+      'Sensitivity Analysis:',
+      'Velocity Lift | Monthly Savings | Annual Savings | Payback | 3-Year NPV',
+    ];
+    sensitivity.forEach((row) => {
+      lines.push(`  ${row.velocity_lift}% | ${formatCurrency(row.monthly_savings)} | ${formatCurrency(row.annual_savings)} | ${paybackLabel(row.payback_months)} | ${formatCurrency(row.three_year_npv)}`);
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'roi-analysis.txt';
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   /* ---- Chart data ---- */
@@ -243,11 +277,11 @@ export default function RoiCalculatorPage(): React.ReactElement {
       {/* ------------------------------------------------------------------ */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Calculator className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+            <Calculator className="h-6 w-6 text-slate-900" />
             ROI Calculator
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-slate-500">
             Calculate and visualize the return on investment for AI coding agent
             adoption across your engineering organization.
           </p>
@@ -268,7 +302,7 @@ export default function RoiCalculatorPage(): React.ReactElement {
         <Card className="self-start">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <DollarSign className="h-4 w-4 text-primary" />
+              <DollarSign className="h-4 w-4 text-slate-900" />
               Input Parameters
             </CardTitle>
             <CardDescription>
@@ -325,7 +359,7 @@ export default function RoiCalculatorPage(): React.ReactElement {
                 <Label htmlFor="projected_velocity_lift" className="text-xs font-medium">
                   Projected Velocity Lift
                 </Label>
-                <span className="text-sm font-semibold text-primary">
+                <span className="text-sm font-semibold text-slate-900">
                   {inputs.projected_velocity_lift}%
                 </span>
               </div>
@@ -342,7 +376,7 @@ export default function RoiCalculatorPage(): React.ReactElement {
                   }))
                 }
               />
-              <div className="flex justify-between text-[10px] text-muted-foreground">
+              <div className="flex justify-between text-[10px] text-slate-500">
                 <span>5%</span>
                 <span>100%</span>
               </div>
@@ -485,8 +519,8 @@ export default function RoiCalculatorPage(): React.ReactElement {
         ) : (
           <Card className="flex items-center justify-center min-h-[300px]">
             <CardContent className="text-center py-12">
-              <Calculator className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
-              <p className="text-sm text-muted-foreground">
+              <Calculator className="h-12 w-12 text-slate-500/40 mx-auto mb-4" />
+              <p className="text-sm text-slate-500">
                 Adjust the input parameters and results will appear here automatically.
               </p>
             </CardContent>
@@ -502,11 +536,11 @@ export default function RoiCalculatorPage(): React.ReactElement {
           <Separator />
 
           <div>
-            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-1">
-              <BarChart3 className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-1">
+              <BarChart3 className="h-5 w-5 text-slate-900" />
               Sensitivity Analysis
             </h2>
-            <p className="text-sm text-muted-foreground mb-6">
+            <p className="text-sm text-slate-500 mb-6">
               3-Year Net Present Value at varying velocity lift percentages,
               holding all other inputs constant.
             </p>
@@ -520,22 +554,22 @@ export default function RoiCalculatorPage(): React.ReactElement {
                       data={chartData}
                       margin={{ top: 8, right: 24, left: 24, bottom: 0 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200" />
                       <XAxis
                         dataKey="name"
                         tick={{ fontSize: 12 }}
-                        className="text-muted-foreground"
+                        className="text-slate-500"
                         label={{
                           value: 'Velocity Lift',
                           position: 'insideBottom',
                           offset: -4,
                           fontSize: 12,
-                          className: 'fill-muted-foreground',
+                          className: 'fill-slate-500',
                         }}
                       />
                       <YAxis
                         tick={{ fontSize: 12 }}
-                        className="text-muted-foreground"
+                        className="text-slate-500"
                         tickFormatter={(v: number) => formatCurrency(v)}
                         width={100}
                         label={{
@@ -544,7 +578,7 @@ export default function RoiCalculatorPage(): React.ReactElement {
                           position: 'insideLeft',
                           offset: 0,
                           fontSize: 12,
-                          className: 'fill-muted-foreground',
+                          className: 'fill-slate-500',
                         }}
                       />
                       <Tooltip content={<SensitivityTooltip />} />
@@ -594,7 +628,7 @@ export default function RoiCalculatorPage(): React.ReactElement {
                         <TableRow
                           key={row.velocity_lift}
                           className={cn(
-                            isCurrentLift && 'bg-primary/5 font-medium'
+                            isCurrentLift && 'bg-slate-50 font-medium'
                           )}
                         >
                           <TableCell>

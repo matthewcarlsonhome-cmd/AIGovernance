@@ -150,31 +150,31 @@ function MetricCard({ metric }: { metric: Metric }): React.ReactElement {
       <CardContent className="p-0">
         {/* Header */}
         <div className="flex items-center gap-3 p-4 pb-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Icon className="h-5 w-5 text-primary" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
+            <Icon className="h-5 w-5 text-slate-900" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground text-sm">
+            <h3 className="font-semibold text-slate-900 text-sm">
               {metric.name}
             </h3>
-            <p className="text-xs text-muted-foreground line-clamp-1">
+            <p className="text-xs text-slate-500 line-clamp-1">
               {metric.description}
             </p>
           </div>
         </div>
 
         {/* Values */}
-        <div className="grid grid-cols-2 gap-0 border-t border-border">
+        <div className="grid grid-cols-2 gap-0 border-t border-slate-200">
           {/* Baseline */}
-          <div className="p-4 border-r border-border">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+          <div className="p-4 border-r border-slate-200">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
               Baseline
             </p>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold text-muted-foreground">
+              <span className="text-2xl font-bold text-slate-500">
                 {metric.baselineValue}
               </span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-slate-500">
                 {metric.baselineUnit}
               </span>
             </div>
@@ -182,14 +182,14 @@ function MetricCard({ metric }: { metric: Metric }): React.ReactElement {
 
           {/* AI-Assisted */}
           <div className="p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
               AI-Assisted
             </p>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold text-foreground">
+              <span className="text-2xl font-bold text-slate-900">
                 {metric.aiValue}
               </span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-slate-500">
                 {metric.aiUnit}
               </span>
             </div>
@@ -228,7 +228,7 @@ function MetricCard({ metric }: { metric: Metric }): React.ReactElement {
           >
             {changePrefix}{metric.changePercent}%
           </span>
-          <span className="text-xs text-muted-foreground ml-1">
+          <span className="text-xs text-slate-500 ml-1">
             vs baseline
           </span>
         </div>
@@ -259,10 +259,10 @@ export default function MetricsPage({
     <div className="flex flex-col gap-6 p-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
           Baseline vs. AI-Assisted Metrics
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-slate-500">
           Compare team performance metrics before and after AI coding agent
           adoption across velocity, quality, and developer experience.
         </p>
@@ -279,10 +279,10 @@ export default function MetricsPage({
                 <TrendingUp className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-foreground">
+                <h2 className="text-lg font-semibold text-slate-900">
                   Overall Impact Assessment
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-slate-500">
                   All 6 measured metrics show positive improvement with AI
                   assistance
                 </p>
@@ -308,7 +308,7 @@ export default function MetricsPage({
                   <p className="text-lg font-bold text-emerald-600">
                     {changePrefix}{metric.changePercent}%
                   </p>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-[10px] text-slate-500">
                     {metric.name}
                   </p>
                 </div>
@@ -329,12 +329,12 @@ export default function MetricsPage({
       <Card>
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <BarChart3 className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+            <BarChart3 className="h-5 w-5 text-slate-500 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-foreground">
+              <p className="text-sm font-medium text-slate-900">
                 Data Collection Methodology
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Baseline metrics were captured during a 2-week period prior to
                 AI tool introduction (Jan 13-24, 2026). AI-assisted metrics
                 represent the average across Sprint 1 (completed) and Sprint 2

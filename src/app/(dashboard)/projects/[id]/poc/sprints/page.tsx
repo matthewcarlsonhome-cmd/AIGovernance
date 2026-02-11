@@ -125,7 +125,7 @@ function getStatusBadgeClasses(status: SprintStatus): string {
     case 'active':
       return 'bg-blue-500/15 text-blue-700 border-blue-500/25';
     case 'planned':
-      return 'bg-muted text-muted-foreground border-border';
+      return 'bg-slate-100 text-slate-500 border-slate-200';
   }
 }
 
@@ -147,7 +147,7 @@ function getStatusIcon(status: SprintStatus): React.ReactElement {
     case 'active':
       return <Play className="h-5 w-5 text-blue-500" />;
     case 'planned':
-      return <CalendarDays className="h-5 w-5 text-muted-foreground" />;
+      return <CalendarDays className="h-5 w-5 text-slate-500" />;
   }
 }
 
@@ -178,10 +178,10 @@ export default function SprintEvaluationPage({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             Sprint Evaluation Tracker
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-slate-500">
             Track evaluation sprints for the Claude Code PoC with velocity,
             quality, and satisfaction metrics per sprint.
           </p>
@@ -203,10 +203,10 @@ export default function SprintEvaluationPage({
                 <CheckCircle2 className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">
+                <p className="text-2xl font-bold text-slate-900">
                   {sprints.filter((s) => s.status === 'completed').length}
                 </p>
-                <p className="text-xs text-muted-foreground">Sprints Completed</p>
+                <p className="text-xs text-slate-500">Sprints Completed</p>
               </div>
             </div>
           </CardContent>
@@ -218,8 +218,8 @@ export default function SprintEvaluationPage({
                 <TrendingUp className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">+62%</p>
-                <p className="text-xs text-muted-foreground">Avg Velocity Increase</p>
+                <p className="text-2xl font-bold text-slate-900">+62%</p>
+                <p className="text-xs text-slate-500">Avg Velocity Increase</p>
               </div>
             </div>
           </CardContent>
@@ -231,8 +231,8 @@ export default function SprintEvaluationPage({
                 <Target className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">8.7/10</p>
-                <p className="text-xs text-muted-foreground">Avg Dev Satisfaction</p>
+                <p className="text-2xl font-bold text-slate-900">8.7/10</p>
+                <p className="text-xs text-slate-500">Avg Dev Satisfaction</p>
               </div>
             </div>
           </CardContent>
@@ -289,9 +289,9 @@ export default function SprintEvaluationPage({
                       {getStatusLabel(sprint.status)}
                     </Badge>
                     {isExpanded ? (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      <ChevronDown className="h-4 w-4 text-slate-500" />
                     ) : (
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      <ChevronRight className="h-4 w-4 text-slate-500" />
                     )}
                   </div>
                 </div>
@@ -299,7 +299,7 @@ export default function SprintEvaluationPage({
                 {/* Progress bar */}
                 {sprint.status !== 'planned' && (
                   <div className="mt-3">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
                       <span>
                         {sprint.storyPointsCompleted}/{sprint.storyPointsPlanned} story
                         points
@@ -317,7 +317,7 @@ export default function SprintEvaluationPage({
 
                   {/* Goals */}
                   <div className="mb-6">
-                    <h4 className="text-sm font-semibold text-foreground mb-3">
+                    <h4 className="text-sm font-semibold text-slate-900 mb-3">
                       Sprint Goals
                     </h4>
                     <div className="space-y-2">
@@ -329,13 +329,13 @@ export default function SprintEvaluationPage({
                           {goal.completed ? (
                             <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
                           ) : (
-                            <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30 shrink-0" />
+                            <div className="h-4 w-4 rounded-full border-2 border-slate-400 shrink-0" />
                           )}
                           <span
                             className={cn(
                               goal.completed
-                                ? 'text-foreground'
-                                : 'text-muted-foreground'
+                                ? 'text-slate-900'
+                                : 'text-slate-500'
                             )}
                           >
                             {goal.name}
@@ -348,17 +348,17 @@ export default function SprintEvaluationPage({
                   {/* Metrics */}
                   {sprint.status !== 'planned' && (
                     <div>
-                      <h4 className="text-sm font-semibold text-foreground mb-3">
+                      <h4 className="text-sm font-semibold text-slate-900 mb-3">
                         Sprint Metrics
                       </h4>
                       <div className="grid gap-3 sm:grid-cols-4">
-                        <div className="rounded-lg border border-border p-3">
-                          <p className="text-xs text-muted-foreground">Velocity</p>
+                        <div className="rounded-lg border border-slate-200 p-3">
+                          <p className="text-xs text-slate-500">Velocity</p>
                           <div className="flex items-baseline gap-1.5">
-                            <p className="text-xl font-bold text-foreground">
+                            <p className="text-xl font-bold text-slate-900">
                               {sprint.velocity}
                             </p>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-slate-500">
                               pts/sprint
                             </span>
                           </div>
@@ -368,32 +368,32 @@ export default function SprintEvaluationPage({
                             </p>
                           )}
                         </div>
-                        <div className="rounded-lg border border-border p-3">
-                          <p className="text-xs text-muted-foreground">Defect Rate</p>
-                          <p className="text-xl font-bold text-foreground">
+                        <div className="rounded-lg border border-slate-200 p-3">
+                          <p className="text-xs text-slate-500">Defect Rate</p>
+                          <p className="text-xl font-bold text-slate-900">
                             {sprint.defectRate}%
                           </p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
+                          <p className="text-xs text-slate-500 mt-0.5">
                             Baseline: 12%
                           </p>
                         </div>
-                        <div className="rounded-lg border border-border p-3">
-                          <p className="text-xs text-muted-foreground">
+                        <div className="rounded-lg border border-slate-200 p-3">
+                          <p className="text-xs text-slate-500">
                             Dev Satisfaction
                           </p>
-                          <p className="text-xl font-bold text-foreground">
+                          <p className="text-xl font-bold text-slate-900">
                             {sprint.satisfaction}/10
                           </p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
+                          <p className="text-xs text-slate-500 mt-0.5">
                             Baseline: 6.2/10
                           </p>
                         </div>
-                        <div className="rounded-lg border border-border p-3">
-                          <p className="text-xs text-muted-foreground">Completion</p>
-                          <p className="text-xl font-bold text-foreground">
+                        <div className="rounded-lg border border-slate-200 p-3">
+                          <p className="text-xs text-slate-500">Completion</p>
+                          <p className="text-xl font-bold text-slate-900">
                             {completionPct}%
                           </p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
+                          <p className="text-xs text-slate-500 mt-0.5">
                             {sprint.storyPointsCompleted}/{sprint.storyPointsPlanned} pts
                           </p>
                         </div>

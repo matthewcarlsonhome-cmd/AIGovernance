@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse rounded bg-muted ${className || ''}`} />;
+  return <div className={`animate-pulse rounded bg-slate-100 ${className || ''}`} />;
 }
 
 export default function GanttLoading() {
@@ -59,7 +59,7 @@ export default function GanttLoading() {
                   return (
                     <div key={i} className="relative h-5">
                       <div
-                        className="h-5 absolute rounded-sm animate-pulse bg-muted"
+                        className="h-5 absolute rounded-sm animate-pulse bg-slate-100"
                         style={{
                           left: `${offset}%`,
                           width: `${width}%`,

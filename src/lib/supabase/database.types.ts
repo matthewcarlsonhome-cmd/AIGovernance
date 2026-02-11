@@ -182,6 +182,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       projects: {
@@ -227,6 +228,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       users: {
@@ -263,6 +265,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       team_members: {
@@ -293,6 +296,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       // ── Assessment Engine ────────────────────────────────────
@@ -328,6 +332,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       assessment_questions: {
@@ -385,6 +390,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       assessment_responses: {
@@ -418,6 +424,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       feasibility_scores: {
@@ -457,6 +464,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       // ── Governance Artifacts ─────────────────────────────────
@@ -504,6 +512,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       policy_versions: {
@@ -540,6 +549,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       compliance_mappings: {
@@ -585,6 +595,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       risk_classifications: {
@@ -633,6 +644,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       gate_reviews: {
@@ -675,6 +687,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       // ── Implementation Tracking ──────────────────────────────
@@ -707,6 +720,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       workflow_phases: {
@@ -740,6 +754,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       workflow_tasks: {
@@ -806,6 +821,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       task_assignments: {
@@ -836,6 +852,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       task_status_history: {
@@ -869,6 +886,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
 
       // ── Sandbox Configuration ────────────────────────────────
@@ -913,6 +931,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       config_files: {
@@ -949,6 +968,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       environment_validations: {
@@ -991,6 +1011,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       // ── PoC Evaluation ───────────────────────────────────────
@@ -1035,6 +1056,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       poc_sprints: {
@@ -1083,6 +1105,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       poc_metrics: {
@@ -1122,6 +1145,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       tool_evaluations: {
@@ -1161,6 +1185,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       // ── Timeline / PM ────────────────────────────────────────
@@ -1202,6 +1227,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       timeline_dependencies: {
@@ -1232,6 +1258,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       timeline_snapshots: {
@@ -1271,6 +1298,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       // ── Reporting ────────────────────────────────────────────
@@ -1309,6 +1337,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       generated_reports: {
@@ -1357,6 +1386,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       // ── Meetings & Action Items ──────────────────────────────
@@ -1404,6 +1434,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       action_items: {
@@ -1458,6 +1489,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       // ── RACI Matrix ──────────────────────────────────────────
@@ -1487,6 +1519,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       raci_entries: {
@@ -1526,6 +1559,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       // ── ROI Calculations ─────────────────────────────────────
@@ -1564,6 +1598,7 @@ export interface Database {
           updated_at?: string;
           deleted_at?: string | null;
         };
+        Relationships: [];
       };
 
       // ── Audit Logs ───────────────────────────────────────────
@@ -1602,6 +1637,7 @@ export interface Database {
           ip_address?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
     };
 

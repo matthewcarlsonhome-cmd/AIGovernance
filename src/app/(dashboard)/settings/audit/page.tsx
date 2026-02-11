@@ -281,11 +281,11 @@ export default function AuditLogPage(): React.ReactElement {
     <div className="flex flex-col gap-6 p-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
           <ScrollText className="h-6 w-6" />
           Audit Log
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-slate-500">
           View a chronological record of all actions performed across the organization.
         </p>
       </div>
@@ -296,7 +296,7 @@ export default function AuditLogPage(): React.ReactElement {
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Filter className="h-4 w-4 text-slate-500" />
             <CardTitle className="text-sm font-medium">Filters</CardTitle>
           </div>
         </CardHeader>
@@ -308,7 +308,7 @@ export default function AuditLogPage(): React.ReactElement {
                 Search
               </Label>
               <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-500" />
                 <Input
                   id="audit-search"
                   placeholder="User, resource, details..."
@@ -328,7 +328,7 @@ export default function AuditLogPage(): React.ReactElement {
                 id="audit-action"
                 value={actionFilter}
                 onChange={(e) => setActionFilter(e.target.value as AuditAction | '')}
-                className="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                className="flex h-9 w-full items-center rounded-md border border-slate-200 bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
               >
                 <option value="">All Actions</option>
                 {ALL_ACTIONS.map((a) => (
@@ -386,20 +386,20 @@ export default function AuditLogPage(): React.ReactElement {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border">
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <tr className="border-b border-slate-200">
+                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Date
                   </th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     User
                   </th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Action
                   </th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Resource
                   </th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Details
                   </th>
                 </tr>
@@ -407,7 +407,7 @@ export default function AuditLogPage(): React.ReactElement {
               <tbody>
                 {paginatedLogs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-12 text-center text-muted-foreground">
+                    <td colSpan={5} className="py-12 text-center text-slate-500">
                       No audit log entries match the current filters.
                     </td>
                   </tr>
@@ -416,19 +416,19 @@ export default function AuditLogPage(): React.ReactElement {
                     <tr
                       key={log.id}
                       className={cn(
-                        'border-b border-border transition-colors hover:bg-muted/50',
-                        idx % 2 === 0 ? 'bg-background' : 'bg-muted/20',
+                        'border-b border-slate-200 transition-colors hover:bg-slate-50',
+                        idx % 2 === 0 ? 'bg-white' : 'bg-slate-50',
                       )}
                     >
-                      <td className="py-3 px-4 text-xs text-muted-foreground whitespace-nowrap">
+                      <td className="py-3 px-4 text-xs text-slate-500 whitespace-nowrap">
                         {formatDate(log.created_at)}
                       </td>
                       <td className="py-3 px-4">
                         <div>
-                          <p className="font-medium text-foreground text-sm">
+                          <p className="font-medium text-slate-900 text-sm">
                             {log.user_name}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-slate-500">
                             {log.user_email}
                           </p>
                         </div>
@@ -437,17 +437,17 @@ export default function AuditLogPage(): React.ReactElement {
                         <ActionBadge action={log.action} />
                       </td>
                       <td className="py-3 px-4">
-                        <span className="text-sm text-foreground">
+                        <span className="text-sm text-slate-900">
                           {formatResourceType(log.resource_type)}
                         </span>
                         {log.resource_id && (
-                          <p className="text-xs text-muted-foreground font-mono truncate max-w-[120px]">
+                          <p className="text-xs text-slate-500 font-mono truncate max-w-[120px]">
                             {log.resource_id}
                           </p>
                         )}
                       </td>
                       <td className="py-3 px-4 max-w-[250px]">
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-xs text-slate-500 truncate">
                           {formatDetails(log.details)}
                         </p>
                       </td>
@@ -461,7 +461,7 @@ export default function AuditLogPage(): React.ReactElement {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4 pt-4 border-t">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-slate-500">
                 Page {currentPage} of {totalPages}
               </p>
               <div className="flex items-center gap-2">

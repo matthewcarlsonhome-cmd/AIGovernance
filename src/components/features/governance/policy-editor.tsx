@@ -66,7 +66,7 @@ function ToolbarButton({
       title={title}
       className={cn(
         'h-8 w-8 p-0',
-        isActive && 'bg-muted text-foreground',
+        isActive && 'bg-slate-100 text-slate-900',
       )}
     >
       {children}
@@ -86,7 +86,7 @@ function Toolbar({ editor }: ToolbarProps): React.ReactElement | null {
   if (!editor) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-0.5 border-b bg-muted/30 px-2 py-1.5">
+    <div className="flex flex-wrap items-center gap-0.5 border-b bg-slate-50 px-2 py-1.5">
       {/* Text formatting */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -208,7 +208,7 @@ export function PolicyEditor({
           'prose-headings:font-semibold prose-headings:tracking-tight',
           'prose-h1:text-xl prose-h2:text-lg prose-h3:text-base',
           'prose-p:leading-relaxed prose-li:leading-relaxed',
-          'prose-blockquote:border-l-primary prose-blockquote:not-italic',
+          'prose-blockquote:border-l-slate-900 prose-blockquote:not-italic',
         ),
       },
     },
@@ -234,7 +234,7 @@ export function PolicyEditor({
   return (
     <div
       className={cn(
-        'rounded-lg border bg-background overflow-hidden',
+        'rounded-lg border bg-white overflow-hidden',
         !editable && 'opacity-80',
         className,
       )}

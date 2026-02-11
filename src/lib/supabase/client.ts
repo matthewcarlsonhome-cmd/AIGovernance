@@ -1,5 +1,9 @@
 import { createBrowserClient } from '@supabase/ssr';
-import type { Database } from './database.types';
+// Database type definitions are available in ./database.types.ts for
+// type-safe queries. Pass `Database` as a generic parameter when ready
+// to adopt per-route typed access:
+//   import type { Database } from './database.types';
+//   createBrowserClient<Database>(...)
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -21,5 +25,5 @@ export function createClient() {
     );
   }
 
-  return createBrowserClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);
+  return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }

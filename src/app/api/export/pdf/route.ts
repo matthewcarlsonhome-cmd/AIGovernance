@@ -5,7 +5,7 @@ import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { withRateLimit } from '@/lib/api-helpers';
 import { RATE_LIMIT_EXPORT, RATE_LIMIT_WINDOW_MS } from '@/lib/rate-limit';
-import type { FeasibilityScore, RiskClassification, RoiResults } from '@/types';
+import type { FeasibilityScore, FeasibilityRating, DomainScore, RiskClassification, RoiResults } from '@/types';
 import {
   generateReadinessReportContent,
   type ReadinessReportData,
@@ -113,11 +113,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Build a FeasibilityScore object (fallback to empty defaults)
     const feasibilityScore: FeasibilityScore = {
-      domain_scores: scores?.domain_scores ?? [],
+      domain_scores: (scores?.domain_scores ?? []) as unknown as DomainScore[],
       overall_score: scores?.overall_score ?? 0,
-      rating: scores?.rating ?? 'not_ready',
-      recommendations: scores?.recommendations ?? [],
-      remediation_tasks: scores?.remediation_tasks ?? [],
+      rating: (scores?.rating ?? 'not_ready') as FeasibilityRating,
+      recommendations: (scores?.recommendations ?? []) as unknown as string[],
+      remediation_tasks: (scores?.remediation_tasks ?? []) as unknown as string[],
     };
 
     // ---- Fetch user display name ----

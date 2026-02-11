@@ -28,6 +28,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -205,7 +206,7 @@ function StepProjectDetails({
                     value={field.value}
                     onChange={field.onChange}
                     onBlur={field.onBlur}
-                    className="flex h-9 w-full items-center rounded-md border border-input bg-transparent py-2 pl-10 pr-3 text-sm shadow-sm ring-offset-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    className="flex h-9 w-full items-center rounded-md border border-slate-200 bg-transparent py-2 pl-10 pr-3 text-sm shadow-sm ring-offset-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                   >
                     <option value="">Select industry...</option>
                     {INDUSTRIES.map((ind) => (
@@ -236,7 +237,7 @@ function StepProjectDetails({
                     value={field.value}
                     onChange={field.onChange}
                     onBlur={field.onBlur}
-                    className="flex h-9 w-full items-center rounded-md border border-input bg-transparent py-2 pl-10 pr-3 text-sm shadow-sm ring-offset-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    className="flex h-9 w-full items-center rounded-md border border-slate-200 bg-transparent py-2 pl-10 pr-3 text-sm shadow-sm ring-offset-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                   >
                     <option value="">Select size...</option>
                     {ORG_SIZES.map((size) => (
@@ -330,7 +331,7 @@ function StepTeamSetup({
                 id={`role-${member.id}`}
                 value={member.role}
                 onChange={(e) => updateMember(member.id, 'role', e.target.value)}
-                className="flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                className="flex h-9 w-full items-center rounded-md border border-slate-200 bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-white focus:outline-none focus:ring-1 focus:ring-slate-400"
               >
                 {ROLE_OPTIONS.map((r) => (
                   <option key={r.value} value={r.value}>
@@ -552,26 +553,19 @@ export default function NewProjectPage(): React.ReactElement {
 
         <CardContent>
           {currentStep === 0 && (
-            <StepProjectDetails
-              name={name}
-              setName={setName}
-              description={description}
-              setDescription={setDescription}
-              industry={industry}
-              setIndustry={setIndustry}
-              orgSize={orgSize}
-              setOrgSize={setOrgSize}
-            />
+            <Form {...detailsForm}>
+              <StepProjectDetails form={detailsForm} />
+            </Form>
           )}
           {currentStep === 1 && (
             <StepTeamSetup members={members} setMembers={setMembers} />
           )}
           {currentStep === 2 && (
             <StepReview
-              name={name}
-              description={description}
-              industry={industry}
-              orgSize={orgSize}
+              name={detailsForm.getValues('name')}
+              description={detailsForm.getValues('description')}
+              industry={detailsForm.getValues('industry')}
+              orgSize={detailsForm.getValues('orgSize')}
               members={members}
             />
           )}

@@ -119,7 +119,7 @@ function getStatusBadgeClasses(status: ReportStatus): string {
     case 'Review':
       return 'bg-amber-500/15 text-amber-700 border-amber-500/25';
     case 'Draft':
-      return 'bg-muted text-muted-foreground border-border';
+      return 'bg-slate-100 text-slate-500 border-slate-200';
   }
 }
 
@@ -132,7 +132,7 @@ function getFormatBadgeClasses(format: string): string {
     case 'Markdown':
       return 'bg-gray-500/15 text-gray-700 border-gray-500/25';
     default:
-      return 'bg-muted text-muted-foreground border-border';
+      return 'bg-slate-100 text-slate-500 border-slate-200';
   }
 }
 
@@ -158,14 +158,24 @@ export default function ReportHistoryPage({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             Report History
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-slate-500">
             Previously generated reports with download and version tracking.
           </p>
         </div>
-        <Button variant="outline">
+        <Button variant="outline" onClick={() => {
+          const csvRows = ['Name,Persona,Format,Generated,Size,Status'];
+          reports.forEach((r) => csvRows.push(`"${r.name}","${r.persona}","${r.format}","${r.generatedDate}","${r.fileSize}","${r.status}"`));
+          const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'reports-export.csv';
+          a.click();
+          URL.revokeObjectURL(url);
+        }}>
           <History className="h-4 w-4" />
           Export All
         </Button>
@@ -177,8 +187,8 @@ export default function ReportHistoryPage({
       <div className="grid gap-4 sm:grid-cols-4">
         <Card>
           <CardContent className="p-4">
-            <p className="text-2xl font-bold text-foreground">{reports.length}</p>
-            <p className="text-xs text-muted-foreground">Total Reports</p>
+            <p className="text-2xl font-bold text-slate-900">{reports.length}</p>
+            <p className="text-xs text-slate-500">Total Reports</p>
           </CardContent>
         </Card>
         <Card>
@@ -186,7 +196,7 @@ export default function ReportHistoryPage({
             <p className="text-2xl font-bold text-emerald-600">
               {reports.filter((r) => r.status === 'Final').length}
             </p>
-            <p className="text-xs text-muted-foreground">Finalized</p>
+            <p className="text-xs text-slate-500">Finalized</p>
           </CardContent>
         </Card>
         <Card>
@@ -194,15 +204,15 @@ export default function ReportHistoryPage({
             <p className="text-2xl font-bold text-amber-600">
               {reports.filter((r) => r.status === 'Review').length}
             </p>
-            <p className="text-xs text-muted-foreground">In Review</p>
+            <p className="text-xs text-slate-500">In Review</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-2xl font-bold text-muted-foreground">
+            <p className="text-2xl font-bold text-slate-500">
               {reports.filter((r) => r.status === 'Draft').length}
             </p>
-            <p className="text-xs text-muted-foreground">Drafts</p>
+            <p className="text-xs text-slate-500">Drafts</p>
           </CardContent>
         </Card>
       </div>
@@ -237,15 +247,15 @@ export default function ReportHistoryPage({
                     <TableRow key={report.id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <span className="font-medium text-foreground">
+                          <FileText className="h-4 w-4 text-slate-500 shrink-0" />
+                          <span className="font-medium text-slate-900">
                             {report.name}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1.5">
-                          <PersonaIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                          <PersonaIcon className="h-3.5 w-3.5 text-slate-500" />
                           <span className="text-sm">{report.persona}</span>
                         </div>
                       </TableCell>
@@ -260,10 +270,10 @@ export default function ReportHistoryPage({
                           {report.format}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-sm text-slate-500">
                         {report.generatedDate}
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-sm text-slate-500">
                         {report.fileSize}
                       </TableCell>
                       <TableCell>
@@ -279,15 +289,23 @@ export default function ReportHistoryPage({
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => {
+                            const blob = new Blob([`Report: ${report.name}\nPersona: ${report.persona}\nFormat: ${report.format}\nStatus: ${report.status}\nGenerated: ${report.generatedDate}\n\n[This is a demo export. In production, the actual ${report.format} file would be downloaded from Supabase Storage.]`], { type: 'text/plain' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `${report.name.replace(/\s+/g, '_')}.txt`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          }}>
                             <Download className="h-3.5 w-3.5" />
                           </Button>
                           {report.status === 'Final' ? (
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" onClick={() => alert(`Viewing report: ${report.name}\n\nFormat: ${report.format}\nPersona: ${report.persona}\nGenerated: ${report.generatedDate}\nSize: ${report.fileSize}\n\n[In production, this would open the full report viewer.]`)}>
                               <Eye className="h-3.5 w-3.5" />
                             </Button>
                           ) : (
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" onClick={() => alert(`Opening editor for: ${report.name}\n\nStatus: ${report.status}\nFormat: ${report.format}\n\n[In production, this would open the report editor.]`)}>
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
                           )}
