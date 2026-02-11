@@ -11,6 +11,17 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import {
   FlaskConical,
@@ -25,6 +36,11 @@ import {
   CircleCheck,
   CircleX,
   Clock,
+  Plus,
+  Pencil,
+  Trash2,
+  Download,
+  Save,
 } from 'lucide-react';
 import type {
   PilotDesign,
@@ -35,11 +51,14 @@ import type {
   PilotMetric,
   GoNoGoGate,
   PilotRisk,
+  RiskTier,
 } from '@/types';
 
 /* ------------------------------------------------------------------ */
-/*  Demo Data                                                          */
+/*  Constants                                                          */
 /* ------------------------------------------------------------------ */
+
+const STORAGE_KEY = 'govai_pilot_design';
 
 const PILOT_TYPES: { value: PilotType; label: string; description: string; duration: string; participants: string }[] = [
   {
@@ -72,63 +91,6 @@ const PILOT_TYPES: { value: PilotType; label: string; description: string; durat
   },
 ];
 
-const DEMO_OBJECTIVES: PilotObjective[] = [
-  { category: 'technical', description: 'Validate AI code generation accuracy against internal coding standards', priority: 'must_have' },
-  { category: 'business', description: 'Demonstrate at least 30% reduction in boilerplate code writing time', priority: 'must_have' },
-  { category: 'user', description: 'Achieve developer satisfaction score of 4.0/5.0 or higher', priority: 'should_have' },
-  { category: 'operational', description: 'Verify integration with existing CI/CD pipeline without disruption', priority: 'must_have' },
-  { category: 'strategic', description: 'Establish a replicable onboarding playbook for future teams', priority: 'nice_to_have' },
-];
-
-const DEMO_PARTICIPANTS: ParticipantCriterion[] = [
-  { criterion: 'Technical Proficiency', weight: 30, ideal_profile: 'Mid-to-senior engineers with 3+ years in the primary language' },
-  { criterion: 'Domain Knowledge', weight: 25, ideal_profile: 'Team members who understand the business domain deeply' },
-  { criterion: 'Openness to Change', weight: 20, ideal_profile: 'Volunteers who have expressed interest in AI tooling' },
-  { criterion: 'Role Diversity', weight: 15, ideal_profile: 'Mix of backend, frontend, and full-stack developers' },
-  { criterion: 'Availability', weight: 10, ideal_profile: 'Not on critical-path deadlines during pilot window' },
-];
-
-const DEMO_SUCCESS: SuccessCriterion[] = [
-  { criteria: 'Code generation acceptance rate > 60%', type: 'must_have', threshold: '60%', status: 'met', evidence: 'Measured at 72% over 3-week window' },
-  { criteria: 'No P1/P2 security vulnerabilities introduced', type: 'must_have', threshold: '0 P1/P2 findings', status: 'met', evidence: 'SAST scan clean across all AI-generated PRs' },
-  { criteria: 'Developer satisfaction >= 4.0/5.0', type: 'should_have', threshold: '4.0/5.0', status: 'partial', evidence: 'Survey at 3.8/5.0 - improving trend' },
-  { criteria: 'Cycle time reduction >= 20%', type: 'must_have', threshold: '20% reduction', status: 'met', evidence: 'Cycle time dropped from 4.2d to 3.1d (26% reduction)' },
-  { criteria: 'Test coverage maintained or improved', type: 'could_have', threshold: '>= baseline 78%', status: 'met', evidence: 'Coverage at 82%, up from 78% baseline' },
-];
-
-const DEMO_METRICS: PilotMetric[] = [
-  { metric: 'Code Acceptance Rate', baseline: '0% (no AI)', target: '60%', actual: '72%', method: 'PR merge analytics' },
-  { metric: 'Average Cycle Time', baseline: '4.2 days', target: '3.4 days', actual: '3.1 days', method: 'Jira workflow timestamps' },
-  { metric: 'Defect Escape Rate', baseline: '12 per sprint', target: '<= 12', actual: '9', method: 'QA defect tracker' },
-  { metric: 'Lines of Code per Day', baseline: '120 LoC', target: '160 LoC', actual: '185 LoC', method: 'Git analytics (excluding tests)' },
-  { metric: 'Developer NPS', baseline: 'N/A', target: '40+', actual: '38', method: 'Bi-weekly anonymous survey' },
-];
-
-const DEMO_GONOGO: GoNoGoGate[] = [
-  { criteria: 'Security review passed', threshold: 'No critical findings', status: 'pass', evidence: 'SAST/DAST clean; manual review complete' },
-  { criteria: 'Performance baseline met', threshold: 'P95 latency <= 200ms', status: 'pass', evidence: 'P95 at 142ms in load testing' },
-  { criteria: 'Data handling compliant', threshold: 'No PII/PHI leakage', status: 'pass', evidence: 'DLP monitoring confirmed zero incidents' },
-  { criteria: 'Team satisfaction threshold', threshold: '>= 3.5/5.0', status: 'pass', evidence: 'Survey result: 3.8/5.0' },
-  { criteria: 'Cost within budget', threshold: '<= $15K/month', status: 'pending', evidence: 'Awaiting final billing cycle reconciliation' },
-  { criteria: 'Executive sponsor approval', threshold: 'Written sign-off', status: 'pending', evidence: 'Meeting scheduled for next week' },
-];
-
-const DEMO_RISKS: PilotRisk[] = [
-  { risk: 'AI-generated code introduces subtle logic errors', likelihood: 'medium', impact: 'high', mitigation: 'Mandatory code review for all AI-generated PRs', contingency: 'Revert to manual coding; flag patterns in training data' },
-  { risk: 'Developer over-reliance reduces code comprehension', likelihood: 'medium', impact: 'medium', mitigation: 'Require developers to annotate AI suggestions before accepting', contingency: 'Implement mandatory understanding checks in PR template' },
-  { risk: 'Sensitive data leaked to external AI provider', likelihood: 'low', impact: 'critical', mitigation: 'Sandboxed environment with DLP; no production data in pilot', contingency: 'Immediate kill switch; incident response per IRP' },
-  { risk: 'License costs exceed projected budget', likelihood: 'low', impact: 'medium', mitigation: 'Usage caps per developer; weekly spend monitoring', contingency: 'Reduce participant count; negotiate enterprise discount' },
-  { risk: 'CI/CD pipeline instability from AI tooling integration', likelihood: 'low', impact: 'high', mitigation: 'Feature-flagged integration; isolated build runners', contingency: 'Disable AI integration; rollback to previous pipeline config' },
-];
-
-const DEMO_KILL_SWITCH: string[] = [
-  'Any confirmed data breach or PII/PHI exposure via the AI tool',
-  'Critical security vulnerability (CVSS >= 9.0) traced to AI-generated code',
-  'Sustained developer satisfaction drop below 2.5/5.0 for two consecutive surveys',
-  'Monthly cost exceeds 200% of projected budget for two billing cycles',
-  'AI provider SLA breach with > 8 hours cumulative downtime in a sprint',
-];
-
 const SCALE_OPTIONS: { value: NonNullable<PilotDesign['scale_recommendation']>; label: string; description: string }[] = [
   { value: 'full_scale', label: 'Full Scale Rollout', description: 'Deploy across the entire organization immediately' },
   { value: 'phased', label: 'Phased Expansion', description: 'Expand team-by-team over 2-3 quarters' },
@@ -137,21 +99,57 @@ const SCALE_OPTIONS: { value: NonNullable<PilotDesign['scale_recommendation']>; 
   { value: 'discontinue', label: 'Discontinue', description: 'Insufficient evidence to proceed; revisit in 6 months' },
 ];
 
-const DEMO_PILOT: PilotDesign = {
-  id: 'pilot-001',
-  project_id: 'proj-001',
-  pilot_type: 'limited_pilot',
-  objectives: DEMO_OBJECTIVES,
-  participant_criteria: DEMO_PARTICIPANTS,
-  success_criteria: DEMO_SUCCESS,
-  quantitative_metrics: DEMO_METRICS,
-  go_nogo_gates: DEMO_GONOGO,
-  risk_register: DEMO_RISKS,
-  kill_switch_criteria: DEMO_KILL_SWITCH,
-  scale_recommendation: 'phased',
-  created_at: '2025-11-01T00:00:00Z',
-  updated_at: '2025-12-15T00:00:00Z',
+const DEFAULT_OBJECTIVES_BY_TYPE: Record<PilotType, PilotObjective[]> = {
+  poc: [
+    { category: 'technical', description: 'Validate AI code generation accuracy in a sandboxed environment', priority: 'must_have' },
+    { category: 'technical', description: 'Confirm tool integrates with existing IDE and version control', priority: 'must_have' },
+  ],
+  pov: [
+    { category: 'business', description: 'Demonstrate measurable time savings on real project tasks', priority: 'must_have' },
+    { category: 'user', description: 'Achieve developer satisfaction score of 3.5/5.0 or higher', priority: 'should_have' },
+  ],
+  limited_pilot: [
+    { category: 'operational', description: 'Verify CI/CD pipeline integration without disruption', priority: 'must_have' },
+    { category: 'business', description: 'Demonstrate at least 20% reduction in boilerplate code writing time', priority: 'must_have' },
+    { category: 'user', description: 'Achieve developer satisfaction score of 4.0/5.0 or higher', priority: 'should_have' },
+  ],
+  full_pilot: [
+    { category: 'strategic', description: 'Establish a replicable onboarding playbook for all teams', priority: 'must_have' },
+    { category: 'business', description: 'Demonstrate at least 30% productivity improvement across teams', priority: 'must_have' },
+    { category: 'operational', description: 'Full governance and compliance integration', priority: 'must_have' },
+    { category: 'user', description: 'Achieve organization-wide developer satisfaction score of 4.0/5.0', priority: 'should_have' },
+  ],
 };
+
+const DEFAULT_SUCCESS_BY_TYPE: Record<PilotType, SuccessCriterion[]> = {
+  poc: [
+    { criteria: 'Code generation produces compilable output > 80%', type: 'must_have', threshold: '80%', status: 'not_measured', evidence: '' },
+    { criteria: 'No security vulnerabilities introduced', type: 'must_have', threshold: '0 findings', status: 'not_measured', evidence: '' },
+  ],
+  pov: [
+    { criteria: 'Code generation acceptance rate > 60%', type: 'must_have', threshold: '60%', status: 'not_measured', evidence: '' },
+    { criteria: 'Developer satisfaction >= 3.5/5.0', type: 'should_have', threshold: '3.5/5.0', status: 'not_measured', evidence: '' },
+  ],
+  limited_pilot: [
+    { criteria: 'Code generation acceptance rate > 60%', type: 'must_have', threshold: '60%', status: 'not_measured', evidence: '' },
+    { criteria: 'No P1/P2 security vulnerabilities introduced', type: 'must_have', threshold: '0 P1/P2 findings', status: 'not_measured', evidence: '' },
+    { criteria: 'Cycle time reduction >= 20%', type: 'must_have', threshold: '20% reduction', status: 'not_measured', evidence: '' },
+  ],
+  full_pilot: [
+    { criteria: 'Code generation acceptance rate > 70%', type: 'must_have', threshold: '70%', status: 'not_measured', evidence: '' },
+    { criteria: 'No P1/P2 security vulnerabilities introduced', type: 'must_have', threshold: '0 P1/P2 findings', status: 'not_measured', evidence: '' },
+    { criteria: 'Cycle time reduction >= 25%', type: 'must_have', threshold: '25% reduction', status: 'not_measured', evidence: '' },
+    { criteria: 'Test coverage maintained or improved', type: 'could_have', threshold: '>= baseline', status: 'not_measured', evidence: '' },
+  ],
+};
+
+const DEFAULT_GONOGO: GoNoGoGate[] = [
+  { criteria: 'Security review passed', threshold: 'No critical findings', status: 'pending', evidence: '' },
+  { criteria: 'Performance baseline met', threshold: 'P95 latency <= 200ms', status: 'pending', evidence: '' },
+  { criteria: 'Data handling compliant', threshold: 'No PII/PHI leakage', status: 'pending', evidence: '' },
+  { criteria: 'Team satisfaction threshold', threshold: '>= 3.5/5.0', status: 'pending', evidence: '' },
+  { criteria: 'Cost within budget', threshold: '<= projected budget', status: 'pending', evidence: '' },
+];
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -257,6 +255,10 @@ function riskTierColor(tier: string): string {
   }
 }
 
+function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 /* ------------------------------------------------------------------ */
 /*  Page Component                                                     */
 /* ------------------------------------------------------------------ */
@@ -266,26 +268,264 @@ export default function PilotDesignPage({
 }: {
   params: Promise<{ id: string }>;
 }): React.ReactElement {
-  const { id: _projectId } = React.use(params);
+  const { id: projectId } = React.use(params);
 
-  const [selectedPilotType, setSelectedPilotType] = React.useState<PilotType>(DEMO_PILOT.pilot_type);
-  const [scaleRecommendation, setScaleRecommendation] = React.useState<PilotDesign['scale_recommendation']>(DEMO_PILOT.scale_recommendation);
-  const [goNoGoStates, setGoNoGoStates] = React.useState<GoNoGoGate[]>(DEMO_PILOT.go_nogo_gates);
+  // ---- Core State ----
+  const [hasDesign, setHasDesign] = React.useState(false);
+  const [pilotType, setPilotType] = React.useState<PilotType>('limited_pilot');
+  const [objectives, setObjectives] = React.useState<PilotObjective[]>([]);
+  const [participants, setParticipants] = React.useState<ParticipantCriterion[]>([]);
+  const [successCriteria, setSuccessCriteria] = React.useState<SuccessCriterion[]>([]);
+  const [metrics, setMetrics] = React.useState<PilotMetric[]>([]);
+  const [goNoGoGates, setGoNoGoGates] = React.useState<GoNoGoGate[]>([]);
+  const [risks, setRisks] = React.useState<PilotRisk[]>([]);
+  const [killSwitch, setKillSwitch] = React.useState<string[]>([]);
+  const [scaleRecommendation, setScaleRecommendation] = React.useState<PilotDesign['scale_recommendation']>(null);
 
-  const toggleGoNoGo = (idx: number) => {
-    setGoNoGoStates((prev) => {
+  // ---- Dialog State ----
+  const [objectiveDialogOpen, setObjectiveDialogOpen] = React.useState(false);
+  const [editingObjectiveIdx, setEditingObjectiveIdx] = React.useState<number | null>(null);
+  const [objForm, setObjForm] = React.useState<PilotObjective>({ category: 'technical', description: '', priority: 'must_have' });
+
+  const [riskDialogOpen, setRiskDialogOpen] = React.useState(false);
+  const [editingRiskIdx, setEditingRiskIdx] = React.useState<number | null>(null);
+  const [riskForm, setRiskForm] = React.useState<PilotRisk>({ risk: '', likelihood: 'medium', impact: 'medium', mitigation: '', contingency: '' });
+
+  const [killSwitchDialogOpen, setKillSwitchDialogOpen] = React.useState(false);
+  const [newKillSwitch, setNewKillSwitch] = React.useState('');
+
+  // ---- Load from localStorage ----
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`${STORAGE_KEY}_${projectId}`);
+      if (stored) {
+        const data = JSON.parse(stored) as PilotDesign;
+        setHasDesign(true);
+        setPilotType(data.pilot_type);
+        setObjectives(data.objectives);
+        setParticipants(data.participant_criteria);
+        setSuccessCriteria(data.success_criteria);
+        setMetrics(data.quantitative_metrics);
+        setGoNoGoGates(data.go_nogo_gates);
+        setRisks(data.risk_register);
+        setKillSwitch(data.kill_switch_criteria);
+        setScaleRecommendation(data.scale_recommendation);
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, [projectId]);
+
+  // ---- Create Pilot Design ----
+  const handleCreateDesign = (type: PilotType): void => {
+    setPilotType(type);
+    setObjectives(DEFAULT_OBJECTIVES_BY_TYPE[type]);
+    setSuccessCriteria(DEFAULT_SUCCESS_BY_TYPE[type]);
+    setGoNoGoGates([...DEFAULT_GONOGO]);
+    setParticipants([]);
+    setMetrics([]);
+    setRisks([]);
+    setKillSwitch([]);
+    setScaleRecommendation(null);
+    setHasDesign(true);
+  };
+
+  // ---- Pilot Type Change ----
+  const handlePilotTypeChange = (type: PilotType): void => {
+    setPilotType(type);
+    // Reset defaults for the new type
+    setObjectives(DEFAULT_OBJECTIVES_BY_TYPE[type]);
+    setSuccessCriteria(DEFAULT_SUCCESS_BY_TYPE[type]);
+    setGoNoGoGates([...DEFAULT_GONOGO]);
+  };
+
+  // ---- Save ----
+  const handleSave = (): void => {
+    const data: PilotDesign = {
+      id: generateId(),
+      project_id: projectId,
+      pilot_type: pilotType,
+      objectives,
+      participant_criteria: participants,
+      success_criteria: successCriteria,
+      quantitative_metrics: metrics,
+      go_nogo_gates: goNoGoGates,
+      risk_register: risks,
+      kill_switch_criteria: killSwitch,
+      scale_recommendation: scaleRecommendation,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    localStorage.setItem(`${STORAGE_KEY}_${projectId}`, JSON.stringify(data));
+    alert('Pilot design saved successfully.');
+  };
+
+  // ---- Export ----
+  const handleExport = (): void => {
+    const data: PilotDesign = {
+      id: generateId(),
+      project_id: projectId,
+      pilot_type: pilotType,
+      objectives,
+      participant_criteria: participants,
+      success_criteria: successCriteria,
+      quantitative_metrics: metrics,
+      go_nogo_gates: goNoGoGates,
+      risk_register: risks,
+      kill_switch_criteria: killSwitch,
+      scale_recommendation: scaleRecommendation,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pilot-design-${projectId}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ---- Objective CRUD ----
+  const openAddObjective = (): void => {
+    setEditingObjectiveIdx(null);
+    setObjForm({ category: 'technical', description: '', priority: 'must_have' });
+    setObjectiveDialogOpen(true);
+  };
+
+  const openEditObjective = (idx: number): void => {
+    setEditingObjectiveIdx(idx);
+    setObjForm({ ...objectives[idx] });
+    setObjectiveDialogOpen(true);
+  };
+
+  const saveObjective = (): void => {
+    if (!objForm.description.trim()) return;
+    if (editingObjectiveIdx !== null) {
+      setObjectives((prev) => prev.map((o, i) => (i === editingObjectiveIdx ? { ...objForm } : o)));
+    } else {
+      setObjectives((prev) => [...prev, { ...objForm }]);
+    }
+    setObjectiveDialogOpen(false);
+  };
+
+  const deleteObjective = (idx: number): void => {
+    setObjectives((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  // ---- Success Criteria Status Toggle ----
+  const cycleSuccessStatus = (idx: number): void => {
+    const statuses: SuccessCriterion['status'][] = ['not_measured', 'met', 'not_met', 'partial'];
+    setSuccessCriteria((prev) =>
+      prev.map((sc, i) => {
+        if (i !== idx) return sc;
+        const nextStatus = statuses[(statuses.indexOf(sc.status) + 1) % statuses.length];
+        return { ...sc, status: nextStatus };
+      }),
+    );
+  };
+
+  // ---- Go/No-Go Toggle ----
+  const toggleGoNoGo = (idx: number): void => {
+    setGoNoGoGates((prev) => {
       const next = [...prev];
-      const current = next[idx].status;
       const order: GoNoGoGate['status'][] = ['pending', 'pass', 'fail'];
-      const nextStatus = order[(order.indexOf(current) + 1) % order.length];
+      const nextStatus = order[(order.indexOf(next[idx].status) + 1) % order.length];
       next[idx] = { ...next[idx], status: nextStatus };
       return next;
     });
   };
 
-  const passCount = goNoGoStates.filter((g) => g.status === 'pass').length;
-  const failCount = goNoGoStates.filter((g) => g.status === 'fail').length;
-  const pendingCount = goNoGoStates.filter((g) => g.status === 'pending').length;
+  // ---- Risk CRUD ----
+  const openAddRisk = (): void => {
+    setEditingRiskIdx(null);
+    setRiskForm({ risk: '', likelihood: 'medium', impact: 'medium', mitigation: '', contingency: '' });
+    setRiskDialogOpen(true);
+  };
+
+  const openEditRisk = (idx: number): void => {
+    setEditingRiskIdx(idx);
+    setRiskForm({ ...risks[idx] });
+    setRiskDialogOpen(true);
+  };
+
+  const saveRisk = (): void => {
+    if (!riskForm.risk.trim()) return;
+    if (editingRiskIdx !== null) {
+      setRisks((prev) => prev.map((r, i) => (i === editingRiskIdx ? { ...riskForm } : r)));
+    } else {
+      setRisks((prev) => [...prev, { ...riskForm }]);
+    }
+    setRiskDialogOpen(false);
+  };
+
+  const deleteRisk = (idx: number): void => {
+    setRisks((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  // ---- Kill Switch CRUD ----
+  const addKillSwitch = (): void => {
+    if (!newKillSwitch.trim()) return;
+    setKillSwitch((prev) => [...prev, newKillSwitch.trim()]);
+    setNewKillSwitch('');
+    setKillSwitchDialogOpen(false);
+  };
+
+  const deleteKillSwitch = (idx: number): void => {
+    setKillSwitch((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  // ---- Computed ----
+  const passCount = goNoGoGates.filter((g) => g.status === 'pass').length;
+  const failCount = goNoGoGates.filter((g) => g.status === 'fail').length;
+  const pendingCount = goNoGoGates.filter((g) => g.status === 'pending').length;
+
+  // ---- Empty State ----
+  if (!hasDesign) {
+    return (
+      <div className="flex flex-col gap-6 p-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Pilot Program Designer
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Design and configure your AI pilot program with objectives, success criteria, risk assessment, and go/no-go gates.
+          </p>
+        </div>
+        <Separator />
+        <Card className="border-dashed border-2 border-slate-300">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <FlaskConical className="h-12 w-12 text-slate-300 mb-4" />
+            <h2 className="text-lg font-semibold text-slate-700 mb-2">No Pilot Design Yet</h2>
+            <p className="text-sm text-slate-500 mb-6 max-w-md">
+              Select a pilot type below to create your pilot program design with pre-configured objectives and success criteria.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 w-full max-w-4xl">
+              {PILOT_TYPES.map((pt) => (
+                <button
+                  key={pt.value}
+                  onClick={() => handleCreateDesign(pt.value)}
+                  className="rounded-xl border-2 border-slate-200 bg-white hover:border-violet-400 hover:shadow-md p-4 text-left transition-all"
+                >
+                  <h3 className="text-sm font-semibold text-slate-900">{pt.label}</h3>
+                  <p className="mt-1 text-xs text-slate-500 leading-relaxed">{pt.description}</p>
+                  <div className="mt-3 flex gap-3 text-[11px]">
+                    <span className="text-slate-500">
+                      <span className="font-medium text-slate-700">{pt.duration}</span>
+                    </span>
+                    <span className="text-slate-300">|</span>
+                    <span className="text-slate-500">
+                      <span className="font-medium text-slate-700">{pt.participants}</span>
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -311,17 +551,17 @@ export default function PilotDesignPage({
           {PILOT_TYPES.map((pt) => (
             <button
               key={pt.value}
-              onClick={() => setSelectedPilotType(pt.value)}
+              onClick={() => handlePilotTypeChange(pt.value)}
               className={cn(
                 'rounded-xl border-2 p-4 text-left transition-all',
-                selectedPilotType === pt.value
+                pilotType === pt.value
                   ? 'border-violet-600 bg-violet-50 shadow-md'
                   : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm',
               )}
             >
               <h3 className={cn(
                 'text-sm font-semibold',
-                selectedPilotType === pt.value ? 'text-violet-700' : 'text-slate-900',
+                pilotType === pt.value ? 'text-violet-700' : 'text-slate-900',
               )}>
                 {pt.label}
               </h3>
@@ -343,43 +583,79 @@ export default function PilotDesignPage({
       {/* ---- Objectives ---- */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-900">
-            <Target className="h-5 w-5 text-blue-600" />
-            Objectives
-          </CardTitle>
-          <CardDescription className="text-slate-500">
-            Define what the pilot needs to accomplish across key dimensions.
-          </CardDescription>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-slate-900">
+                <Target className="h-5 w-5 text-blue-600" />
+                Objectives
+              </CardTitle>
+              <CardDescription className="text-slate-500">
+                Define what the pilot needs to accomplish across key dimensions.
+              </CardDescription>
+            </div>
+            <Button
+              size="sm"
+              className="bg-slate-900 text-white hover:bg-slate-800"
+              onClick={openAddObjective}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Objective
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Category</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Description</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Priority</th>
-                </tr>
-              </thead>
-              <tbody>
-                {DEMO_OBJECTIVES.map((obj, idx) => (
-                  <tr key={idx} className={cn('border-b border-slate-100', idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50')}>
-                    <td className="py-3 px-4">
-                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                        {categoryLabel(obj.category)}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-4 text-slate-700">{obj.description}</td>
-                    <td className="py-3 px-4">
-                      <Badge variant="outline" className={cn('text-xs', priorityColor(obj.priority))}>
-                        {priorityLabel(obj.priority)}
-                      </Badge>
-                    </td>
+          {objectives.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              <Target className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+              <p className="text-sm">No objectives defined yet. Click &quot;Add Objective&quot; to get started.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Category</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Description</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Priority</th>
+                    <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 w-24">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {objectives.map((obj, idx) => (
+                    <tr key={idx} className={cn('border-b border-slate-100', idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50')}>
+                      <td className="py-3 px-4">
+                        <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                          {categoryLabel(obj.category)}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-slate-700">{obj.description}</td>
+                      <td className="py-3 px-4">
+                        <Badge variant="outline" className={cn('text-xs', priorityColor(obj.priority))}>
+                          {priorityLabel(obj.priority)}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => openEditObjective(idx)}
+                            className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => deleteObjective(idx)}
+                            className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -395,36 +671,43 @@ export default function PilotDesignPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Criterion</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-20">Weight</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Ideal Profile</th>
-                </tr>
-              </thead>
-              <tbody>
-                {DEMO_PARTICIPANTS.map((pc, idx) => (
-                  <tr key={idx} className={cn('border-b border-slate-100', idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50')}>
-                    <td className="py-3 px-4 font-medium text-slate-900">{pc.criterion}</td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-teal-500"
-                            style={{ width: `${pc.weight}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-semibold text-slate-700 w-8">{pc.weight}%</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-slate-500">{pc.ideal_profile}</td>
+          {participants.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              <Users className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+              <p className="text-sm">Participant criteria will appear here once defined.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Criterion</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-20">Weight</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Ideal Profile</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {participants.map((pc, idx) => (
+                    <tr key={idx} className={cn('border-b border-slate-100', idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50')}>
+                      <td className="py-3 px-4 font-medium text-slate-900">{pc.criterion}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-teal-500"
+                              style={{ width: `${pc.weight}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-semibold text-slate-700 w-8">{pc.weight}%</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-slate-500">{pc.ideal_profile}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -436,43 +719,54 @@ export default function PilotDesignPage({
             Success Criteria
           </CardTitle>
           <CardDescription className="text-slate-500">
-            Measurable outcomes that determine pilot success.
+            Measurable outcomes that determine pilot success. Click a status to cycle through: Not Measured, Met, Not Met, Partial.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Criteria</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-24">Type</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-28">Threshold</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-28">Status</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Evidence</th>
-                </tr>
-              </thead>
-              <tbody>
-                {DEMO_SUCCESS.map((sc, idx) => (
-                  <tr key={idx} className={cn('border-b border-slate-100', idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50')}>
-                    <td className="py-3 px-4 font-medium text-slate-900">{sc.criteria}</td>
-                    <td className="py-3 px-4">
-                      <Badge variant="outline" className={cn('text-xs', successTypeColor(sc.type))}>
-                        {sc.type === 'must_have' ? 'Must' : sc.type === 'should_have' ? 'Should' : 'Could'}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-4 text-slate-600 text-xs font-mono">{sc.threshold}</td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-1.5">
-                        {successStatusIcon(sc.status)}
-                        <span className="text-xs text-slate-700">{successStatusLabel(sc.status)}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-slate-500 text-xs">{sc.evidence}</td>
+          {successCriteria.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+              <p className="text-sm">No success criteria defined yet.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Criteria</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-24">Type</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-28">Threshold</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-36">Status</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Evidence</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {successCriteria.map((sc, idx) => (
+                    <tr key={idx} className={cn('border-b border-slate-100', idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50')}>
+                      <td className="py-3 px-4 font-medium text-slate-900">{sc.criteria}</td>
+                      <td className="py-3 px-4">
+                        <Badge variant="outline" className={cn('text-xs', successTypeColor(sc.type))}>
+                          {sc.type === 'must_have' ? 'Must' : sc.type === 'should_have' ? 'Should' : 'Could'}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 text-xs font-mono">{sc.threshold}</td>
+                      <td className="py-3 px-4">
+                        <button
+                          onClick={() => cycleSuccessStatus(idx)}
+                          className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-slate-100 transition-colors"
+                          title="Click to cycle status"
+                        >
+                          {successStatusIcon(sc.status)}
+                          <span className="text-xs text-slate-700">{successStatusLabel(sc.status)}</span>
+                        </button>
+                      </td>
+                      <td className="py-3 px-4 text-slate-500 text-xs">{sc.evidence || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -488,34 +782,41 @@ export default function PilotDesignPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Metric</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Baseline</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Target</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Actual</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Measurement Method</th>
-                </tr>
-              </thead>
-              <tbody>
-                {DEMO_METRICS.map((m, idx) => (
-                  <tr key={idx} className={cn('border-b border-slate-100', idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50')}>
-                    <td className="py-3 px-4 font-medium text-slate-900">{m.metric}</td>
-                    <td className="py-3 px-4 text-slate-500 font-mono text-xs">{m.baseline}</td>
-                    <td className="py-3 px-4 text-blue-700 font-mono text-xs font-semibold">{m.target}</td>
-                    <td className="py-3 px-4 font-mono text-xs font-semibold">
-                      <span className={m.actual ? 'text-emerald-700' : 'text-slate-400'}>
-                        {m.actual ?? 'Pending'}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-slate-500 text-xs">{m.method}</td>
+          {metrics.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              <BarChart3 className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+              <p className="text-sm">No quantitative metrics defined yet.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Metric</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Baseline</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Target</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Actual</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Measurement Method</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {metrics.map((m, idx) => (
+                    <tr key={idx} className={cn('border-b border-slate-100', idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50')}>
+                      <td className="py-3 px-4 font-medium text-slate-900">{m.metric}</td>
+                      <td className="py-3 px-4 text-slate-500 font-mono text-xs">{m.baseline}</td>
+                      <td className="py-3 px-4 text-blue-700 font-mono text-xs font-semibold">{m.target}</td>
+                      <td className="py-3 px-4 font-mono text-xs font-semibold">
+                        <span className={m.actual ? 'text-emerald-700' : 'text-slate-400'}>
+                          {m.actual ?? 'Pending'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-slate-500 text-xs">{m.method}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -546,101 +847,170 @@ export default function PilotDesignPage({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {goNoGoStates.map((gate, idx) => (
-              <button
-                key={idx}
-                onClick={() => toggleGoNoGo(idx)}
-                className={cn(
-                  'w-full flex items-center gap-4 p-4 rounded-lg border transition-all text-left',
-                  gate.status === 'pass'
-                    ? 'border-emerald-200 bg-emerald-50/50'
-                    : gate.status === 'fail'
-                    ? 'border-red-200 bg-red-50/50'
-                    : 'border-slate-200 bg-slate-50/50',
-                )}
-              >
-                {goNoGoIcon(gate.status)}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900">{gate.criteria}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Threshold: {gate.threshold}</p>
-                </div>
-                <div className="text-xs text-slate-500 max-w-xs text-right hidden sm:block">
-                  {gate.evidence}
-                </div>
-              </button>
-            ))}
-          </div>
+          {goNoGoGates.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              <CircleDot className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+              <p className="text-sm">No go/no-go gates defined.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {goNoGoGates.map((gate, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => toggleGoNoGo(idx)}
+                  className={cn(
+                    'w-full flex items-center gap-4 p-4 rounded-lg border transition-all text-left',
+                    gate.status === 'pass'
+                      ? 'border-emerald-200 bg-emerald-50/50'
+                      : gate.status === 'fail'
+                      ? 'border-red-200 bg-red-50/50'
+                      : 'border-slate-200 bg-slate-50/50',
+                  )}
+                >
+                  {goNoGoIcon(gate.status)}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900">{gate.criteria}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Threshold: {gate.threshold}</p>
+                  </div>
+                  <div className="text-xs text-slate-500 max-w-xs text-right hidden sm:block">
+                    {gate.evidence || 'No evidence yet'}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* ---- Risk Register ---- */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-900">
-            <ShieldAlert className="h-5 w-5 text-orange-600" />
-            Risk Register
-          </CardTitle>
-          <CardDescription className="text-slate-500">
-            Identified risks with likelihood, impact, mitigation strategies, and contingency plans.
-          </CardDescription>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-slate-900">
+                <ShieldAlert className="h-5 w-5 text-orange-600" />
+                Risk Register
+              </CardTitle>
+              <CardDescription className="text-slate-500">
+                Identified risks with likelihood, impact, mitigation strategies, and contingency plans.
+              </CardDescription>
+            </div>
+            <Button
+              size="sm"
+              className="bg-slate-900 text-white hover:bg-slate-800"
+              onClick={openAddRisk}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Risk
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Risk</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-24">Likelihood</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-24">Impact</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Mitigation</th>
-                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Contingency</th>
-                </tr>
-              </thead>
-              <tbody>
-                {DEMO_RISKS.map((r, idx) => (
-                  <tr key={idx} className={cn('border-b border-slate-100', idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50')}>
-                    <td className="py-3 px-4 font-medium text-slate-900">{r.risk}</td>
-                    <td className="py-3 px-4">
-                      <Badge variant="outline" className={cn('text-xs capitalize', riskTierColor(r.likelihood))}>
-                        {r.likelihood}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-4">
-                      <Badge variant="outline" className={cn('text-xs capitalize', riskTierColor(r.impact))}>
-                        {r.impact}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-4 text-slate-500 text-xs">{r.mitigation}</td>
-                    <td className="py-3 px-4 text-slate-500 text-xs">{r.contingency}</td>
+          {risks.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              <ShieldAlert className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+              <p className="text-sm">No risks identified yet. Click &quot;Add Risk&quot; to get started.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Risk</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-24">Likelihood</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-24">Impact</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Mitigation</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Contingency</th>
+                    <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 w-24">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {risks.map((r, idx) => (
+                    <tr key={idx} className={cn('border-b border-slate-100', idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50')}>
+                      <td className="py-3 px-4 font-medium text-slate-900">{r.risk}</td>
+                      <td className="py-3 px-4">
+                        <Badge variant="outline" className={cn('text-xs capitalize', riskTierColor(r.likelihood))}>
+                          {r.likelihood}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge variant="outline" className={cn('text-xs capitalize', riskTierColor(r.impact))}>
+                          {r.impact}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-slate-500 text-xs">{r.mitigation}</td>
+                      <td className="py-3 px-4 text-slate-500 text-xs">{r.contingency}</td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => openEditRisk(idx)}
+                            className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => deleteRisk(idx)}
+                            className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* ---- Kill Switch Criteria ---- */}
       <Card className="border-red-200">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-900">
-            <OctagonX className="h-5 w-5 text-red-600" />
-            Kill Switch Criteria
-          </CardTitle>
-          <CardDescription className="text-slate-500">
-            Conditions that trigger an immediate halt to the pilot program.
-          </CardDescription>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-slate-900">
+                <OctagonX className="h-5 w-5 text-red-600" />
+                Kill Switch Criteria
+              </CardTitle>
+              <CardDescription className="text-slate-500">
+                Conditions that trigger an immediate halt to the pilot program.
+              </CardDescription>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-red-200 text-red-700 hover:bg-red-50"
+              onClick={() => setKillSwitchDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Condition
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-3">
-            {DEMO_KILL_SWITCH.map((ks, idx) => (
-              <li key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-red-50/50 border border-red-100">
-                <OctagonX className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
-                <span className="text-sm text-slate-700">{ks}</span>
-              </li>
-            ))}
-          </ul>
+          {killSwitch.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              <OctagonX className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+              <p className="text-sm">No kill switch conditions defined yet.</p>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {killSwitch.map((ks, idx) => (
+                <li key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-red-50/50 border border-red-100">
+                  <OctagonX className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
+                  <span className="text-sm text-slate-700 flex-1">{ks}</span>
+                  <button
+                    onClick={() => deleteKillSwitch(idx)}
+                    className="p-1 rounded hover:bg-red-100 text-red-400 hover:text-red-600 shrink-0"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
 
@@ -681,13 +1051,191 @@ export default function PilotDesignPage({
 
       {/* ---- Footer Action ---- */}
       <div className="flex justify-end gap-3 pt-2">
-        <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100">
-          Export as PDF
+        <Button
+          variant="outline"
+          className="border-slate-300 text-slate-700 hover:bg-slate-100"
+          onClick={handleExport}
+        >
+          <Download className="h-4 w-4 mr-1.5" />
+          Export PDF
         </Button>
-        <Button className="bg-slate-900 text-white hover:bg-slate-800">
+        <Button
+          className="bg-slate-900 text-white hover:bg-slate-800"
+          onClick={handleSave}
+        >
+          <Save className="h-4 w-4 mr-1.5" />
           Save Pilot Design
         </Button>
       </div>
+
+      {/* ---- Objective Dialog ---- */}
+      <Dialog open={objectiveDialogOpen} onOpenChange={setObjectiveDialogOpen}>
+        <DialogContent className="bg-white border-slate-200">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900">
+              {editingObjectiveIdx !== null ? 'Edit Objective' : 'Add Objective'}
+            </DialogTitle>
+            <DialogDescription className="text-slate-500">
+              Define a pilot objective with category, description, and priority.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label className="text-slate-700">Category</Label>
+              <select
+                className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm"
+                value={objForm.category}
+                onChange={(e) => setObjForm({ ...objForm, category: e.target.value as PilotObjective['category'] })}
+              >
+                <option value="technical">Technical</option>
+                <option value="business">Business</option>
+                <option value="user">User</option>
+                <option value="operational">Operational</option>
+                <option value="strategic">Strategic</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-700">Description</Label>
+              <Textarea
+                value={objForm.description}
+                onChange={(e) => setObjForm({ ...objForm, description: e.target.value })}
+                placeholder="Describe the objective..."
+                className="border-slate-200"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-700">Priority</Label>
+              <select
+                className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm"
+                value={objForm.priority}
+                onChange={(e) => setObjForm({ ...objForm, priority: e.target.value as PilotObjective['priority'] })}
+              >
+                <option value="must_have">Must Have</option>
+                <option value="should_have">Should Have</option>
+                <option value="nice_to_have">Nice to Have</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="border-slate-200 text-slate-700" onClick={() => setObjectiveDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button className="bg-slate-900 text-white hover:bg-slate-800" onClick={saveObjective}>
+              {editingObjectiveIdx !== null ? 'Update' : 'Add'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---- Risk Dialog ---- */}
+      <Dialog open={riskDialogOpen} onOpenChange={setRiskDialogOpen}>
+        <DialogContent className="bg-white border-slate-200">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900">
+              {editingRiskIdx !== null ? 'Edit Risk' : 'Add Risk'}
+            </DialogTitle>
+            <DialogDescription className="text-slate-500">
+              Define a risk with likelihood, impact, mitigation, and contingency.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label className="text-slate-700">Risk Description</Label>
+              <Textarea
+                value={riskForm.risk}
+                onChange={(e) => setRiskForm({ ...riskForm, risk: e.target.value })}
+                placeholder="Describe the risk..."
+                className="border-slate-200"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-slate-700">Likelihood</Label>
+                <select
+                  className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm"
+                  value={riskForm.likelihood}
+                  onChange={(e) => setRiskForm({ ...riskForm, likelihood: e.target.value as RiskTier })}
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-700">Impact</Label>
+                <select
+                  className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm"
+                  value={riskForm.impact}
+                  onChange={(e) => setRiskForm({ ...riskForm, impact: e.target.value as RiskTier })}
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-700">Mitigation Strategy</Label>
+              <Textarea
+                value={riskForm.mitigation}
+                onChange={(e) => setRiskForm({ ...riskForm, mitigation: e.target.value })}
+                placeholder="How will this risk be mitigated?"
+                className="border-slate-200"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-700">Contingency Plan</Label>
+              <Textarea
+                value={riskForm.contingency}
+                onChange={(e) => setRiskForm({ ...riskForm, contingency: e.target.value })}
+                placeholder="What is the fallback if mitigation fails?"
+                className="border-slate-200"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="border-slate-200 text-slate-700" onClick={() => setRiskDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button className="bg-slate-900 text-white hover:bg-slate-800" onClick={saveRisk}>
+              {editingRiskIdx !== null ? 'Update' : 'Add'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---- Kill Switch Dialog ---- */}
+      <Dialog open={killSwitchDialogOpen} onOpenChange={setKillSwitchDialogOpen}>
+        <DialogContent className="bg-white border-slate-200">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900">Add Kill Switch Condition</DialogTitle>
+            <DialogDescription className="text-slate-500">
+              Define a condition that would trigger an immediate halt to the pilot.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label className="text-slate-700">Condition</Label>
+              <Textarea
+                value={newKillSwitch}
+                onChange={(e) => setNewKillSwitch(e.target.value)}
+                placeholder="e.g., Any confirmed data breach or PII/PHI exposure via the AI tool"
+                className="border-slate-200"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="border-slate-200 text-slate-700" onClick={() => setKillSwitchDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button className="bg-slate-900 text-white hover:bg-slate-800" onClick={addKillSwitch}>
+              Add
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
