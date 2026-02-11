@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
+import { createServerSupabaseClient, createServiceRoleClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import type { ApiResponse, User } from '@/types';
 
 /**
@@ -22,15 +22,19 @@ export async function GET(): Promise<NextResponse<ApiResponse<User>>> {
       return NextResponse.json({ data: demoUser });
     }
 
-    const supabase = await createServerSupabaseClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Auth check with cookie-based client
+    const authClient = await createServerSupabaseClient();
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Use service role client for data operations (bypasses RLS)
+    const db = await createServiceRoleClient();
+
     // Try to get the full user profile from the users table
-    const { data: profile } = await supabase
+    const { data: profile, error: profileErr } = await db
       .from('users')
       .select('*')
       .eq('id', user.id)
@@ -40,25 +44,67 @@ export async function GET(): Promise<NextResponse<ApiResponse<User>>> {
       return NextResponse.json({ data: profile as User });
     }
 
-    // Fallback: build a user object from auth metadata
+    if (profileErr) {
+      console.error('[GET /api/auth/me] Profile lookup:', profileErr.message);
+    }
+
+    // No profile exists — build one from auth metadata and try to insert it
     const fullName =
       user.user_metadata?.full_name ??
       user.user_metadata?.name ??
       user.email?.split('@')[0] ??
       'User';
 
-    const fallbackUser: User = {
+    // Try to find an existing organization, or create one
+    let organizationId = user.user_metadata?.organization_id ?? '';
+    if (!organizationId) {
+      const { data: existingOrg } = await db
+        .from('organizations')
+        .select('id')
+        .limit(1)
+        .single();
+
+      if (existingOrg?.id) {
+        organizationId = existingOrg.id;
+      } else {
+        // Create a default organization for the user
+        const { data: newOrg } = await db
+          .from('organizations')
+          .insert({ name: 'My Organization' })
+          .select('id')
+          .single();
+        if (newOrg?.id) {
+          organizationId = newOrg.id;
+        }
+      }
+    }
+
+    const now = new Date().toISOString();
+    const newProfile: User = {
       id: user.id,
       email: user.email ?? '',
       full_name: fullName,
       role: (user.user_metadata?.role as User['role']) ?? 'admin',
-      organization_id: user.user_metadata?.organization_id ?? '',
+      organization_id: organizationId,
       avatar_url: user.user_metadata?.avatar_url ?? null,
-      created_at: user.created_at ?? new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: user.created_at ?? now,
+      updated_at: now,
     };
 
-    return NextResponse.json({ data: fallbackUser });
+    // Attempt to insert the profile into the users table
+    const { data: inserted, error: insertErr } = await db
+      .from('users')
+      .insert(newProfile)
+      .select()
+      .single();
+
+    if (insertErr) {
+      console.error('[GET /api/auth/me] Failed to create user profile:', insertErr.message);
+      // Still return the constructed profile even if insert fails
+      return NextResponse.json({ data: newProfile });
+    }
+
+    return NextResponse.json({ data: (inserted as User) ?? newProfile });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: 'Internal server error', message }, { status: 500 });

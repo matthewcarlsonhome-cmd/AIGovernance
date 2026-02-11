@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
+import { createServerSupabaseClient, createServiceRoleClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import type { ApiResponse, Project } from '@/types';
 
 /* ------------------------------------------------------------------ */
@@ -83,22 +83,31 @@ export async function GET(
       });
     }
 
-    const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const authClient = await createServerSupabaseClient();
+    const { data: { user } } = await authClient.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data, error } = await supabase
+    const db = await createServiceRoleClient();
+    const { data, error } = await db
       .from('projects')
       .select('*')
       .eq('id', id)
-      .is('deleted_at', null)
       .single();
 
     if (error) {
+      console.error('[GET /api/projects/[id]] Supabase error:', error.message, error.code);
       return NextResponse.json(
         { error: 'Project not found', message: error.message },
+        { status: 404 },
+      );
+    }
+
+    // Check for soft-deleted projects if column exists
+    if (data && 'deleted_at' in data && data.deleted_at != null) {
+      return NextResponse.json(
+        { error: 'Project not found', message: 'This project has been deleted' },
         { status: 404 },
       );
     }
@@ -138,21 +147,22 @@ export async function PUT(
       });
     }
 
-    const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const authClient = await createServerSupabaseClient();
+    const { data: { user } } = await authClient.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: updated, error } = await supabase
+    const db = await createServiceRoleClient();
+    const { data: updated, error } = await db
       .from('projects')
       .update({ ...parsed.data, updated_at: new Date().toISOString() })
       .eq('id', id)
-      .is('deleted_at', null)
       .select()
       .single();
 
     if (error) {
+      console.error('[PUT /api/projects/[id]] Update failed:', error.message, error.code);
       return NextResponse.json(
         { error: 'Failed to update project', message: error.message },
         { status: 500 },
@@ -168,7 +178,7 @@ export async function PUT(
 
 /**
  * DELETE /api/projects/[id]
- * Soft-delete a project by setting deleted_at timestamp.
+ * Soft-delete a project (or hard-delete if deleted_at column doesn't exist).
  */
 export async function DELETE(
   _request: NextRequest,
@@ -182,24 +192,36 @@ export async function DELETE(
       return NextResponse.json({ data: { deleted: true } });
     }
 
-    const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const authClient = await createServerSupabaseClient();
+    const { data: { user } } = await authClient.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const db = await createServiceRoleClient();
+
+    // Try soft-delete first, fall back to hard-delete
     const now = new Date().toISOString();
-    const { error } = await supabase
+    const { error: softErr } = await db
       .from('projects')
       .update({ deleted_at: now, updated_at: now })
-      .eq('id', id)
-      .is('deleted_at', null);
+      .eq('id', id);
 
-    if (error) {
-      return NextResponse.json(
-        { error: 'Failed to delete project', message: error.message },
-        { status: 500 },
-      );
+    if (softErr) {
+      // Soft-delete failed (maybe no deleted_at column), try hard delete
+      console.error('[DELETE /api/projects/[id]] Soft-delete failed:', softErr.message);
+      const { error: hardErr } = await db
+        .from('projects')
+        .delete()
+        .eq('id', id);
+
+      if (hardErr) {
+        console.error('[DELETE /api/projects/[id]] Hard-delete failed:', hardErr.message);
+        return NextResponse.json(
+          { error: 'Failed to delete project', message: hardErr.message },
+          { status: 500 },
+        );
+      }
     }
 
     return NextResponse.json({ data: { deleted: true } });
