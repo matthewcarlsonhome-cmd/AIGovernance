@@ -137,18 +137,38 @@ function ReadinessSkeleton() {
 /*  Page Component                                                             */
 /* -------------------------------------------------------------------------- */
 
+const SCORES_STORAGE_KEY = 'govai_readiness_scores';
+
 export default function ReadinessPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }): React.ReactElement {
   const { id } = use(params);
-  const { data: scores, isLoading, error } = useAssessmentScores(id);
+  const { data: apiScores, isLoading, error } = useAssessmentScores(id);
+  const [localScores, setLocalScores] = React.useState<FeasibilityScore | null>(null);
+  const [localLoaded, setLocalLoaded] = React.useState(false);
 
-  if (isLoading) return <ReadinessSkeleton />;
+  // Load scores from localStorage (saved by questionnaire page)
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`${SCORES_STORAGE_KEY}_${id}`);
+      if (saved) {
+        setLocalScores(JSON.parse(saved));
+      }
+    } catch {
+      // ignore
+    }
+    setLocalLoaded(true);
+  }, [id]);
 
-  // If no assessment scores exist, show empty state
-  if (!scores && !isLoading && !error) {
+  // Use local scores first, then API scores
+  const scores = localScores || apiScores;
+
+  if (isLoading && !localLoaded) return <ReadinessSkeleton />;
+
+  // If no assessment scores exist (neither local nor API), show empty state
+  if (!scores && localLoaded && !isLoading && !error) {
     return (
       <div className="flex flex-col gap-6 p-6">
         <div>
@@ -181,7 +201,7 @@ export default function ReadinessPage({
   const feasibility = scores || FALLBACK_SCORES;
   const overallScore = feasibility.overall_score;
   const domainScores = feasibility.domain_scores || [];
-  const isDemo = !scores;
+  const isDemo = !scores; // true only if neither local nor API scores exist
 
   // Build radar chart data
   const radarData = domainScores.map((ds: DomainScore) => ({
@@ -422,11 +442,33 @@ export default function ReadinessPage({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-3">
           <Button variant="outline" className="gap-2" onClick={() => {
-            const blob = new Blob(['Readiness Assessment Report\n==========================\n\nThis is a demo export. In production, the full PDF report would be generated using @react-pdf/renderer.\n\nOverall Score: See dashboard for current scores.\nDomains: Infrastructure, Security, Governance, Engineering, Business'], { type: 'text/plain' });
+            const lines = [
+              'AI READINESS ASSESSMENT REPORT',
+              '='.repeat(50),
+              '',
+              `Overall Score: ${overallScore}/100`,
+              `Rating: ${ratingLabel(feasibility.rating)}`,
+              '',
+              'DOMAIN SCORES',
+              '-'.repeat(30),
+            ];
+            for (const ds of domainScores) {
+              const meta = DOMAIN_META[ds.domain];
+              lines.push(`${meta?.label ?? ds.domain}: ${ds.score}/100 (${ds.passed ? 'PASS' : 'NEEDS IMPROVEMENT'})`);
+              for (const rec of (ds.recommendations || [])) {
+                lines.push(`  - ${rec}`);
+              }
+              lines.push('');
+            }
+            lines.push('', 'PRIORITIZED RECOMMENDATIONS', '-'.repeat(30));
+            for (const rec of allRecommendations) {
+              lines.push(`[${rec.priority}] ${rec.text} (${rec.domain})`);
+            }
+            const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'readiness-assessment-report.txt';
+            a.download = `readiness-assessment-${id}.txt`;
             a.click();
             URL.revokeObjectURL(url);
           }}>
