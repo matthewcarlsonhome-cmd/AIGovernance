@@ -86,10 +86,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 100);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
+    // First try with deleted_at filter; fall back to without it if column doesn't exist
     let query = supabase
       .from('projects')
       .select('*')
-      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -97,13 +97,20 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       query = query.eq('status', status);
     }
 
-    const { data, error } = await query;
+    let { data, error } = await query;
 
+    // If the query failed (e.g., table doesn't exist), log and return error
     if (error) {
+      console.error('[GET /api/projects] Supabase error:', error.message, error.code);
       return NextResponse.json(
         { error: 'Failed to fetch projects', message: error.message },
         { status: 500 },
       );
+    }
+
+    // Filter out soft-deleted projects in JS if deleted_at column exists
+    if (data && data.length > 0 && 'deleted_at' in data[0]) {
+      data = data.filter((p: Record<string, unknown>) => p.deleted_at == null);
     }
 
     return NextResponse.json({ data: data ?? [] });
@@ -156,38 +163,54 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     // Resolve organization_id: use provided value, or look up from user profile
     let organizationId = parsed.data.organization_id;
     if (!organizationId) {
-      const { data: userProfile } = await supabase
+      const { data: userProfile, error: profileErr } = await supabase
         .from('users')
         .select('organization_id')
         .eq('id', user.id)
         .single();
+      if (profileErr) {
+        console.error('[POST /api/projects] User profile lookup failed:', profileErr.message);
+      }
       organizationId = userProfile?.organization_id ?? undefined;
     }
 
     // If still no org, try to find any organization the user has access to
     if (!organizationId) {
-      const { data: orgs } = await supabase
+      const { data: orgs, error: orgErr } = await supabase
         .from('organizations')
         .select('id')
         .limit(1)
         .single();
+      if (orgErr) {
+        console.error('[POST /api/projects] Org lookup failed:', orgErr.message);
+      }
       organizationId = orgs?.id ?? undefined;
+    }
+
+    // Build insert payload — only include columns we know exist
+    const insertPayload: Record<string, unknown> = {
+      name: parsed.data.name,
+      description: parsed.data.description || '',
+      status: parsed.data.status,
+    };
+    if (organizationId) {
+      insertPayload.organization_id = organizationId;
+    }
+    if (parsed.data.start_date !== undefined) {
+      insertPayload.start_date = parsed.data.start_date ?? null;
+    }
+    if (parsed.data.target_end_date !== undefined) {
+      insertPayload.target_end_date = parsed.data.target_end_date ?? null;
     }
 
     const { data: created, error } = await supabase
       .from('projects')
-      .insert({
-        name: parsed.data.name,
-        description: parsed.data.description || '',
-        ...(organizationId ? { organization_id: organizationId } : {}),
-        status: parsed.data.status,
-        start_date: parsed.data.start_date ?? null,
-        target_end_date: parsed.data.target_end_date ?? null,
-      })
+      .insert(insertPayload)
       .select()
       .single();
 
     if (error) {
+      console.error('[POST /api/projects] Insert failed:', error.message, error.code, error.details);
       return NextResponse.json(
         { error: 'Failed to create project', message: error.message },
         { status: 500 },
