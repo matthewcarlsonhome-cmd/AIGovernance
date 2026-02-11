@@ -16,7 +16,7 @@
 5. [Running the Application](#5-running-the-application)
 6. [First-Time Admin Setup](#6-first-time-admin-setup)
 7. [Application Structure](#7-application-structure)
-8. [Deployment to Vercel](#8-deployment-to-vercel)
+8. [Deployment](#8-deployment-no-command-line-required) (Vercel, Netlify, and others)
 9. [Troubleshooting](#9-troubleshooting)
 10. [Testing](#10-testing)
 
@@ -355,28 +355,46 @@ GovAI Studio guides organizations through a structured AI governance implementat
 
 ### 7.3 API Routes
 
-The backend exposes 18 API route endpoints organized by feature domain. All routes require authentication (enforced by `middleware.ts`) and return typed JSON responses with a consistent shape: `{ data }` on success or `{ error, message }` on failure.
+The backend exposes 36 API route endpoints organized by feature domain. All routes require authentication (enforced by `middleware.ts`) and return typed JSON responses with a consistent shape: `{ data }` on success or `{ error, message }` on failure. When Supabase is not configured, all routes return demo data for demonstration purposes.
 
 | Route | Methods | Purpose |
 |-------|---------|---------|
-| `/api/projects` | GET, POST | List all projects for the organization, create new projects |
-| `/api/projects/[id]` | GET, PUT, DELETE | Read, update, or soft-delete a single project |
-| `/api/assessments` | GET, POST | List assessment responses, submit new responses |
-| `/api/assessments/[id]` | GET, PUT, DELETE | Manage a single assessment response |
-| `/api/assessments/score` | POST | Run the feasibility scoring engine on submitted responses |
-| `/api/configs` | POST | Generate sandbox configuration files |
-| `/api/configs/[id]` | GET, PUT, DELETE | Manage a single config set |
-| `/api/reports` | GET, POST | List report history, trigger report generation |
+| `/api/projects` | GET, POST | List all projects, create new projects |
+| `/api/projects/[id]` | GET, PUT, DELETE | Read, update, or soft-delete a project |
+| `/api/projects/[id]/team` | GET, POST, DELETE | Manage team members for a project |
+| `/api/assessments` | GET, POST | List assessment questions, submit responses |
+| `/api/assessments/[id]` | GET, PUT | Fetch responses by project, update a response |
+| `/api/assessments/score` | POST | Run the feasibility scoring engine |
+| `/api/governance/policies` | GET, POST | Manage AUP and governance policies |
+| `/api/governance/gates` | GET, POST | Gate review management (3-gate pipeline) |
+| `/api/governance/compliance` | GET, POST | Compliance framework mappings |
+| `/api/governance/risk` | GET, POST | Risk classification management |
+| `/api/configs` | GET, POST | Sandbox configuration CRUD |
+| `/api/configs/[id]` | GET, PATCH, DELETE | Manage a single config set |
+| `/api/configs/validate` | GET, POST | Run sandbox environment validation |
+| `/api/poc/projects` | GET, POST | PoC project definitions |
+| `/api/poc/sprints` | GET, POST | Sprint evaluation management |
+| `/api/poc/metrics` | GET, POST | Sprint metrics capture |
+| `/api/poc/tool-evaluations` | GET, POST | Tool comparison data persistence |
+| `/api/timeline/tasks` | GET, POST | Timeline task management |
+| `/api/timeline/tasks/[id]` | PATCH, DELETE | Individual task updates |
+| `/api/timeline/milestones` | GET, POST | Milestone tracking |
+| `/api/timeline/snapshots` | GET, POST | Schedule baseline snapshots |
+| `/api/reports` | GET, POST | Report templates and generated reports |
 | `/api/reports/[id]` | GET, DELETE | Retrieve or delete a generated report |
-| `/api/export/pdf` | POST | Generate and return a PDF document |
+| `/api/reports/templates` | GET | List available report templates |
+| `/api/reports/generate` | POST | Generate a new report |
+| `/api/export/pdf` | GET, POST | Generate and return a PDF document |
 | `/api/export/docx` | POST | Generate and return a DOCX document |
-| `/api/ai` | POST | Claude AI integration for assisted content generation (requires `ANTHROPIC_API_KEY`) |
+| `/api/ai` | POST | Claude AI integration (requires `ANTHROPIC_API_KEY`) |
 | `/api/meetings` | GET, POST | List and create meetings |
-| `/api/meetings/[id]` | GET, PUT, DELETE | Manage a single meeting |
-| `/api/meetings/[id]/actions` | GET, POST | Manage action items for a meeting |
-| `/api/raci` | GET, POST | List and create RACI matrix entries |
+| `/api/meetings/[id]` | GET, PATCH, DELETE | Manage a single meeting |
+| `/api/meetings/[id]/actions` | GET, POST | Meeting action items |
+| `/api/meetings/[id]/actions/[actionId]` | PATCH, DELETE | Individual action item CRUD |
+| `/api/raci` | GET, POST | RACI matrix entries |
 | `/api/raci/[id]` | GET, PUT, DELETE | Manage a single RACI entry |
-| `/api/roi` | POST | Run ROI calculation with provided inputs |
+| `/api/roi` | GET, POST | ROI calculation |
+| `/api/storage` | POST | File upload |
 
 ### 7.4 Report Generation Capabilities
 
@@ -415,59 +433,128 @@ GovAI Studio includes content generators for 5 report types, each tailored to a 
 
 ---
 
-## 8. Deployment to Vercel
+## 8. Deployment (No Command Line Required)
 
-GovAI Studio is built for deployment on Vercel with zero additional configuration.
+GovAI Studio deploys to any modern hosting platform. The entire process uses web dashboards — no command line needed on the server or client's machine.
 
-### Step 1: Connect Your Repository
+### Prerequisites for All Platforms
 
-1. Go to [vercel.com](https://vercel.com) and sign in.
-2. Click **Add New Project**.
-3. Import your GitHub (or GitLab/Bitbucket) repository.
-4. Vercel will auto-detect the Next.js framework preset.
+Before deploying, ensure you have:
+1. A Supabase project with all migrations run (Section 3)
+2. Your repository pushed to GitHub, GitLab, or Bitbucket
+3. The 5 environment variable values ready (Section 4)
 
-### Step 2: Set Environment Variables
+---
 
-In the Vercel project settings (**Settings > Environment Variables**), add all five variables:
+### 8A. Deploy to Vercel (Recommended)
 
+Vercel is the native platform for Next.js with zero configuration.
+
+1. Go to [vercel.com](https://vercel.com) and sign in with your Git provider.
+2. Click **Add New Project** and import your repository.
+3. Vercel auto-detects Next.js. No build settings changes needed.
+4. In **Environment Variables**, add all 5 variables:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+   ANTHROPIC_API_KEY=sk-ant-your-key
+   NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
+   ```
+5. Click **Deploy**. Wait 2-3 minutes for the build to complete.
+6. In Supabase > **Authentication > URL Configuration**, add:
+   - `https://your-app.vercel.app/auth/callback` to Redirect URLs
+   - Set Site URL to `https://your-app.vercel.app`
+
+Subsequent pushes to `main` auto-deploy. Pull requests get preview URLs.
+
+---
+
+### 8B. Deploy to Netlify
+
+A `netlify.toml` configuration file is included in the repository root.
+
+1. Go to [netlify.com](https://www.netlify.com) and sign in.
+2. Click **Add new site > Import an existing project**.
+3. Select your Git provider and choose the repository.
+4. Netlify detects `netlify.toml` and configures the build automatically.
+5. Go to **Site configuration > Environment variables** and add:
+
+   | Variable | Value |
+   |----------|-------|
+   | `NEXT_PUBLIC_SUPABASE_URL` | `https://your-project.supabase.co` |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anon key |
+   | `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key |
+   | `ANTHROPIC_API_KEY` | Your Anthropic API key (optional) |
+   | `NEXT_PUBLIC_APP_URL` | `https://your-site.netlify.app` |
+
+6. If the Next.js plugin is not auto-installed, go to **Build & deploy > Build plugins** and add **Next.js Runtime** (`@netlify/plugin-nextjs`).
+7. Click **Deploy site**. Wait 3-5 minutes for the build.
+8. In Supabase > **Authentication > URL Configuration**, add:
+   - `https://your-site.netlify.app/auth/callback` to Redirect URLs
+   - Set Site URL to `https://your-site.netlify.app`
+
+The included `netlify.toml` configures everything:
+
+```toml
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 ```
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-ANTHROPIC_API_KEY=sk-ant-your-key
-NEXT_PUBLIC_APP_URL=https://your-domain.vercel.app
-```
 
-Mark `SUPABASE_SERVICE_ROLE_KEY` and `ANTHROPIC_API_KEY` as **Sensitive** so they are not visible in logs or the Vercel dashboard after creation.
+---
 
-### Step 3: Verify Build Settings
+### 8C. Deploy to Other Platforms
 
-Vercel should auto-detect these settings, but confirm they are correct:
+GovAI Studio runs on any Node.js hosting that supports Next.js:
 
-- **Framework Preset:** Next.js
-- **Build Command:** `npm run build`
-- **Output Directory:** `.next`
-- **Install Command:** `npm install`
+| Platform | Setup |
+|----------|-------|
+| **Railway** | Connect repo, add env vars, auto-detects Next.js |
+| **Render** | New Web Service > connect repo > Node environment |
+| **AWS Amplify** | Import repo, set env vars, auto-detects Next.js |
+| **Google Cloud Run** | Use `Dockerfile` or Cloud Build |
+| **DigitalOcean App Platform** | Import repo, set env vars |
+| **Fly.io** | `fly launch` with Node.js builder |
 
-### Step 4: Update Supabase Redirect URLs
+For all platforms:
+- Build command: `npm run build`
+- Start command: `npm start`
+- Node version: 20+
+- Set the 5 environment variables listed above
 
-1. In the Supabase dashboard, go to **Authentication > URL Configuration**.
-2. Add your Vercel deployment URL to **Redirect URLs**:
-   - `https://your-domain.vercel.app/auth/callback`
-3. Update the **Site URL** to your Vercel domain.
+---
 
-### Step 5: Deploy
+### Custom Domain (Any Platform)
 
-1. Click **Deploy** in the Vercel dashboard.
-2. Subsequent pushes to the `main` branch will trigger automatic deployments.
-3. Pull request branches receive automatic preview deployments with unique URLs.
+1. Add your custom domain in the platform's domain settings.
+2. Update `NEXT_PUBLIC_APP_URL` to your custom domain.
+3. Add `https://your-domain.com/auth/callback` to Supabase redirect URLs.
+4. Update the **Site URL** in Supabase to your custom domain.
+5. SSL certificates are automatically provisioned by Vercel, Netlify, and most platforms.
 
-### Custom Domain (Optional)
+---
 
-1. In Vercel, go to **Settings > Domains**.
-2. Add your custom domain and follow the DNS configuration instructions.
-3. Update `NEXT_PUBLIC_APP_URL` to your custom domain.
-4. Add the custom domain to Supabase redirect URLs.
+### Sharing with Clients for Demos
+
+To share the deployed application with a client without requiring any technical setup:
+
+1. Deploy to Vercel or Netlify (above).
+2. Create a user account via the `/register` page.
+3. Set up a project and seed it with sample data.
+4. Share the deployment URL and login credentials with the client.
+5. The client opens the URL in any browser — no installation needed.
+
+For a fully self-contained demo (no Supabase required):
+- The application includes demo mode fallbacks on all API routes.
+- If Supabase environment variables are omitted, the app serves hardcoded sample data.
+- This allows deploying a read-only demo instance with zero backend configuration.
 
 ---
 

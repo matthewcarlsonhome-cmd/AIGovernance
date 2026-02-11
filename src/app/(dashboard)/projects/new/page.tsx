@@ -14,6 +14,7 @@ import {
   Check,
   Building2,
   Briefcase,
+  AlertCircle,
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -477,6 +478,7 @@ export default function NewProjectPage(): React.ReactElement {
   ]);
 
   const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   /* ---- Validation ---- */
   const isStep1Valid = detailsForm.formState.isValid;
@@ -503,18 +505,18 @@ export default function NewProjectPage(): React.ReactElement {
 
   const handleCreate = async () => {
     setIsCreating(true);
+    setCreateError(null);
     const formValues = detailsForm.getValues();
     try {
       const project = await createProject.mutateAsync({
         name: formValues.name,
-        description: formValues.description,
+        description: formValues.description || '',
         status: 'discovery',
       });
-      router.push(`/projects/${project?.id ?? 'demo-new'}/overview`);
-    } catch {
-      // Fallback: navigate to demo project if API not ready
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      router.push('/projects/demo-new/overview');
+      router.push(`/projects/${project.id}/overview`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create project';
+      setCreateError(message);
     } finally {
       setIsCreating(false);
     }
@@ -570,6 +572,16 @@ export default function NewProjectPage(): React.ReactElement {
             />
           )}
         </CardContent>
+
+        {createError && (
+          <div className="mx-6 mb-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
+            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-red-800">Failed to create project</p>
+              <p className="text-sm text-red-700 mt-1">{createError}</p>
+            </div>
+          </div>
+        )}
 
         <CardFooter className="flex justify-between gap-3 border-t border-slate-200 pt-6">
           <Button
