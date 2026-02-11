@@ -24,7 +24,7 @@ export const assessmentKeys = {
 // Fetchers
 // ---------------------------------------------------------------------------
 async function fetchQuestions(): Promise<AssessmentQuestion[]> {
-  const res = await fetch('/api/assessments/questions');
+  const res = await fetch('/api/assessments');
   if (!res.ok) {
     const body: ApiResponse = await res.json().catch(() => ({}));
     throw new Error(body.error ?? 'Failed to fetch assessment questions');
@@ -34,7 +34,7 @@ async function fetchQuestions(): Promise<AssessmentQuestion[]> {
 }
 
 async function fetchResponses(projectId: string): Promise<AssessmentResponse[]> {
-  const res = await fetch(`/api/assessments/responses?projectId=${encodeURIComponent(projectId)}`);
+  const res = await fetch(`/api/assessments/${encodeURIComponent(projectId)}`);
   if (!res.ok) {
     const body: ApiResponse = await res.json().catch(() => ({}));
     throw new Error(body.error ?? 'Failed to fetch assessment responses');
@@ -44,7 +44,11 @@ async function fetchResponses(projectId: string): Promise<AssessmentResponse[]> 
 }
 
 async function fetchScores(projectId: string): Promise<FeasibilityScore> {
-  const res = await fetch(`/api/assessments/scores?projectId=${encodeURIComponent(projectId)}`);
+  const res = await fetch('/api/assessments/score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ project_id: projectId }),
+  });
   if (!res.ok) {
     const body: ApiResponse = await res.json().catch(() => ({}));
     throw new Error(body.error ?? 'Failed to fetch assessment scores');
@@ -96,7 +100,7 @@ export function useSaveResponse() {
     mutationFn: async (
       data: Omit<AssessmentResponse, 'id' | 'created_at' | 'updated_at'> & { id?: string },
     ) => {
-      const res = await fetch('/api/assessments/responses', {
+      const res = await fetch('/api/assessments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -125,10 +129,10 @@ export function useRecalculateScores() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (projectId: string) => {
-      const res = await fetch('/api/assessments/scores', {
+      const res = await fetch('/api/assessments/score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId }),
+        body: JSON.stringify({ project_id: projectId }),
       });
       if (!res.ok) {
         const body: ApiResponse = await res.json().catch(() => ({}));

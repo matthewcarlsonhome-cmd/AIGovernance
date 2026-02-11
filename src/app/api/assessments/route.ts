@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import type { ApiResponse, AssessmentQuestion, AssessmentResponse } from '@/types';
 
 const saveResponseSchema = z.object({
@@ -19,6 +19,10 @@ const saveResponseSchema = z.object({
  */
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<AssessmentQuestion[]>>> {
   try {
+    if (!isServerSupabaseConfigured()) {
+      return NextResponse.json({ data: [] });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -64,6 +68,21 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
  */
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<AssessmentResponse>>> {
   try {
+    if (!isServerSupabaseConfigured()) {
+      const body = await request.json();
+      return NextResponse.json({
+        data: {
+          id: `resp-demo-${Date.now()}`,
+          project_id: body.project_id ?? 'proj-demo-001',
+          question_id: body.question_id ?? 'q-demo-001',
+          value: body.value ?? '',
+          responded_by: 'demo-user',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      }, { status: 201 });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

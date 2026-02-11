@@ -1,7 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import type { ApiResponse, Project } from '@/types';
+
+/* ------------------------------------------------------------------ */
+/*  Demo Data (shared with /api/projects)                              */
+/* ------------------------------------------------------------------ */
+
+const DEMO_PROJECTS: Project[] = [
+  {
+    id: 'proj-demo-001',
+    name: 'Enterprise AI Coding Pilot',
+    description: 'Evaluate Claude Code and OpenAI Codex for enterprise-wide adoption across engineering teams. Includes sandbox setup, security review, and 8-week pilot with 3 teams.',
+    organization_id: 'org-demo-001',
+    status: 'sandbox',
+    feasibility_score: 74,
+    start_date: '2025-06-01T00:00:00Z',
+    target_end_date: '2025-12-31T00:00:00Z',
+    created_at: '2025-06-01T09:00:00Z',
+    updated_at: '2025-07-20T14:30:00Z',
+  },
+  {
+    id: 'proj-demo-002',
+    name: 'Legal Document Assistant',
+    description: 'Deploy AI coding assistant for legal tech team to automate contract template generation and clause extraction workflows.',
+    organization_id: 'org-demo-001',
+    status: 'governance',
+    feasibility_score: 58,
+    start_date: '2025-07-15T00:00:00Z',
+    target_end_date: '2026-03-31T00:00:00Z',
+    created_at: '2025-07-15T10:00:00Z',
+    updated_at: '2025-08-01T11:00:00Z',
+  },
+  {
+    id: 'proj-demo-003',
+    name: 'DevOps Automation PoC',
+    description: 'Proof of concept for using AI coding agents to generate Terraform modules, CI/CD pipelines, and infrastructure-as-code templates.',
+    organization_id: 'org-demo-001',
+    status: 'discovery',
+    feasibility_score: null,
+    start_date: '2025-08-01T00:00:00Z',
+    target_end_date: null,
+    created_at: '2025-08-01T08:00:00Z',
+    updated_at: '2025-08-05T16:00:00Z',
+  },
+];
 
 const updateProjectSchema = z.object({
   name: z.string().min(1).max(255).optional(),
@@ -27,6 +70,19 @@ export async function GET(
 ): Promise<NextResponse<ApiResponse<Project>>> {
   try {
     const { id } = await context.params;
+
+    // Demo mode: find the project in hardcoded data
+    if (!isServerSupabaseConfigured()) {
+      const demoProject = DEMO_PROJECTS.find((p) => p.id === id);
+      if (demoProject) {
+        return NextResponse.json({ data: demoProject });
+      }
+      // For any unknown ID in demo mode, return the first demo project with the requested ID
+      return NextResponse.json({
+        data: { ...DEMO_PROJECTS[0], id },
+      });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -64,12 +120,6 @@ export async function PUT(
 ): Promise<NextResponse<ApiResponse<Project>>> {
   try {
     const { id } = await context.params;
-    const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await request.json();
     const parsed = updateProjectSchema.safeParse(body);
 
@@ -78,6 +128,20 @@ export async function PUT(
         { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
         { status: 400 },
       );
+    }
+
+    // Demo mode: return merged update
+    if (!isServerSupabaseConfigured()) {
+      const existing = DEMO_PROJECTS.find((p) => p.id === id) ?? DEMO_PROJECTS[0];
+      return NextResponse.json({
+        data: { ...existing, ...parsed.data, id, updated_at: new Date().toISOString() },
+      });
+    }
+
+    const supabase = await createServerSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { data: updated, error } = await supabase
@@ -107,11 +171,17 @@ export async function PUT(
  * Soft-delete a project by setting deleted_at timestamp.
  */
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   context: RouteContext,
 ): Promise<NextResponse<ApiResponse<{ deleted: boolean }>>> {
   try {
     const { id } = await context.params;
+
+    // Demo mode: return success
+    if (!isServerSupabaseConfigured()) {
+      return NextResponse.json({ data: { deleted: true } });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

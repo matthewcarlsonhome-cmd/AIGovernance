@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import type { ApiResponse, AssessmentResponse } from '@/types';
 
 const updateResponseSchema = z.object({
@@ -24,6 +24,11 @@ export async function GET(
 ): Promise<NextResponse<ApiResponse<AssessmentResponse[]>>> {
   try {
     const { id: projectId } = await context.params;
+
+    if (!isServerSupabaseConfigured()) {
+      return NextResponse.json({ data: [] });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -60,6 +65,22 @@ export async function PUT(
 ): Promise<NextResponse<ApiResponse<AssessmentResponse>>> {
   try {
     const { id: responseId } = await context.params;
+
+    if (!isServerSupabaseConfigured()) {
+      const body = await request.json();
+      return NextResponse.json({
+        data: {
+          id: responseId,
+          project_id: 'proj-demo-001',
+          question_id: 'q-demo-001',
+          value: body.value ?? '',
+          responded_by: 'demo-user',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

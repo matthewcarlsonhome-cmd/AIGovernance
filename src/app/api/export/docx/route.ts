@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import { withRateLimit } from '@/lib/api-helpers';
 import { RATE_LIMIT_EXPORT, RATE_LIMIT_WINDOW_MS } from '@/lib/rate-limit';
 import { generateProposalContent } from '@/lib/report-gen/docx/proposal-generator';
@@ -51,6 +51,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (rateLimitResponse) return rateLimitResponse;
 
   try {
+    // Demo mode
+    if (!isServerSupabaseConfigured()) {
+      return NextResponse.json({
+        data: {
+          message: 'DOCX export is not available in demo mode. Configure Supabase to enable exports.',
+          reportType: 'proposal',
+          filename: 'demo-report.docx',
+        },
+      });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

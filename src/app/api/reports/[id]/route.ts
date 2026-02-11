@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import type { ApiResponse, GeneratedReport } from '@/types';
 
 const updateReportSchema = z.object({
@@ -23,6 +23,28 @@ export async function GET(
 ): Promise<NextResponse<ApiResponse<GeneratedReport>>> {
   try {
     const { id } = await context.params;
+
+    if (!isServerSupabaseConfigured()) {
+      const now = new Date().toISOString();
+      return NextResponse.json({
+        data: {
+          id,
+          project_id: 'proj-demo-001',
+          template_id: null,
+          persona: 'executive',
+          title: 'Demo Report',
+          status: 'draft',
+          content: {},
+          generated_by: 'demo-user',
+          generated_at: now,
+          file_url: null,
+          file_size: null,
+          created_at: now,
+          updated_at: now,
+        },
+      });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -59,6 +81,29 @@ export async function PUT(
 ): Promise<NextResponse<ApiResponse<GeneratedReport>>> {
   try {
     const { id } = await context.params;
+
+    if (!isServerSupabaseConfigured()) {
+      const body = await request.json();
+      const now = new Date().toISOString();
+      return NextResponse.json({
+        data: {
+          id,
+          project_id: 'proj-demo-001',
+          template_id: null,
+          persona: 'executive',
+          title: body.title ?? 'Demo Report',
+          status: body.status ?? 'draft',
+          content: body.content ?? {},
+          generated_by: 'demo-user',
+          generated_at: now,
+          file_url: body.file_url ?? null,
+          file_size: body.file_size ?? null,
+          created_at: now,
+          updated_at: now,
+        },
+      });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

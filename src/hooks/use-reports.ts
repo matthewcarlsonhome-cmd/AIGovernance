@@ -21,26 +21,31 @@ export const reportKeys = {
 // ---------------------------------------------------------------------------
 // Fetchers
 // ---------------------------------------------------------------------------
+interface ReportsListData {
+  templates: ReportTemplate[];
+  reports: GeneratedReport[];
+}
+
 async function fetchTemplates(): Promise<ReportTemplate[]> {
-  const res = await fetch('/api/reports/templates');
+  const res = await fetch('/api/reports');
   if (!res.ok) {
     const body: ApiResponse = await res.json().catch(() => ({}));
     throw new Error(body.error ?? 'Failed to fetch report templates');
   }
-  const json: ApiResponse<ReportTemplate[]> = await res.json();
-  return json.data ?? [];
+  const json: ApiResponse<ReportsListData> = await res.json();
+  return json.data?.templates ?? [];
 }
 
 async function fetchGeneratedReports(projectId: string): Promise<GeneratedReport[]> {
   const res = await fetch(
-    `/api/reports?projectId=${encodeURIComponent(projectId)}`,
+    `/api/reports?project_id=${encodeURIComponent(projectId)}`,
   );
   if (!res.ok) {
     const body: ApiResponse = await res.json().catch(() => ({}));
     throw new Error(body.error ?? 'Failed to fetch generated reports');
   }
-  const json: ApiResponse<GeneratedReport[]> = await res.json();
-  return json.data ?? [];
+  const json: ApiResponse<ReportsListData> = await res.json();
+  return json.data?.reports ?? [];
 }
 
 // ---------------------------------------------------------------------------

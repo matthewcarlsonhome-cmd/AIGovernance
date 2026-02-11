@@ -1,18 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
-import type { ApiResponse, RaciMatrix } from '@/types';
+import type { ApiResponse, GateReview } from '@/types';
 
-const createMatrixSchema = z.object({
+const createGateReviewSchema = z.object({
   project_id: z.string().uuid('Invalid project ID'),
-  phase: z.string().min(1, 'Phase name is required').max(255),
+  gate_number: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  status: z.enum(['pending', 'in_review', 'approved', 'rejected']).default('pending'),
+  evidence: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 /**
- * GET /api/raci
- * List RACI matrices for a project. Requires ?project_id= query parameter.
+ * GET /api/governance/gates
+ * Fetch gate reviews for a project. Requires ?projectId= query parameter.
  */
-export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<RaciMatrix[]>>> {
+export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<GateReview[]>>> {
   try {
     if (!isServerSupabaseConfigured()) {
       return NextResponse.json({ data: [] });
@@ -25,24 +28,24 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     }
 
     const { searchParams } = new URL(request.url);
-    const projectId = searchParams.get('project_id');
+    const projectId = searchParams.get('projectId');
 
     if (!projectId) {
       return NextResponse.json(
-        { error: 'Validation error', message: 'project_id query parameter is required' },
+        { error: 'Validation error', message: 'projectId query parameter is required' },
         { status: 400 },
       );
     }
 
     const { data, error } = await supabase
-      .from('raci_matrices')
+      .from('gate_reviews')
       .select('*')
       .eq('project_id', projectId)
-      .order('phase', { ascending: true });
+      .order('gate_number', { ascending: true });
 
     if (error) {
       return NextResponse.json(
-        { error: 'Failed to fetch RACI matrices', message: error.message },
+        { error: 'Failed to fetch gate reviews', message: error.message },
         { status: 500 },
       );
     }
@@ -55,19 +58,24 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 }
 
 /**
- * POST /api/raci
- * Create a new RACI matrix for a project phase.
+ * POST /api/governance/gates
+ * Create a new gate review for a project.
  */
-export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<RaciMatrix>>> {
+export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<GateReview>>> {
   try {
     if (!isServerSupabaseConfigured()) {
       const body = await request.json();
       const now = new Date().toISOString();
       return NextResponse.json({
         data: {
-          id: `raci-demo-${Date.now()}`,
-          project_id: body.project_id ?? 'proj-demo-001',
-          phase: body.phase ?? 'Discovery',
+          id: `gate-${Date.now()}`,
+          project_id: body.project_id ?? '',
+          gate_number: body.gate_number ?? 1,
+          status: body.status ?? 'pending',
+          evidence_checklist: [],
+          approvers: [],
+          notes: body.notes ?? null,
+          reviewed_at: null,
           created_at: now,
           updated_at: now,
         },
@@ -81,51 +89,25 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }
 
     const body = await request.json();
-    const parsed = createMatrixSchema.safeParse(body);
+    const parsed = createGateReviewSchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
+        { error: 'Validation failed', message: parsed.error.flatten().fieldErrors.toString() },
         { status: 400 },
       );
     }
 
-    // Verify the project exists
-    const { data: project, error: projectError } = await supabase
-      .from('projects')
-      .select('id')
-      .eq('id', parsed.data.project_id)
-      .is('deleted_at', null)
-      .single();
-
-    if (projectError || !project) {
-      return NextResponse.json(
-        { error: 'Project not found', message: 'The specified project does not exist or has been deleted' },
-        { status: 404 },
-      );
-    }
-
-    // Check for duplicate phase within the same project
-    const { data: existing } = await supabase
-      .from('raci_matrices')
-      .select('id')
-      .eq('project_id', parsed.data.project_id)
-      .eq('phase', parsed.data.phase)
-      .maybeSingle();
-
-    if (existing) {
-      return NextResponse.json(
-        { error: 'Duplicate matrix', message: `A RACI matrix for phase "${parsed.data.phase}" already exists in this project` },
-        { status: 409 },
-      );
-    }
-
     const now = new Date().toISOString();
-    const { data: matrix, error } = await supabase
-      .from('raci_matrices')
+    const { data: gateReview, error } = await supabase
+      .from('gate_reviews')
       .insert({
         project_id: parsed.data.project_id,
-        phase: parsed.data.phase,
+        gate_number: parsed.data.gate_number,
+        status: parsed.data.status,
+        evidence_checklist: [],
+        approvers: [],
+        notes: parsed.data.notes ?? null,
         created_at: now,
         updated_at: now,
       })
@@ -134,12 +116,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     if (error) {
       return NextResponse.json(
-        { error: 'Failed to create RACI matrix', message: error.message },
+        { error: 'Failed to create gate review', message: error.message },
         { status: 500 },
       );
     }
 
-    return NextResponse.json({ data: matrix }, { status: 201 });
+    return NextResponse.json({ data: gateReview }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: 'Internal server error', message }, { status: 500 });

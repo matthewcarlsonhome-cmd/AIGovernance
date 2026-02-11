@@ -2,7 +2,7 @@ import React, { type ReactElement } from 'react';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import { withRateLimit } from '@/lib/api-helpers';
 import { RATE_LIMIT_EXPORT, RATE_LIMIT_WINDOW_MS } from '@/lib/rate-limit';
 import type { FeasibilityScore, FeasibilityRating, DomainScore, RiskClassification, RoiResults } from '@/types';
@@ -50,6 +50,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (rateLimitResponse) return rateLimitResponse;
 
   try {
+    // ---- Demo mode ----
+    if (!isServerSupabaseConfigured()) {
+      return NextResponse.json({
+        data: {
+          message: 'PDF export is not available in demo mode. Configure Supabase to enable exports.',
+          reportType: 'readiness',
+          filename: 'demo-report.pdf',
+        },
+      });
+    }
+
     // ---- Auth ----
     const supabase = await createServerSupabaseClient();
     const {

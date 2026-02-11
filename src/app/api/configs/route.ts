@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import { generateAllConfigFiles } from '@/lib/config-gen/generator';
 import type { ApiResponse, ConfigFile, SandboxConfig } from '@/types';
 
@@ -28,6 +28,28 @@ export async function POST(
   request: NextRequest,
 ): Promise<NextResponse<ApiResponse<GenerateConfigResult>>> {
   try {
+    if (!isServerSupabaseConfigured()) {
+      const body = await request.json();
+      const demoConfigId = `cfg-demo-${Date.now()}`;
+      return NextResponse.json({
+        data: {
+          sandbox_config: {
+            id: demoConfigId,
+            project_id: body.project_id ?? 'proj-demo-001',
+            cloud_provider: body.cloud_provider ?? 'aws',
+            sandbox_model: body.sandbox_model ?? 'docker',
+            vpc_cidr: body.vpc_cidr ?? null,
+            region: body.region ?? null,
+            ai_provider: body.ai_provider ?? null,
+            settings: body.settings ?? {},
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          } as SandboxConfig,
+          config_files: [],
+        },
+      }, { status: 201 });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, isServerSupabaseConfigured } from '@/lib/supabase/server';
 import type { ApiResponse, ConfigFile } from '@/types';
 
 const updateConfigFileSchema = z.object({
@@ -20,6 +20,11 @@ export async function GET(
 ): Promise<NextResponse<ApiResponse<ConfigFile[]>>> {
   try {
     const { id } = await context.params;
+
+    if (!isServerSupabaseConfigured()) {
+      return NextResponse.json({ data: [] });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -57,6 +62,23 @@ export async function PUT(
 ): Promise<NextResponse<ApiResponse<ConfigFile>>> {
   try {
     const { id } = await context.params;
+
+    if (!isServerSupabaseConfigured()) {
+      const body = await request.json();
+      return NextResponse.json({
+        data: {
+          id,
+          sandbox_config_id: 'cfg-demo-001',
+          filename: 'config.json',
+          file_type: 'json',
+          content: body.content ?? '{}',
+          description: body.description ?? 'Demo config file',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      });
+    }
+
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
