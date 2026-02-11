@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useCurrentUser } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -41,6 +42,7 @@ import {
   DollarSign,
   Camera,
   Rocket,
+  HelpCircle,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -233,7 +235,19 @@ function CollapsibleSection({
 /*  Top bar                                                            */
 /* ------------------------------------------------------------------ */
 
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((w) => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+}
+
 function TopBar({ pathname }: { pathname: string }) {
+  const { data: currentUser } = useCurrentUser();
+
   const getBreadcrumbs = (path: string): { label: string; href: string }[] => {
     if (path === '/') return [{ label: 'Dashboard', href: '/' }];
     const segments = path.split('/').filter(Boolean);
@@ -251,6 +265,12 @@ function TopBar({ pathname }: { pathname: string }) {
   };
 
   const crumbs = getBreadcrumbs(pathname);
+
+  const displayName = currentUser?.full_name || currentUser?.email?.split('@')[0] || 'User';
+  const displayRole = currentUser?.role
+    ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)
+    : '';
+  const initials = getInitials(displayName);
 
   return (
     <header className="flex h-14 items-center justify-between border-b bg-white px-6">
@@ -274,11 +294,13 @@ function TopBar({ pathname }: { pathname: string }) {
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white text-xs font-semibold">
-            JS
+            {initials}
           </div>
           <div className="hidden sm:block text-sm">
-            <p className="font-medium leading-none">Jane Smith</p>
-            <p className="text-xs text-slate-500">Admin</p>
+            <p className="font-medium leading-none">{displayName}</p>
+            {displayRole && (
+              <p className="text-xs text-slate-500">{displayRole}</p>
+            )}
           </div>
         </div>
       </div>
@@ -397,6 +419,11 @@ export default function DashboardLayout({
 
         {/* Bottom area */}
         <div className="border-t px-2 py-3 space-y-1">
+          <NavLink
+            item={{ label: 'Help & Guide', href: '/help', icon: HelpCircle }}
+            collapsed={collapsed}
+            pathname={pathname}
+          />
           <NavLink
             item={{ label: 'Settings', href: '/settings', icon: Settings }}
             collapsed={collapsed}

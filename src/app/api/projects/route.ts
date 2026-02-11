@@ -48,8 +48,8 @@ const DEMO_PROJECTS: Project[] = [
 
 const createProjectSchema = z.object({
   name: z.string().min(1, 'Project name is required').max(255),
-  description: z.string().min(1, 'Project description is required').max(2000),
-  organization_id: z.string().uuid('Invalid organization ID'),
+  description: z.string().max(2000).optional().default(''),
+  organization_id: z.string().uuid('Invalid organization ID').optional(),
   status: z
     .enum(['discovery', 'governance', 'sandbox', 'pilot', 'evaluation', 'production', 'completed'])
     .optional()
@@ -135,8 +135,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       const demoProject: Project = {
         id: `proj-demo-${Date.now()}`,
         name: parsed.data.name,
-        description: parsed.data.description,
-        organization_id: parsed.data.organization_id,
+        description: parsed.data.description || '',
+        organization_id: parsed.data.organization_id ?? 'org-demo-001',
         status: parsed.data.status ?? 'discovery',
         feasibility_score: null,
         start_date: parsed.data.start_date ?? null,
@@ -153,12 +153,33 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Resolve organization_id: use provided value, or look up from user profile
+    let organizationId = parsed.data.organization_id;
+    if (!organizationId) {
+      const { data: userProfile } = await supabase
+        .from('users')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+      organizationId = userProfile?.organization_id ?? undefined;
+    }
+
+    // If still no org, try to find any organization the user has access to
+    if (!organizationId) {
+      const { data: orgs } = await supabase
+        .from('organizations')
+        .select('id')
+        .limit(1)
+        .single();
+      organizationId = orgs?.id ?? undefined;
+    }
+
     const { data: created, error } = await supabase
       .from('projects')
       .insert({
         name: parsed.data.name,
-        description: parsed.data.description,
-        organization_id: parsed.data.organization_id,
+        description: parsed.data.description || '',
+        ...(organizationId ? { organization_id: organizationId } : {}),
         status: parsed.data.status,
         start_date: parsed.data.start_date ?? null,
         target_end_date: parsed.data.target_end_date ?? null,
