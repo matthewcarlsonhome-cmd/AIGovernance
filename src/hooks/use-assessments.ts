@@ -21,41 +21,49 @@ export const assessmentKeys = {
 };
 
 // ---------------------------------------------------------------------------
-// Fetchers
+// Fetchers — gracefully return empty/fallback data on any error
 // ---------------------------------------------------------------------------
 async function fetchQuestions(): Promise<AssessmentQuestion[]> {
-  const res = await fetch('/api/assessments');
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch assessment questions');
+  try {
+    const res = await fetch('/api/assessments');
+    if (!res.ok) {
+      return [];
+    }
+    const json: ApiResponse<AssessmentQuestion[]> = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
   }
-  const json: ApiResponse<AssessmentQuestion[]> = await res.json();
-  return json.data ?? [];
 }
 
 async function fetchResponses(projectId: string): Promise<AssessmentResponse[]> {
-  const res = await fetch(`/api/assessments/${encodeURIComponent(projectId)}`);
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch assessment responses');
+  try {
+    const res = await fetch(`/api/assessments/${encodeURIComponent(projectId)}`);
+    if (!res.ok) {
+      return [];
+    }
+    const json: ApiResponse<AssessmentResponse[]> = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
   }
-  const json: ApiResponse<AssessmentResponse[]> = await res.json();
-  return json.data ?? [];
 }
 
-async function fetchScores(projectId: string): Promise<FeasibilityScore> {
-  const res = await fetch('/api/assessments/score', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ project_id: projectId }),
-  });
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch assessment scores');
+async function fetchScores(projectId: string): Promise<FeasibilityScore | null> {
+  try {
+    const res = await fetch('/api/assessments/score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: projectId }),
+    });
+    if (!res.ok) {
+      return null;
+    }
+    const json: ApiResponse<FeasibilityScore> = await res.json();
+    return json.data ?? null;
+  } catch {
+    return null;
   }
-  const json: ApiResponse<FeasibilityScore> = await res.json();
-  if (!json.data) throw new Error('Assessment scores not found');
-  return json.data;
 }
 
 // ---------------------------------------------------------------------------

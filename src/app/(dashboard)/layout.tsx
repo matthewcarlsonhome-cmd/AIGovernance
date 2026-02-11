@@ -49,6 +49,11 @@ import {
   Beaker,
   ListOrdered,
   PackageSearch,
+  Activity,
+  Layers,
+  MessageSquare,
+  Briefcase,
+  Database,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -83,6 +88,7 @@ function buildProjectSections(projectId: string): NavSection[] {
       items: [
         { label: 'Questionnaire', href: p('/discovery/questionnaire'), icon: ClipboardList },
         { label: 'Readiness', href: p('/discovery/readiness'), icon: Target },
+        { label: 'Data Readiness', href: p('/discovery/data-readiness'), icon: Database },
         { label: 'Prerequisites', href: p('/discovery/prerequisites'), icon: CheckSquare },
       ],
     },
@@ -105,6 +111,7 @@ function buildProjectSections(projectId: string): NavSection[] {
         { label: 'Configure', href: p('/sandbox/configure'), icon: Settings },
         { label: 'Config Files', href: p('/sandbox/files'), icon: Code },
         { label: 'Validation', href: p('/sandbox/validate'), icon: CheckCircle },
+        { label: 'Architecture', href: p('/sandbox/architecture'), icon: Layers },
       ],
     },
     {
@@ -134,10 +141,18 @@ function buildProjectSections(projectId: string): NavSection[] {
       ],
     },
     {
+      title: 'Monitoring',
+      items: [
+        { label: 'Dashboard', href: p('/monitoring'), icon: Activity },
+      ],
+    },
+    {
       title: 'Reports',
       items: [
         { label: 'Generate', href: p('/reports/generate'), icon: FileOutput },
         { label: 'History', href: p('/reports/history'), icon: History },
+        { label: 'Communications', href: p('/reports/communications'), icon: MessageSquare },
+        { label: 'Client Brief', href: p('/reports/client-brief'), icon: Briefcase },
       ],
     },
   ];

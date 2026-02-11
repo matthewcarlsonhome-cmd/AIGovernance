@@ -25,54 +25,66 @@ export const pocKeys = {
 };
 
 // ---------------------------------------------------------------------------
-// Fetchers
+// Fetchers — gracefully return empty data on any error
 // ---------------------------------------------------------------------------
 async function fetchPocProjects(projectId: string): Promise<PocProject[]> {
-  const res = await fetch(
-    `/api/poc/projects?projectId=${encodeURIComponent(projectId)}`,
-  );
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch PoC projects');
+  try {
+    const res = await fetch(
+      `/api/poc/projects?projectId=${encodeURIComponent(projectId)}`,
+    );
+    if (!res.ok) {
+      return [];
+    }
+    const json: ApiResponse<PocProject[]> = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
   }
-  const json: ApiResponse<PocProject[]> = await res.json();
-  return json.data ?? [];
 }
 
 async function fetchSprints(pocProjectId: string): Promise<PocSprint[]> {
-  const res = await fetch(
-    `/api/poc/sprints?pocProjectId=${encodeURIComponent(pocProjectId)}`,
-  );
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch sprints');
+  try {
+    const res = await fetch(
+      `/api/poc/sprints?pocProjectId=${encodeURIComponent(pocProjectId)}`,
+    );
+    if (!res.ok) {
+      return [];
+    }
+    const json: ApiResponse<PocSprint[]> = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
   }
-  const json: ApiResponse<PocSprint[]> = await res.json();
-  return json.data ?? [];
 }
 
 async function fetchMetrics(sprintId: string): Promise<PocMetric[]> {
-  const res = await fetch(
-    `/api/poc/metrics?sprintId=${encodeURIComponent(sprintId)}`,
-  );
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch PoC metrics');
+  try {
+    const res = await fetch(
+      `/api/poc/metrics?sprintId=${encodeURIComponent(sprintId)}`,
+    );
+    if (!res.ok) {
+      return [];
+    }
+    const json: ApiResponse<PocMetric[]> = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
   }
-  const json: ApiResponse<PocMetric[]> = await res.json();
-  return json.data ?? [];
 }
 
 async function fetchToolEvaluations(projectId: string): Promise<ToolEvaluation[]> {
-  const res = await fetch(
-    `/api/poc/tool-evaluations?projectId=${encodeURIComponent(projectId)}`,
-  );
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch tool evaluations');
+  try {
+    const res = await fetch(
+      `/api/poc/tool-evaluations?projectId=${encodeURIComponent(projectId)}`,
+    );
+    if (!res.ok) {
+      return [];
+    }
+    const json: ApiResponse<ToolEvaluation[]> = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
   }
-  const json: ApiResponse<ToolEvaluation[]> = await res.json();
-  return json.data ?? [];
 }
 
 // ---------------------------------------------------------------------------

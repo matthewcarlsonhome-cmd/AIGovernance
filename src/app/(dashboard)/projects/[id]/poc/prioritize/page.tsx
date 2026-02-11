@@ -11,6 +11,17 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import {
   Tabs,
   TabsList,
@@ -35,6 +46,9 @@ import {
   ArrowDown,
   Download,
   ChevronRight,
+  Pencil,
+  Trash2,
+  Info,
 } from 'lucide-react';
 import type {
   UseCasePriority,
@@ -44,191 +58,45 @@ import type {
 } from '@/types';
 
 /* ------------------------------------------------------------------ */
-/*  Demo Data                                                          */
+/*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 
-const DEMO_USE_CASES: UseCasePriority[] = [
-  {
-    id: 'uc-001',
-    project_id: 'proj-001',
-    name: 'Code Review Automation',
-    description:
-      'AI-powered code review assistant that identifies bugs, security issues, and style violations before human review.',
-    sponsor: 'Sarah Chen',
-    department: 'Engineering',
-    dimension_scores: [
-      { dimension: 'strategic_value', score: 92, weight: 30, notes: 'Directly aligns with engineering productivity OKR' },
-      { dimension: 'technical_feasibility', score: 88, weight: 25, notes: 'Well-proven pattern with existing tool integrations' },
-      { dimension: 'implementation_risk', score: 82, weight: 25, notes: 'Low risk; sandboxed in CI pipeline' },
-      { dimension: 'time_to_value', score: 85, weight: 20, notes: 'Can deliver in 4-week sprint' },
-    ],
-    composite_score: 87,
-    quadrant: 'strategic_imperative',
-    implementation_wave: 1,
-    dependencies: ['Sandbox environment setup', 'CI/CD integration approval'],
-    roi_estimate: 420000,
-    created_at: '2025-10-01T00:00:00Z',
-    updated_at: '2025-11-15T00:00:00Z',
-  },
-  {
-    id: 'uc-002',
-    project_id: 'proj-001',
-    name: 'Test Generation',
-    description:
-      'Generate unit and integration tests from existing code with target coverage thresholds.',
-    sponsor: 'Marcus Rodriguez',
-    department: 'Engineering',
-    dimension_scores: [
-      { dimension: 'strategic_value', score: 85, weight: 30, notes: 'Addresses persistent test coverage gaps' },
-      { dimension: 'technical_feasibility', score: 90, weight: 25, notes: 'Strong model capabilities for test generation' },
-      { dimension: 'implementation_risk', score: 80, weight: 25, notes: 'Minimal production risk; tests are additive' },
-      { dimension: 'time_to_value', score: 88, weight: 20, notes: 'Quick wins available within 2 weeks' },
-    ],
-    composite_score: 86,
-    quadrant: 'high_value',
-    implementation_wave: 1,
-    dependencies: ['Code review automation validated'],
-    roi_estimate: 310000,
-    created_at: '2025-10-05T00:00:00Z',
-    updated_at: '2025-11-15T00:00:00Z',
-  },
-  {
-    id: 'uc-003',
-    project_id: 'proj-001',
-    name: 'Documentation Generation',
-    description:
-      'Auto-generate API documentation, README files, and inline code comments from source code.',
-    sponsor: 'Priya Patel',
-    department: 'Engineering',
-    dimension_scores: [
-      { dimension: 'strategic_value', score: 68, weight: 30, notes: 'Improves onboarding but not a direct revenue driver' },
-      { dimension: 'technical_feasibility', score: 92, weight: 25, notes: 'Straightforward summarization task' },
-      { dimension: 'implementation_risk', score: 90, weight: 25, notes: 'Very low risk; output is always human-reviewed' },
-      { dimension: 'time_to_value', score: 95, weight: 20, notes: 'Can demo in 1 week' },
-    ],
-    composite_score: 85,
-    quadrant: 'foundation_builder',
-    implementation_wave: 1,
-    dependencies: [],
-    roi_estimate: 180000,
-    created_at: '2025-10-08T00:00:00Z',
-    updated_at: '2025-11-15T00:00:00Z',
-  },
-  {
-    id: 'uc-004',
-    project_id: 'proj-001',
-    name: 'Security Scanning',
-    description:
-      'AI-assisted static analysis that detects vulnerabilities, insecure patterns, and compliance issues in real time.',
-    sponsor: 'David Park',
-    department: 'Security',
-    dimension_scores: [
-      { dimension: 'strategic_value', score: 95, weight: 30, notes: 'Critical for compliance and risk posture' },
-      { dimension: 'technical_feasibility', score: 78, weight: 25, notes: 'Requires integration with SAST/DAST toolchain' },
-      { dimension: 'implementation_risk', score: 72, weight: 25, notes: 'False positives could slow development if untuned' },
-      { dimension: 'time_to_value', score: 70, weight: 20, notes: '6-8 weeks for baseline tuning' },
-    ],
-    composite_score: 80,
-    quadrant: 'strategic_imperative',
-    implementation_wave: 2,
-    dependencies: ['Code review automation deployed', 'Security team sign-off'],
-    roi_estimate: 380000,
-    created_at: '2025-10-10T00:00:00Z',
-    updated_at: '2025-11-15T00:00:00Z',
-  },
-  {
-    id: 'uc-005',
-    project_id: 'proj-001',
-    name: 'Bug Prediction',
-    description:
-      'ML-powered analysis of code changes to predict areas most likely to introduce defects, enabling targeted review.',
-    sponsor: 'Elena Vasquez',
-    department: 'Engineering',
-    dimension_scores: [
-      { dimension: 'strategic_value', score: 82, weight: 30, notes: 'Reduces defect escape rate to production' },
-      { dimension: 'technical_feasibility', score: 75, weight: 25, notes: 'Needs historical defect data and model training' },
-      { dimension: 'implementation_risk', score: 68, weight: 25, notes: 'Requires careful calibration to avoid noise' },
-      { dimension: 'time_to_value', score: 65, weight: 20, notes: '8-10 weeks for initial model accuracy' },
-    ],
-    composite_score: 74,
-    quadrant: 'high_value',
-    implementation_wave: 2,
-    dependencies: ['Defect data pipeline', 'Test generation in production'],
-    roi_estimate: 270000,
-    created_at: '2025-10-12T00:00:00Z',
-    updated_at: '2025-11-15T00:00:00Z',
-  },
-  {
-    id: 'uc-006',
-    project_id: 'proj-001',
-    name: 'Customer Support Chatbot',
-    description:
-      'AI assistant for support agents to draft responses, summarize tickets, and suggest knowledge base articles.',
-    sponsor: 'James O\'Brien',
-    department: 'Customer Success',
-    dimension_scores: [
-      { dimension: 'strategic_value', score: 70, weight: 30, notes: 'Reduces resolution time but carries reputation risk' },
-      { dimension: 'technical_feasibility', score: 55, weight: 25, notes: 'Requires RAG pipeline and knowledge base indexing' },
-      { dimension: 'implementation_risk', score: 48, weight: 25, notes: 'Customer-facing outputs carry brand risk' },
-      { dimension: 'time_to_value', score: 45, weight: 20, notes: '12-16 weeks for production-ready MVP' },
-    ],
-    composite_score: 56,
-    quadrant: 'watch_list',
-    implementation_wave: 3,
-    dependencies: ['Data classification complete', 'RAG infrastructure', 'Legal review'],
-    roi_estimate: 550000,
-    created_at: '2025-10-15T00:00:00Z',
-    updated_at: '2025-11-15T00:00:00Z',
-  },
-  {
-    id: 'uc-007',
-    project_id: 'proj-001',
-    name: 'Legacy Code Migration',
-    description:
-      'AI-assisted refactoring and migration of legacy codebases to modern frameworks and patterns.',
-    sponsor: 'Ava Kim',
-    department: 'Engineering',
-    dimension_scores: [
-      { dimension: 'strategic_value', score: 78, weight: 30, notes: 'Reduces technical debt and maintenance burden' },
-      { dimension: 'technical_feasibility', score: 72, weight: 25, notes: 'Complex transformations need careful validation' },
-      { dimension: 'implementation_risk', score: 65, weight: 25, notes: 'Risk of subtle behavior changes in migrated code' },
-      { dimension: 'time_to_value', score: 60, weight: 20, notes: '10-12 weeks per major migration batch' },
-    ],
-    composite_score: 70,
-    quadrant: 'high_value',
-    implementation_wave: 2,
-    dependencies: ['Test generation deployed', 'Legacy codebase inventory complete'],
-    roi_estimate: 340000,
-    created_at: '2025-10-18T00:00:00Z',
-    updated_at: '2025-11-15T00:00:00Z',
-  },
-  {
-    id: 'uc-008',
-    project_id: 'proj-001',
-    name: 'Requirements Analysis',
-    description:
-      'AI-powered extraction and analysis of requirements from documents, user stories, and stakeholder inputs.',
-    sponsor: 'Tom Nguyen',
-    department: 'Product',
-    dimension_scores: [
-      { dimension: 'strategic_value', score: 65, weight: 30, notes: 'Useful but not mission-critical for initial rollout' },
-      { dimension: 'technical_feasibility', score: 80, weight: 25, notes: 'NLP capabilities are mature for text analysis' },
-      { dimension: 'implementation_risk', score: 75, weight: 25, notes: 'Low risk; human validation always in loop' },
-      { dimension: 'time_to_value', score: 70, weight: 20, notes: '4-6 weeks for usable prototype' },
-    ],
-    composite_score: 72,
-    quadrant: 'foundation_builder',
-    implementation_wave: 3,
-    dependencies: ['Requirements template standardization', 'Product team training'],
-    roi_estimate: 160000,
-    created_at: '2025-10-20T00:00:00Z',
-    updated_at: '2025-11-15T00:00:00Z',
-  },
-];
+const STORAGE_KEY = 'govai_use_case_prioritization';
+
+const DIMENSION_WEIGHTS: Record<PriorityDimension, number> = {
+  strategic_value: 30,
+  technical_feasibility: 25,
+  implementation_risk: 25,
+  time_to_value: 20,
+};
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
+
+function generateId(): string {
+  return `uc-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function calculateCompositeScore(scores: UseCaseDimensionScore[]): number {
+  const totalWeight = scores.reduce((sum, s) => sum + s.weight, 0);
+  if (totalWeight === 0) return 0;
+  const weightedSum = scores.reduce((sum, s) => sum + s.score * s.weight, 0);
+  return Math.round(weightedSum / totalWeight);
+}
+
+function assignQuadrant(compositeScore: number, strategicValue: number): PortfolioQuadrant {
+  if (compositeScore >= 80 && strategicValue >= 80) return 'strategic_imperative';
+  if (compositeScore >= 70) return 'high_value';
+  if (compositeScore >= 55) return 'foundation_builder';
+  return 'watch_list';
+}
+
+function assignWave(compositeScore: number): 1 | 2 | 3 {
+  if (compositeScore >= 80) return 1;
+  if (compositeScore >= 65) return 2;
+  return 3;
+}
 
 function quadrantLabel(q: PortfolioQuadrant): string {
   switch (q) {
@@ -334,6 +202,36 @@ function getDimensionScore(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Form Type                                                          */
+/* ------------------------------------------------------------------ */
+
+interface UseCaseForm {
+  name: string;
+  description: string;
+  sponsor: string;
+  department: string;
+  strategic_value: number;
+  technical_feasibility: number;
+  implementation_risk: number;
+  time_to_value: number;
+  dependencies: string;
+  roi_estimate: string;
+}
+
+const EMPTY_FORM: UseCaseForm = {
+  name: '',
+  description: '',
+  sponsor: '',
+  department: '',
+  strategic_value: 50,
+  technical_feasibility: 50,
+  implementation_risk: 50,
+  time_to_value: 50,
+  dependencies: '',
+  roi_estimate: '',
+};
+
+/* ------------------------------------------------------------------ */
 /*  Summary Stats                                                      */
 /* ------------------------------------------------------------------ */
 
@@ -422,10 +320,14 @@ function MatrixView({
   useCases,
   selectedId,
   onSelect,
+  onEdit,
+  onDelete,
 }: {
   useCases: UseCasePriority[];
   selectedId: string;
   onSelect: (id: string) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
 }): React.ReactElement {
   const quadrants: {
     key: PortfolioQuadrant;
@@ -486,7 +388,6 @@ function MatrixView({
 
   return (
     <div className="space-y-6">
-      {/* Axis labels */}
       <div className="relative">
         <div
           className="absolute top-1/2 -translate-y-1/2 -rotate-90 origin-center text-[10px] font-semibold uppercase tracking-widest text-slate-400 whitespace-nowrap hidden md:block"
@@ -554,11 +455,25 @@ function MatrixView({
                               {uc.name}
                             </span>
                           </div>
-                          <span
-                            className={cn('text-xs font-bold', q.scoreColor)}
-                          >
-                            {uc.composite_score}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={cn('text-xs font-bold', q.scoreColor)}
+                            >
+                              {uc.composite_score}
+                            </span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onEdit(uc.id); }}
+                              className="p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onDelete(uc.id); }}
+                              className="p-0.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
                         </div>
                         <div className="mt-1 flex items-center gap-2 pl-4">
                           <span className="text-[10px] text-slate-400">
@@ -588,7 +503,6 @@ function MatrixView({
         </div>
       </div>
 
-      {/* Selected use case detail */}
       <UseCaseDetail useCases={useCases} selectedId={selectedId} />
     </div>
   );
@@ -603,10 +517,14 @@ function TableView({
   useCases,
   selectedId,
   onSelect,
+  onEdit,
+  onDelete,
 }: {
   useCases: UseCasePriority[];
   selectedId: string;
   onSelect: (id: string) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
 }): React.ReactElement {
   const [sortField, setSortField] = React.useState<SortField>('composite_score');
   const [sortDir, setSortDir] = React.useState<SortDir>('desc');
@@ -711,6 +629,9 @@ function TableView({
                   <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Wave
                   </th>
+                  <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 w-20">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -787,6 +708,22 @@ function TableView({
                         Wave {uc.implementation_wave}
                       </Badge>
                     </td>
+                    <td className="py-3 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onEdit(uc.id); }}
+                          className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onDelete(uc.id); }}
+                          className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -795,7 +732,6 @@ function TableView({
         </CardContent>
       </Card>
 
-      {/* Selected use case detail */}
       <UseCaseDetail useCases={useCases} selectedId={selectedId} />
     </div>
   );
@@ -964,7 +900,6 @@ function WavePlanView({
                           {quadrantLabel(uc.quadrant)}
                         </Badge>
                       </div>
-                      {/* Mini dimension bars */}
                       <div className="space-y-1.5">
                         {uc.dimension_scores.map((ds) => (
                           <div
@@ -992,7 +927,7 @@ function WavePlanView({
                           {uc.dependencies.length === 1 ? 'y' : 'ies'}
                         </p>
                       )}
-                      {uc.roi_estimate && (
+                      {uc.roi_estimate !== null && uc.roi_estimate > 0 && (
                         <p className="mt-1 text-[10px] font-medium text-slate-500">
                           Est. ROI: ${(uc.roi_estimate / 1000).toFixed(0)}K/yr
                         </p>
@@ -1017,8 +952,9 @@ function UseCaseDetail({
 }: {
   useCases: UseCasePriority[];
   selectedId: string;
-}): React.ReactElement {
-  const uc = useCases.find((u) => u.id === selectedId) ?? useCases[0];
+}): React.ReactElement | null {
+  const uc = useCases.find((u) => u.id === selectedId);
+  if (!uc) return null;
 
   return (
     <Card className="border-violet-200">
@@ -1070,7 +1006,6 @@ function UseCaseDetail({
           ))}
         </div>
 
-        {/* Summary row */}
         <div className="mt-4 flex items-center gap-4 flex-wrap text-sm border-t border-slate-100 pt-4">
           <span className="text-slate-500">Composite Score:</span>
           <span
@@ -1092,7 +1027,7 @@ function UseCaseDetail({
           <span className="text-slate-300">|</span>
           <span className="text-slate-500">Sponsor:</span>
           <span className="font-medium text-slate-900">{uc.sponsor}</span>
-          {uc.roi_estimate && (
+          {uc.roi_estimate !== null && uc.roi_estimate > 0 && (
             <>
               <span className="text-slate-300">|</span>
               <span className="text-slate-500">Est. ROI:</span>
@@ -1103,7 +1038,6 @@ function UseCaseDetail({
           )}
         </div>
 
-        {/* Dependencies */}
         {uc.dependencies.length > 0 && (
           <div className="mt-3 pt-3 border-t border-slate-100">
             <p className="text-xs font-medium text-slate-500 mb-1.5">
@@ -1136,11 +1070,208 @@ export default function UseCasePrioritizationPage({
 }: {
   params: Promise<{ id: string }>;
 }): React.ReactElement {
-  const { id: _projectId } = React.use(params);
+  const { id: projectId } = React.use(params);
 
-  const [selectedId, setSelectedId] = React.useState<string>(
-    DEMO_USE_CASES[0].id,
-  );
+  const [useCases, setUseCases] = React.useState<UseCasePriority[]>([]);
+  const [selectedId, setSelectedId] = React.useState<string>('');
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [form, setForm] = React.useState<UseCaseForm>(EMPTY_FORM);
+  const [showFormula, setShowFormula] = React.useState(false);
+
+  // ---- Load from localStorage ----
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`${STORAGE_KEY}_${projectId}`);
+      if (stored) {
+        const data = JSON.parse(stored) as UseCasePriority[];
+        setUseCases(data);
+        if (data.length > 0) {
+          setSelectedId(data[0].id);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [projectId]);
+
+  // ---- Persist ----
+  const persist = (data: UseCasePriority[]): void => {
+    localStorage.setItem(`${STORAGE_KEY}_${projectId}`, JSON.stringify(data));
+  };
+
+  // ---- Build Use Case from Form ----
+  const buildUseCase = (existingId?: string): UseCasePriority => {
+    const scores: UseCaseDimensionScore[] = [
+      { dimension: 'strategic_value', score: form.strategic_value, weight: DIMENSION_WEIGHTS.strategic_value, notes: '' },
+      { dimension: 'technical_feasibility', score: form.technical_feasibility, weight: DIMENSION_WEIGHTS.technical_feasibility, notes: '' },
+      { dimension: 'implementation_risk', score: form.implementation_risk, weight: DIMENSION_WEIGHTS.implementation_risk, notes: '' },
+      { dimension: 'time_to_value', score: form.time_to_value, weight: DIMENSION_WEIGHTS.time_to_value, notes: '' },
+    ];
+    const compositeScore = calculateCompositeScore(scores);
+    const quadrant = assignQuadrant(compositeScore, form.strategic_value);
+    const wave = assignWave(compositeScore);
+    const deps = form.dependencies
+      .split(',')
+      .map((d) => d.trim())
+      .filter((d): d is string => d.length > 0);
+    const roi = form.roi_estimate ? parseInt(form.roi_estimate, 10) : null;
+
+    return {
+      id: existingId ?? generateId(),
+      project_id: projectId,
+      name: form.name,
+      description: form.description,
+      sponsor: form.sponsor,
+      department: form.department,
+      dimension_scores: scores,
+      composite_score: compositeScore,
+      quadrant,
+      implementation_wave: wave,
+      dependencies: deps,
+      roi_estimate: isNaN(roi as number) ? null : roi,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  };
+
+  // ---- Open Add ----
+  const openAdd = (): void => {
+    setEditingId(null);
+    setForm(EMPTY_FORM);
+    setDialogOpen(true);
+  };
+
+  // ---- Open Edit ----
+  const openEdit = (id: string): void => {
+    const uc = useCases.find((u) => u.id === id);
+    if (!uc) return;
+    setEditingId(id);
+    setForm({
+      name: uc.name,
+      description: uc.description,
+      sponsor: uc.sponsor,
+      department: uc.department,
+      strategic_value: getDimensionScore(uc.dimension_scores, 'strategic_value'),
+      technical_feasibility: getDimensionScore(uc.dimension_scores, 'technical_feasibility'),
+      implementation_risk: getDimensionScore(uc.dimension_scores, 'implementation_risk'),
+      time_to_value: getDimensionScore(uc.dimension_scores, 'time_to_value'),
+      dependencies: uc.dependencies.join(', '),
+      roi_estimate: uc.roi_estimate !== null ? String(uc.roi_estimate) : '',
+    });
+    setDialogOpen(true);
+  };
+
+  // ---- Save ----
+  const handleSave = (): void => {
+    if (!form.name.trim()) return;
+    if (editingId) {
+      const updated = useCases.map((uc) =>
+        uc.id === editingId ? buildUseCase(editingId) : uc,
+      );
+      setUseCases(updated);
+      persist(updated);
+    } else {
+      const newUc = buildUseCase();
+      const updated = [...useCases, newUc];
+      setUseCases(updated);
+      setSelectedId(newUc.id);
+      persist(updated);
+    }
+    setDialogOpen(false);
+  };
+
+  // ---- Delete ----
+  const handleDelete = (id: string): void => {
+    const updated = useCases.filter((uc) => uc.id !== id);
+    setUseCases(updated);
+    if (selectedId === id && updated.length > 0) {
+      setSelectedId(updated[0].id);
+    } else if (updated.length === 0) {
+      setSelectedId('');
+    }
+    persist(updated);
+  };
+
+  // ---- Export ----
+  const handleExport = (): void => {
+    const blob = new Blob([JSON.stringify(useCases, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `use-case-prioritization-${projectId}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ---- Live preview score ----
+  const previewComposite = calculateCompositeScore([
+    { dimension: 'strategic_value', score: form.strategic_value, weight: DIMENSION_WEIGHTS.strategic_value, notes: '' },
+    { dimension: 'technical_feasibility', score: form.technical_feasibility, weight: DIMENSION_WEIGHTS.technical_feasibility, notes: '' },
+    { dimension: 'implementation_risk', score: form.implementation_risk, weight: DIMENSION_WEIGHTS.implementation_risk, notes: '' },
+    { dimension: 'time_to_value', score: form.time_to_value, weight: DIMENSION_WEIGHTS.time_to_value, notes: '' },
+  ]);
+  const previewQuadrant = assignQuadrant(previewComposite, form.strategic_value);
+  const previewWave = assignWave(previewComposite);
+
+  // ---- Empty State ----
+  if (useCases.length === 0 && !dialogOpen) {
+    return (
+      <div className="flex flex-col gap-6 p-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Use Case Prioritization Framework
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Score, prioritize, and sequence AI use cases across your
+            organization for maximum impact and manageable risk.
+          </p>
+        </div>
+        <Card className="border-dashed border-2 border-slate-300">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <Layers className="h-12 w-12 text-slate-300 mb-4" />
+            <h2 className="text-lg font-semibold text-slate-700 mb-2">No Use Cases Yet</h2>
+            <p className="text-sm text-slate-500 mb-6 max-w-md">
+              Add your first use case to begin scoring and prioritizing AI initiatives.
+              Each use case is scored across 4 dimensions to determine its priority wave and quadrant.
+            </p>
+            <Button
+              className="bg-slate-900 text-white hover:bg-slate-800"
+              onClick={openAdd}
+            >
+              <Plus className="h-4 w-4 mr-1.5" />
+              Add First Use Case
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Dialog still needs to render when open */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="bg-white border-slate-200 max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-slate-900">Add Use Case</DialogTitle>
+              <DialogDescription className="text-slate-500">
+                Define a use case with dimension scores. The composite score, quadrant, and wave are auto-calculated.
+              </DialogDescription>
+            </DialogHeader>
+            <UseCaseFormFields
+              form={form}
+              setForm={setForm}
+              previewComposite={previewComposite}
+              previewQuadrant={previewQuadrant}
+              previewWave={previewWave}
+              showFormula={showFormula}
+              setShowFormula={setShowFormula}
+            />
+            <DialogFooter>
+              <Button variant="outline" className="border-slate-200 text-slate-700" onClick={() => setDialogOpen(false)}>Cancel</Button>
+              <Button className="bg-slate-900 text-white hover:bg-slate-800" onClick={handleSave}>Add</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -1159,11 +1290,15 @@ export default function UseCasePrioritizationPage({
           <Button
             variant="outline"
             className="border-slate-300 text-slate-700 hover:bg-slate-100"
+            onClick={handleExport}
           >
             <Download className="h-4 w-4 mr-1.5" />
             Export
           </Button>
-          <Button className="bg-slate-900 text-white hover:bg-slate-800">
+          <Button
+            className="bg-slate-900 text-white hover:bg-slate-800"
+            onClick={openAdd}
+          >
             <Plus className="h-4 w-4 mr-1.5" />
             Add Use Case
           </Button>
@@ -1171,7 +1306,7 @@ export default function UseCasePrioritizationPage({
       </div>
 
       {/* Summary Cards */}
-      <SummaryCards useCases={DEMO_USE_CASES} />
+      <SummaryCards useCases={useCases} />
 
       {/* Tab Navigation */}
       <Tabs defaultValue="matrix" className="w-full">
@@ -1201,40 +1336,223 @@ export default function UseCasePrioritizationPage({
 
         <TabsContent value="matrix">
           <MatrixView
-            useCases={DEMO_USE_CASES}
+            useCases={useCases}
             selectedId={selectedId}
             onSelect={setSelectedId}
+            onEdit={openEdit}
+            onDelete={handleDelete}
           />
         </TabsContent>
 
         <TabsContent value="table">
           <TableView
-            useCases={DEMO_USE_CASES}
+            useCases={useCases}
             selectedId={selectedId}
             onSelect={setSelectedId}
+            onEdit={openEdit}
+            onDelete={handleDelete}
           />
         </TabsContent>
 
         <TabsContent value="waves">
           <WavePlanView
-            useCases={DEMO_USE_CASES}
+            useCases={useCases}
             selectedId={selectedId}
             onSelect={setSelectedId}
           />
         </TabsContent>
       </Tabs>
 
-      {/* Footer Actions */}
-      <div className="flex justify-end gap-3 pt-2">
-        <Button
-          variant="outline"
-          className="border-slate-300 text-slate-700 hover:bg-slate-100"
-        >
-          Export Framework
-        </Button>
-        <Button className="bg-slate-900 text-white hover:bg-slate-800">
-          Save Prioritization
-        </Button>
+      {/* Use Case Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="bg-white border-slate-200 max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900">
+              {editingId ? 'Edit Use Case' : 'Add Use Case'}
+            </DialogTitle>
+            <DialogDescription className="text-slate-500">
+              Define a use case with dimension scores. The composite score, quadrant, and wave are auto-calculated.
+            </DialogDescription>
+          </DialogHeader>
+          <UseCaseFormFields
+            form={form}
+            setForm={setForm}
+            previewComposite={previewComposite}
+            previewQuadrant={previewQuadrant}
+            previewWave={previewWave}
+            showFormula={showFormula}
+            setShowFormula={setShowFormula}
+          />
+          <DialogFooter>
+            <Button variant="outline" className="border-slate-200 text-slate-700" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button className="bg-slate-900 text-white hover:bg-slate-800" onClick={handleSave}>
+              {editingId ? 'Update' : 'Add'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Form Fields (extracted for reuse in empty state + main)            */
+/* ------------------------------------------------------------------ */
+
+function UseCaseFormFields({
+  form,
+  setForm,
+  previewComposite,
+  previewQuadrant,
+  previewWave,
+  showFormula,
+  setShowFormula,
+}: {
+  form: UseCaseForm;
+  setForm: React.Dispatch<React.SetStateAction<UseCaseForm>>;
+  previewComposite: number;
+  previewQuadrant: PortfolioQuadrant;
+  previewWave: 1 | 2 | 3;
+  showFormula: boolean;
+  setShowFormula: React.Dispatch<React.SetStateAction<boolean>>;
+}): React.ReactElement {
+  const dimensions: { key: PriorityDimension; formKey: keyof UseCaseForm }[] = [
+    { key: 'strategic_value', formKey: 'strategic_value' },
+    { key: 'technical_feasibility', formKey: 'technical_feasibility' },
+    { key: 'implementation_risk', formKey: 'implementation_risk' },
+    { key: 'time_to_value', formKey: 'time_to_value' },
+  ];
+
+  return (
+    <div className="space-y-4 py-2">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-slate-700">Name</Label>
+          <Input
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            placeholder="e.g., Code Review Automation"
+            className="border-slate-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-slate-700">Department</Label>
+          <Input
+            value={form.department}
+            onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
+            placeholder="e.g., Engineering"
+            className="border-slate-200"
+          />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label className="text-slate-700">Description</Label>
+        <Textarea
+          value={form.description}
+          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+          placeholder="Describe the use case..."
+          className="border-slate-200"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-slate-700">Sponsor</Label>
+          <Input
+            value={form.sponsor}
+            onChange={(e) => setForm((f) => ({ ...f, sponsor: e.target.value }))}
+            placeholder="e.g., Sarah Chen"
+            className="border-slate-200"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-slate-700">ROI Estimate ($)</Label>
+          <Input
+            type="number"
+            value={form.roi_estimate}
+            onChange={(e) => setForm((f) => ({ ...f, roi_estimate: e.target.value }))}
+            placeholder="e.g., 420000"
+            className="border-slate-200"
+          />
+        </div>
+      </div>
+
+      {/* Dimension Scores */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label className="text-slate-700 text-sm font-semibold">Dimension Scores (0-100)</Label>
+          <button
+            onClick={() => setShowFormula(!showFormula)}
+            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
+          >
+            <Info className="h-3 w-3" />
+            {showFormula ? 'Hide formula' : 'Show formula'}
+          </button>
+        </div>
+
+        {showFormula && (
+          <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-xs text-slate-600 space-y-1">
+            <p className="font-semibold text-slate-700">Composite Score Formula:</p>
+            <p className="font-mono">
+              Score = (Strategic Value x 30% + Technical Feasibility x 25% + Implementation Risk x 25% + Time to Value x 20%) / 100
+            </p>
+            <p className="mt-1">
+              <span className="font-semibold">Quadrant:</span> Strategic Imperative (score &ge; 80 AND strategic &ge; 80), High Value (score &ge; 70), Foundation Builder (score &ge; 55), Watch List (below 55)
+            </p>
+            <p>
+              <span className="font-semibold">Wave:</span> Wave 1 (score &ge; 80), Wave 2 (score &ge; 65), Wave 3 (below 65)
+            </p>
+          </div>
+        )}
+
+        {dimensions.map(({ key, formKey }) => (
+          <div key={key} className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 w-40 shrink-0">
+              {dimensionIcon(key)}
+              <span className="text-xs font-medium text-slate-700">{dimensionLabel(key)}</span>
+              <span className="text-[10px] text-slate-400">({DIMENSION_WEIGHTS[key]}%)</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={form[formKey] as number}
+              onChange={(e) => setForm((f) => ({ ...f, [formKey]: parseInt(e.target.value, 10) }))}
+              className="flex-1 h-2 accent-slate-700"
+            />
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              value={form[formKey] as number}
+              onChange={(e) => setForm((f) => ({ ...f, [formKey]: Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)) }))}
+              className="w-16 text-center border-slate-200 text-sm"
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Live Preview */}
+      <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 flex items-center gap-4 flex-wrap text-sm">
+        <span className="text-slate-500">Preview:</span>
+        <span className={cn('font-bold text-lg', scoreColor(previewComposite))}>
+          {previewComposite}
+        </span>
+        <Badge variant="outline" className={cn('text-xs', quadrantBadgeColor(previewQuadrant))}>
+          {quadrantLabel(previewQuadrant)}
+        </Badge>
+        <Badge variant="outline" className={cn('text-xs', waveBadgeColor(previewWave))}>
+          Wave {previewWave}
+        </Badge>
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-slate-700">Dependencies (comma-separated)</Label>
+        <Input
+          value={form.dependencies}
+          onChange={(e) => setForm((f) => ({ ...f, dependencies: e.target.value }))}
+          placeholder="e.g., Sandbox setup, CI/CD approval"
+          className="border-slate-200"
+        />
       </div>
     </div>
   );

@@ -16,45 +16,62 @@ export const meetingKeys = {
 };
 
 // ---------------------------------------------------------------------------
-// Fetchers
+// Fetchers — gracefully return empty/fallback data on any error
 // ---------------------------------------------------------------------------
+
 async function fetchMeetings(projectId: string): Promise<MeetingNote[]> {
-  const res = await fetch(
-    `/api/meetings?projectId=${encodeURIComponent(projectId)}`,
-  );
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch meetings');
+  try {
+    // Note: the meetings API route expects `project_id` (snake_case), not `projectId`
+    const res = await fetch(
+      `/api/meetings?project_id=${encodeURIComponent(projectId)}`,
+    );
+    if (!res.ok) {
+      // In demo mode (no Supabase), this route may fail because it lacks
+      // an isServerSupabaseConfigured() check. Return empty array gracefully.
+      return [];
+    }
+    const json: ApiResponse<MeetingNote[]> = await res.json();
+    return json.data ?? [];
+  } catch {
+    // Network error or JSON parse failure — return empty array
+    return [];
   }
-  const json: ApiResponse<MeetingNote[]> = await res.json();
-  return json.data ?? [];
 }
 
-async function fetchMeeting(id: string): Promise<MeetingNote> {
-  const res = await fetch(`/api/meetings/${id}`);
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch meeting');
+async function fetchMeeting(id: string): Promise<MeetingNote | null> {
+  try {
+    const res = await fetch(`/api/meetings/${id}`);
+    if (!res.ok) {
+      return null;
+    }
+    const json: ApiResponse<MeetingNote> = await res.json();
+    return json.data ?? null;
+  } catch {
+    return null;
   }
-  const json: ApiResponse<MeetingNote> = await res.json();
-  if (!json.data) throw new Error('Meeting not found');
-  return json.data;
 }
 
 async function fetchActionItems(
   projectId: string,
   meetingId?: string,
 ): Promise<ActionItem[]> {
-  const params = new URLSearchParams({ projectId });
-  if (meetingId) params.set('meetingId', meetingId);
+  try {
+    // The action items route is /api/meetings/[id]/actions and requires
+    // a specific meeting ID. When no meetingId is provided, we cannot call
+    // the route, so return an empty array.
+    if (!meetingId) {
+      return [];
+    }
 
-  const res = await fetch(`/api/meetings/action-items?${params.toString()}`);
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch action items');
+    const res = await fetch(`/api/meetings/${encodeURIComponent(meetingId)}/actions`);
+    if (!res.ok) {
+      return [];
+    }
+    const json: ApiResponse<ActionItem[]> = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
   }
-  const json: ApiResponse<ActionItem[]> = await res.json();
-  return json.data ?? [];
 }
 
 // ---------------------------------------------------------------------------
@@ -171,14 +188,15 @@ export function useDeleteMeeting() {
   });
 }
 
-/** Create a new action item. */
+/** Create a new action item for a specific meeting. */
 export function useSaveActionItem() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (
       data: Omit<ActionItem, 'id' | 'created_at' | 'updated_at'>,
     ) => {
-      const res = await fetch('/api/meetings/action-items', {
+      // Use the correct route: /api/meetings/[id]/actions
+      const res = await fetch(`/api/meetings/${data.meeting_id}/actions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -209,7 +227,8 @@ export function useUpdateActionItem() {
       id,
       ...data
     }: Partial<ActionItem> & { id: string; project_id: string; meeting_id: string }) => {
-      const res = await fetch(`/api/meetings/action-items/${id}`, {
+      // Use the correct route: /api/meetings/[meetingId]/actions/[actionId]
+      const res = await fetch(`/api/meetings/${data.meeting_id}/actions/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

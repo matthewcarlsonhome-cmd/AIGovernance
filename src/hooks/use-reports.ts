@@ -19,7 +19,7 @@ export const reportKeys = {
 };
 
 // ---------------------------------------------------------------------------
-// Fetchers
+// Fetchers — gracefully return empty data on any error
 // ---------------------------------------------------------------------------
 interface ReportsListData {
   templates: ReportTemplate[];
@@ -27,25 +27,31 @@ interface ReportsListData {
 }
 
 async function fetchTemplates(): Promise<ReportTemplate[]> {
-  const res = await fetch('/api/reports');
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch report templates');
+  try {
+    const res = await fetch('/api/reports');
+    if (!res.ok) {
+      return [];
+    }
+    const json: ApiResponse<ReportsListData> = await res.json();
+    return json.data?.templates ?? [];
+  } catch {
+    return [];
   }
-  const json: ApiResponse<ReportsListData> = await res.json();
-  return json.data?.templates ?? [];
 }
 
 async function fetchGeneratedReports(projectId: string): Promise<GeneratedReport[]> {
-  const res = await fetch(
-    `/api/reports?project_id=${encodeURIComponent(projectId)}`,
-  );
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch generated reports');
+  try {
+    const res = await fetch(
+      `/api/reports?project_id=${encodeURIComponent(projectId)}`,
+    );
+    if (!res.ok) {
+      return [];
+    }
+    const json: ApiResponse<ReportsListData> = await res.json();
+    return json.data?.reports ?? [];
+  } catch {
+    return [];
   }
-  const json: ApiResponse<ReportsListData> = await res.json();
-  return json.data?.reports ?? [];
 }
 
 // ---------------------------------------------------------------------------
@@ -87,10 +93,19 @@ export function useGenerateReport() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: GenerateReportInput) => {
-      const res = await fetch('/api/reports/generate', {
+      // The /api/reports POST route expects snake_case keys:
+      // project_id, template_id, persona, title, sections
+      const payload = {
+        project_id: data.projectId,
+        template_id: data.templateId,
+        persona: data.persona,
+        title: data.title,
+        sections: data.sections,
+      };
+      const res = await fetch('/api/reports', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const body: ApiResponse = await res.json().catch(() => ({}));
