@@ -126,6 +126,22 @@ const FRAMEWORKS: FrameworkData[] = [
       { controlId: "Art. 35", controlName: "Data Protection Impact Assessment", description: "Carry out an assessment of the impact of the envisaged processing operations on the protection of personal data.", status: "in_progress", evidence: "DPIA for AI tool usage (draft)" },
     ],
   },
+  {
+    id: "eu_ai_act",
+    name: "EU AI Act",
+    shortName: "EU AI Act",
+    description: "European Union Artificial Intelligence Act - Regulation on harmonised rules for AI systems, covering risk classification, transparency, and human oversight requirements.",
+    controls: [
+      { controlId: "Art. 6", controlName: "Risk Classification", description: "Classify AI systems according to their risk level (unacceptable, high, limited, minimal) and apply corresponding regulatory obligations.", status: "in_progress", evidence: "AI risk classification matrix" },
+      { controlId: "Art. 9", controlName: "Risk Management System", description: "Establish and maintain a continuous, iterative risk management system throughout the AI system lifecycle, identifying and mitigating known and foreseeable risks.", status: "in_progress", evidence: "Risk management framework draft" },
+      { controlId: "Art. 10", controlName: "Data Governance", description: "Ensure training, validation, and testing datasets are relevant, representative, free of errors, and complete, with appropriate data governance and management practices.", status: "not_started", evidence: "-" },
+      { controlId: "Art. 11", controlName: "Technical Documentation", description: "Maintain up-to-date technical documentation demonstrating compliance with AI Act requirements, prepared before the system is placed on the market.", status: "in_progress", evidence: "Technical documentation template" },
+      { controlId: "Art. 12", controlName: "Record-Keeping", description: "Design high-risk AI systems with automatic logging capabilities to ensure traceability of the system functioning throughout its lifecycle.", status: "not_started", evidence: "-" },
+      { controlId: "Art. 13", controlName: "Transparency", description: "Design and develop high-risk AI systems to ensure their operation is sufficiently transparent to enable users to interpret and use the system output appropriately.", status: "implemented", evidence: "AI disclosure policy" },
+      { controlId: "Art. 14", controlName: "Human Oversight", description: "Design high-risk AI systems to allow effective human oversight, including the ability to fully understand, monitor, and intervene in the system operation.", status: "implemented", evidence: "Human-in-the-loop review process" },
+      { controlId: "Art. 15", controlName: "Accuracy & Robustness", description: "Ensure high-risk AI systems achieve appropriate levels of accuracy, robustness, and cybersecurity, and perform consistently throughout their lifecycle.", status: "in_progress", evidence: "Quality assurance test plan" },
+    ],
+  },
 ];
 
 function getStatusBadgeClasses(status: ControlStatus): string {
@@ -174,6 +190,7 @@ const FRAMEWORK_OPTIONS = [
   { value: "hipaa", label: "HIPAA Security Rule" },
   { value: "nist", label: "NIST 800-53 Rev. 5" },
   { value: "gdpr", label: "GDPR" },
+  { value: "eu_ai_act", label: "EU AI Act" },
 ];
 
 const STATUS_OPTIONS: { value: ControlStatus; label: string }[] = [

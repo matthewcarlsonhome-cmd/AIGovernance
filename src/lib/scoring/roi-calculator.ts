@@ -1,4 +1,4 @@
-import type { RoiInputs, RoiResults, SensitivityRow } from '@/types';
+import type { RoiInputs, RoiResults, SensitivityRow, EnhancedRoiInputs, EnhancedRoiResults, ScenarioAnalysis } from '@/types';
 
 const DISCOUNT_RATE = 0.10; // 10% annual discount rate for NPV
 const MONTHS_PER_YEAR = 12;
@@ -89,4 +89,109 @@ export function formatCurrency(value: number): string {
 
 export function formatPercent(value: number): string {
   return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+}
+
+// ---------------------------------------------------------------------------
+// Enhanced ROI Calculator with TCO, IRR, Scenarios
+// ---------------------------------------------------------------------------
+
+const SCENARIO_CONFIGS: Omit<ScenarioAnalysis, 'npv' | 'roi'>[] = [
+  { scenario: 'optimistic', probability: 0.20, revenue_multiplier: 1.30, cost_multiplier: 0.90 },
+  { scenario: 'base', probability: 0.50, revenue_multiplier: 1.00, cost_multiplier: 1.00 },
+  { scenario: 'conservative', probability: 0.25, revenue_multiplier: 0.70, cost_multiplier: 1.15 },
+  { scenario: 'pessimistic', probability: 0.05, revenue_multiplier: 0.40, cost_multiplier: 1.40 },
+];
+
+export function calculateEnhancedRoi(inputs: EnhancedRoiInputs): EnhancedRoiResults {
+  // Base ROI
+  const base = calculateRoi(inputs);
+
+  // TCO calculations
+  const tco_initial = inputs.implementation_cost + inputs.training_cost
+    + (inputs.infrastructure_cost || 0)
+    + (inputs.data_engineering_cost || 0)
+    + (inputs.change_management_cost || 0);
+
+  const annual_license = inputs.license_cost_per_user * inputs.team_size * 12;
+  const annual_infra = inputs.ongoing_infrastructure || 0;
+  const annual_support = (inputs.ongoing_support_fte || 0) * (inputs.support_fte_salary || 0);
+  const tco_annual = annual_license + annual_infra + annual_support;
+  const tco_three_year = tco_initial + (tco_annual * 3);
+
+  // Benefit breakdown
+  const productivity = base.annual_savings;
+  const revenue = (inputs.revenue_increase_pct || 0) / 100 * productivity;
+  const error_savings = (inputs.error_reduction_pct || 0) / 100 * (inputs.error_cost_annual || 0);
+  const cost_reduction = productivity - revenue;
+
+  const total_annual_benefit = productivity + revenue + error_savings;
+  const net_annual = total_annual_benefit - tco_annual;
+
+  // 5-year cashflows
+  const five_year_cashflows: number[] = [];
+  for (let y = 0; y < 5; y++) {
+    if (y === 0) {
+      five_year_cashflows.push(-tco_initial + net_annual * 0.5); // Half year ramp
+    } else {
+      five_year_cashflows.push(net_annual);
+    }
+  }
+
+  // IRR calculation (Newton-Raphson approximation)
+  const irr = calculateIRR([-tco_initial, ...five_year_cashflows.slice(0).map((_, i) => i === 0 ? net_annual * 0.5 : net_annual)]);
+
+  // Scenario analysis
+  const scenarios: ScenarioAnalysis[] = SCENARIO_CONFIGS.map(cfg => {
+    const adjBenefit = total_annual_benefit * cfg.revenue_multiplier;
+    const adjCost = tco_annual * cfg.cost_multiplier;
+    const adjNet = adjBenefit - adjCost;
+    const adjInitial = tco_initial * cfg.cost_multiplier;
+    const npv = calculateNPV(adjNet, adjInitial, 3, DISCOUNT_RATE);
+    const roi = adjCost > 0 ? ((adjNet / (adjCost + adjInitial / 3)) * 100) : 0;
+    return { ...cfg, npv: Math.round(npv), roi: Math.round(roi * 10) / 10 };
+  });
+
+  const expected_npv = Math.round(
+    scenarios.reduce((sum, s) => sum + s.npv * s.probability, 0)
+  );
+
+  return {
+    ...base,
+    total_annual_cost: Math.round(tco_annual + tco_initial / 3),
+    net_annual_benefit: Math.round(net_annual),
+    tco_initial: Math.round(tco_initial),
+    tco_annual: Math.round(tco_annual),
+    tco_three_year: Math.round(tco_three_year),
+    irr: Math.round(irr * 1000) / 10,
+    scenarios,
+    expected_npv,
+    five_year_cashflows: five_year_cashflows.map(Math.round),
+    benefit_breakdown: {
+      revenue: Math.round(revenue),
+      cost_reduction: Math.round(cost_reduction),
+      error_savings: Math.round(error_savings),
+      productivity: Math.round(productivity),
+    },
+  };
+}
+
+function calculateIRR(cashflows: number[], guess = 0.1, maxIter = 100, tolerance = 0.0001): number {
+  let rate = guess;
+  for (let i = 0; i < maxIter; i++) {
+    let npv = 0;
+    let derivative = 0;
+    for (let t = 0; t < cashflows.length; t++) {
+      const discounted = cashflows[t] / Math.pow(1 + rate, t);
+      npv += discounted;
+      if (t > 0) {
+        derivative -= t * cashflows[t] / Math.pow(1 + rate, t + 1);
+      }
+    }
+    if (Math.abs(npv) < tolerance) return rate;
+    if (Math.abs(derivative) < 1e-10) return rate;
+    rate = rate - npv / derivative;
+    if (rate < -0.99) rate = -0.5;
+    if (rate > 10) rate = 5;
+  }
+  return rate;
 }
