@@ -33,60 +33,72 @@ export const governanceKeys = {
 };
 
 // ---------------------------------------------------------------------------
-// Fetchers
+// Fetchers — gracefully return empty data on any error
 // ---------------------------------------------------------------------------
 async function fetchPolicies(projectId: string): Promise<Policy[]> {
-  const res = await fetch(
-    `/api/governance/policies?projectId=${encodeURIComponent(projectId)}`,
-  );
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch policies');
+  try {
+    const res = await fetch(
+      `/api/governance/policies?projectId=${encodeURIComponent(projectId)}`,
+    );
+    if (!res.ok) {
+      return [];
+    }
+    const json: ApiResponse<Policy[]> = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
   }
-  const json: ApiResponse<Policy[]> = await res.json();
-  return json.data ?? [];
 }
 
 async function fetchGateReviews(projectId: string): Promise<GateReview[]> {
-  const res = await fetch(
-    `/api/governance/gates?projectId=${encodeURIComponent(projectId)}`,
-  );
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch gate reviews');
+  try {
+    const res = await fetch(
+      `/api/governance/gates?projectId=${encodeURIComponent(projectId)}`,
+    );
+    if (!res.ok) {
+      return [];
+    }
+    const json: ApiResponse<GateReview[]> = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
   }
-  const json: ApiResponse<GateReview[]> = await res.json();
-  return json.data ?? [];
 }
 
 async function fetchComplianceMappings(
   projectId: string,
   framework?: string,
 ): Promise<ComplianceMapping[]> {
-  const params = new URLSearchParams({ projectId });
-  if (framework) params.set('framework', framework);
+  try {
+    const params = new URLSearchParams({ projectId });
+    if (framework) params.set('framework', framework);
 
-  const res = await fetch(`/api/governance/compliance?${params.toString()}`);
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch compliance mappings');
+    const res = await fetch(`/api/governance/compliance?${params.toString()}`);
+    if (!res.ok) {
+      return [];
+    }
+    const json: ApiResponse<ComplianceMapping[]> = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
   }
-  const json: ApiResponse<ComplianceMapping[]> = await res.json();
-  return json.data ?? [];
 }
 
 async function fetchRiskClassifications(
   projectId: string,
 ): Promise<RiskClassification[]> {
-  const res = await fetch(
-    `/api/governance/risk?projectId=${encodeURIComponent(projectId)}`,
-  );
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch risk classifications');
+  try {
+    const res = await fetch(
+      `/api/governance/risk?projectId=${encodeURIComponent(projectId)}`,
+    );
+    if (!res.ok) {
+      return [];
+    }
+    const json: ApiResponse<RiskClassification[]> = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
   }
-  const json: ApiResponse<RiskClassification[]> = await res.json();
-  return json.data ?? [];
 }
 
 // ---------------------------------------------------------------------------

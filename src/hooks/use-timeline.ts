@@ -22,42 +22,51 @@ export const timelineKeys = {
 };
 
 // ---------------------------------------------------------------------------
-// Fetchers
+// Fetchers — gracefully return empty data on any error
 // ---------------------------------------------------------------------------
 async function fetchTasks(projectId: string): Promise<TimelineTask[]> {
-  const res = await fetch(
-    `/api/timeline/tasks?projectId=${encodeURIComponent(projectId)}`,
-  );
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch timeline tasks');
+  try {
+    const res = await fetch(
+      `/api/timeline/tasks?projectId=${encodeURIComponent(projectId)}`,
+    );
+    if (!res.ok) {
+      return [];
+    }
+    const json: ApiResponse<TimelineTask[]> = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
   }
-  const json: ApiResponse<TimelineTask[]> = await res.json();
-  return json.data ?? [];
 }
 
 async function fetchMilestones(projectId: string): Promise<TimelineMilestone[]> {
-  const res = await fetch(
-    `/api/timeline/milestones?projectId=${encodeURIComponent(projectId)}`,
-  );
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch milestones');
+  try {
+    const res = await fetch(
+      `/api/timeline/milestones?projectId=${encodeURIComponent(projectId)}`,
+    );
+    if (!res.ok) {
+      return [];
+    }
+    const json: ApiResponse<TimelineMilestone[]> = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
   }
-  const json: ApiResponse<TimelineMilestone[]> = await res.json();
-  return json.data ?? [];
 }
 
 async function fetchSnapshots(projectId: string): Promise<TimelineSnapshot[]> {
-  const res = await fetch(
-    `/api/timeline/snapshots?projectId=${encodeURIComponent(projectId)}`,
-  );
-  if (!res.ok) {
-    const body: ApiResponse = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to fetch timeline snapshots');
+  try {
+    const res = await fetch(
+      `/api/timeline/snapshots?projectId=${encodeURIComponent(projectId)}`,
+    );
+    if (!res.ok) {
+      return [];
+    }
+    const json: ApiResponse<TimelineSnapshot[]> = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
   }
-  const json: ApiResponse<TimelineSnapshot[]> = await res.json();
-  return json.data ?? [];
 }
 
 // ---------------------------------------------------------------------------

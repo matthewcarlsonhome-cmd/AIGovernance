@@ -147,7 +147,37 @@ export default function ReadinessPage({
 
   if (isLoading) return <ReadinessSkeleton />;
 
-  // Use real data if available, otherwise fall back to demo
+  // If no assessment scores exist, show empty state
+  if (!scores && !isLoading && !error) {
+    return (
+      <div className="flex flex-col gap-6 p-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+            <ListChecks className="h-6 w-6 text-slate-900" />
+            Readiness Assessment
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Complete the assessment questionnaire to see your readiness scores.
+          </p>
+        </div>
+        <Card className="flex flex-col items-center justify-center py-16">
+          <CardContent className="text-center">
+            <ListChecks className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-slate-900 mb-2">No Assessment Data Yet</h2>
+            <p className="text-sm text-slate-500 mb-6 max-w-md">
+              Complete the discovery questionnaire first to generate your feasibility scores and readiness assessment across all five domains.
+            </p>
+            <Link href={`/projects/${id}/discovery/questionnaire`}>
+              <Button className="bg-slate-900 text-white hover:bg-slate-800 gap-2">
+                Start Questionnaire <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const feasibility = scores || FALLBACK_SCORES;
   const overallScore = feasibility.overall_score;
   const domainScores = feasibility.domain_scores || [];
