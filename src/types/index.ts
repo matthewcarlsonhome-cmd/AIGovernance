@@ -881,6 +881,216 @@ export interface AIUsagePlaybook {
   updated_at: string;
 }
 
+// P3: AI Performance Monitoring types
+export type MonitoringTier = 'executive' | 'model_performance' | 'operational' | 'data_quality' | 'business_impact';
+export type AlertSeverity = 'critical' | 'warning' | 'info';
+export type DriftType = 'data_drift' | 'concept_drift' | 'feature_drift';
+
+export interface MonitoringMetric {
+  id: string;
+  tier: MonitoringTier;
+  name: string;
+  value: number;
+  target: number;
+  unit: string;
+  trend: 'up' | 'down' | 'stable';
+  status: 'healthy' | 'degraded' | 'critical';
+  last_updated: string;
+}
+
+export interface MonitoringAlert {
+  id: string;
+  severity: AlertSeverity;
+  metric_id: string;
+  message: string;
+  threshold: number;
+  current_value: number;
+  triggered_at: string;
+  acknowledged: boolean;
+}
+
+export interface DriftDetection {
+  id: string;
+  drift_type: DriftType;
+  feature: string;
+  score: number;
+  threshold: number;
+  detected_at: string;
+  status: 'active' | 'resolved' | 'investigating';
+}
+
+export interface MonitoringDashboard {
+  id: string;
+  project_id: string;
+  health_score: number;
+  metrics: MonitoringMetric[];
+  alerts: MonitoringAlert[];
+  drift_detections: DriftDetection[];
+  created_at: string;
+  updated_at: string;
+}
+
+// P3: Architecture Blueprint types
+export type ArchitectureLayer = 'data_foundation' | 'ml_platform' | 'api_integration' | 'infrastructure' | 'mlops' | 'security';
+
+export interface ArchitectureComponent {
+  id: string;
+  layer: ArchitectureLayer;
+  name: string;
+  technology: string;
+  description: string;
+  cloud_provider: string | null;
+  status: 'planned' | 'in_progress' | 'deployed' | 'deprecated';
+  dependencies: string[];
+}
+
+export interface ApiContract {
+  id: string;
+  name: string;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  endpoint: string;
+  description: string;
+  request_schema: string;
+  response_schema: string;
+  rate_limit: string | null;
+  auth_required: boolean;
+}
+
+export interface InfraRequirement {
+  category: string;
+  requirement: string;
+  specification: string;
+  priority: 'required' | 'recommended' | 'optional';
+}
+
+export interface ArchitectureBlueprint {
+  id: string;
+  project_id: string;
+  name: string;
+  cloud_provider: string;
+  components: ArchitectureComponent[];
+  api_contracts: ApiContract[];
+  infra_requirements: InfraRequirement[];
+  scaling_strategy: 'horizontal' | 'vertical' | 'auto' | 'hybrid';
+  monitoring_stack: string[];
+  deployment_model: 'kubernetes' | 'serverless' | 'vm' | 'hybrid';
+  created_at: string;
+  updated_at: string;
+}
+
+// P3: Stakeholder Communication types
+export type CommunicationType = 'board_presentation' | 'executive_briefing' | 'employee_announcement' | 'employee_faq' | 'manager_talking_points' | 'customer_announcement' | 'customer_faq' | 'crisis_communication';
+
+export interface CommunicationItem {
+  id: string;
+  type: CommunicationType;
+  title: string;
+  audience: string;
+  key_messages: string[];
+  content: string;
+  tone: 'formal' | 'professional' | 'casual';
+  status: 'draft' | 'review' | 'approved' | 'sent';
+  scheduled_date: string | null;
+}
+
+export interface CommunicationCalendarEntry {
+  id: string;
+  milestone: string;
+  date: string;
+  communications: string[];
+  owner: string;
+  status: 'planned' | 'in_progress' | 'completed';
+}
+
+export interface StakeholderCommunicationPackage {
+  id: string;
+  project_id: string;
+  communications: CommunicationItem[];
+  calendar: CommunicationCalendarEntry[];
+  crisis_framework: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// P3: Client Brief types
+export type RiskPosture = 'conservative' | 'moderate' | 'progressive';
+
+export interface ObjectionScript {
+  objection: string;
+  acknowledge: string;
+  counter: string;
+  evidence: string;
+}
+
+export interface TalkingPoint {
+  role: 'c_suite' | 'legal' | 'it' | 'security' | 'engineering' | 'hr';
+  points: string[];
+  concerns: string[];
+  benefits: string[];
+}
+
+export interface ClientBrief {
+  id: string;
+  project_id: string;
+  client_industry: Industry;
+  risk_posture: RiskPosture;
+  executive_summary: string;
+  governance_framework_summary: string;
+  risk_mitigation_table: { risk: string; mitigation: string; status: string }[];
+  objection_scripts: ObjectionScript[];
+  talking_points: TalkingPoint[];
+  faq_items: { question: string; answer: string }[];
+  transparency_statement: string;
+  available_upon_request: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+// P3: Data Readiness types
+export type DataReadinessDimension = 'availability' | 'quality' | 'accessibility' | 'governance' | 'security' | 'operations';
+export type DataReadinessLevel = 'optimized' | 'managed' | 'defined' | 'developing' | 'initial';
+
+export interface DataQualityMetric {
+  dimension: 'accuracy' | 'completeness' | 'consistency' | 'timeliness' | 'validity' | 'uniqueness';
+  score: number;
+  target: number;
+  domain: string;
+  notes: string;
+}
+
+export interface DataAsset {
+  id: string;
+  name: string;
+  type: 'database' | 'data_lake' | 'api' | 'file_system' | 'streaming' | 'feature_store';
+  domain: string;
+  owner: string;
+  classification: 'public' | 'internal' | 'confidential' | 'restricted';
+  ai_relevance: 'training' | 'inference' | 'both' | 'none';
+  quality_score: number;
+}
+
+export interface DataReadinessDimensionScore {
+  dimension: DataReadinessDimension;
+  score: number;
+  weight: number;
+  findings: string[];
+  recommendations: string[];
+}
+
+export interface DataReadinessAudit {
+  id: string;
+  project_id: string;
+  overall_score: number;
+  readiness_level: DataReadinessLevel;
+  dimension_scores: DataReadinessDimensionScore[];
+  data_assets: DataAsset[];
+  quality_metrics: DataQualityMetric[];
+  dataops_maturity: number;
+  remediation_roadmap: { phase: 'quick_wins' | 'foundation' | 'advanced'; items: string[] }[];
+  created_at: string;
+  updated_at: string;
+}
+
 // API Response types
 export interface ApiResponse<T = unknown> {
   data?: T;

@@ -21,7 +21,10 @@ export type PromptType =
   | 'stakeholder_communication'
   | 'vendor_evaluation'
   | 'use_case_prioritization'
-  | 'compliance_analysis';
+  | 'compliance_analysis'
+  | 'architecture_blueprint'
+  | 'data_readiness_audit'
+  | 'performance_monitoring';
 
 export interface PromptTemplate {
   type: PromptType;
@@ -657,6 +660,108 @@ Do not provide legal advice or guarantee compliance outcomes.`,
 };
 
 // ---------------------------------------------------------------------------
+// Architecture Blueprint
+// ---------------------------------------------------------------------------
+
+const architectureBlueprintTemplate: PromptTemplate = {
+  type: 'architecture_blueprint',
+  system: `You are a Solutions Architect specializing in AI/ML infrastructure design.
+Generate a comprehensive AI Integration Architecture Blueprint including:
+1. 6-Layer Architecture (Data Foundation, ML Platform, API/Integration, Infrastructure, MLOps, Security)
+2. Component Inventory per layer with technology recommendations
+3. API Contract Specifications (endpoints, request/response schemas, auth, rate limits)
+4. Infrastructure Requirements (compute, storage, network, security)
+5. Scaling Strategy recommendation (horizontal, vertical, auto, hybrid)
+6. Deployment Model recommendation (Kubernetes, serverless, VM, hybrid)
+7. Monitoring Stack recommendation
+8. Security Architecture (IAM, encryption, DLP, secrets management)
+
+For each component, include: name, technology choice, description, cloud provider mapping, dependencies.
+Tailor recommendations to the specified cloud provider (AWS, GCP, Azure).
+Provide cost estimation ranges where applicable.
+Output structured JSON.`,
+  buildUserMessage(context: Record<string, unknown>): string {
+    const parts = ['Generate an architecture blueprint with the following context:'];
+    if (context.cloud_provider) parts.push(`Cloud Provider: ${context.cloud_provider}`);
+    if (context.deployment_model) parts.push(`Preferred Deployment: ${context.deployment_model}`);
+    if (context.team_size) parts.push(`Engineering Team Size: ${context.team_size}`);
+    if (context.scale) parts.push(`Expected Scale: ${context.scale}`);
+    if (context.existing_stack) parts.push(`Existing Technology Stack: ${context.existing_stack}`);
+    if (context.compliance_requirements) parts.push(`Compliance Requirements: ${context.compliance_requirements}`);
+    if (context.budget_range) parts.push(`Budget Range: ${context.budget_range}`);
+    return parts.join('\n');
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Data Readiness Audit
+// ---------------------------------------------------------------------------
+
+const dataReadinessAuditTemplate: PromptTemplate = {
+  type: 'data_readiness_audit',
+  system: `You are a Chief Data Officer specializing in AI/ML data readiness assessment.
+Generate a comprehensive Data Readiness Audit including:
+1. 6-Dimension Assessment (Availability 25%, Quality 25%, Accessibility 20%, Governance 15%, Security 10%, Operations 5%)
+2. Data Quality Metrics across 6 dimensions (Accuracy, Completeness, Consistency, Timeliness, Validity, Uniqueness)
+3. Data Asset Inventory with AI relevance classification
+4. DataOps Maturity Scoring (1-5 scale)
+5. Readiness Level Classification (Optimized, Managed, Defined, Developing, Initial)
+6. Remediation Roadmap with three phases:
+   - Quick Wins (0-30 days): Low-effort, high-impact improvements
+   - Foundation (1-3 months): Core infrastructure and process improvements
+   - Advanced (3-6 months): Optimization and automation
+
+For each dimension, provide: score (0-100), key findings, and specific recommendations.
+Include domain-specific quality assessments (Customer, Product, Transaction, Behavioral).
+Output structured JSON.`,
+  buildUserMessage(context: Record<string, unknown>): string {
+    const parts = ['Generate a data readiness audit with the following context:'];
+    if (context.industry) parts.push(`Industry: ${context.industry}`);
+    if (context.data_sources) parts.push(`Current Data Sources: ${context.data_sources}`);
+    if (context.ai_use_cases) parts.push(`Planned AI Use Cases: ${context.ai_use_cases}`);
+    if (context.current_infrastructure) parts.push(`Current Data Infrastructure: ${context.current_infrastructure}`);
+    if (context.data_volume) parts.push(`Data Volume: ${context.data_volume}`);
+    if (context.team_capabilities) parts.push(`Data Team Capabilities: ${context.team_capabilities}`);
+    if (context.compliance_requirements) parts.push(`Compliance Requirements: ${context.compliance_requirements}`);
+    return parts.join('\n');
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Performance Monitoring
+// ---------------------------------------------------------------------------
+
+const performanceMonitoringTemplate: PromptTemplate = {
+  type: 'performance_monitoring',
+  system: `You are an MLOps Engineer specializing in AI system performance monitoring.
+Generate a comprehensive AI Performance Monitoring Dashboard Specification including:
+1. 5-Tier Monitoring Framework:
+   - Tier 1 Executive: AI Health Score composite, Business Impact summary, Active Alerts
+   - Tier 2 Model Performance: Accuracy, Precision, Recall, F1, AUC-ROC trends
+   - Tier 3 Operational: Infrastructure metrics, SLIs/SLOs, Pipeline health
+   - Tier 4 Data Quality: Quality dimensions, Feature store metrics, Data drift detection
+   - Tier 5 Business: KPIs, ROI tracking, User adoption metrics
+2. Alert Configuration Matrix (severity levels, thresholds, notification channels, escalation paths)
+3. Drift Detection Setup (data drift, concept drift, feature drift with monitoring approaches)
+4. KRI (Key Risk Indicator) Dashboard design
+5. SLI/SLO definitions for AI services
+
+For each metric, include: name, target value, warning threshold, critical threshold, unit, measurement method.
+Provide recommended monitoring tools and integrations.
+Output structured JSON.`,
+  buildUserMessage(context: Record<string, unknown>): string {
+    const parts = ['Generate a performance monitoring spec with the following context:'];
+    if (context.ai_models) parts.push(`AI Models in Use: ${context.ai_models}`);
+    if (context.infrastructure) parts.push(`Infrastructure: ${context.infrastructure}`);
+    if (context.sla_requirements) parts.push(`SLA Requirements: ${context.sla_requirements}`);
+    if (context.current_monitoring) parts.push(`Current Monitoring Tools: ${context.current_monitoring}`);
+    if (context.team_size) parts.push(`Operations Team Size: ${context.team_size}`);
+    if (context.business_kpis) parts.push(`Business KPIs: ${context.business_kpis}`);
+    return parts.join('\n');
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
@@ -675,6 +780,9 @@ export const PROMPT_TEMPLATES: Record<PromptType, PromptTemplate> = {
   vendor_evaluation: vendorEvaluationTemplate,
   use_case_prioritization: useCasePrioritizationTemplate,
   compliance_analysis: complianceAnalysisTemplate,
+  architecture_blueprint: architectureBlueprintTemplate,
+  data_readiness_audit: dataReadinessAuditTemplate,
+  performance_monitoring: performanceMonitoringTemplate,
 };
 
 /**
