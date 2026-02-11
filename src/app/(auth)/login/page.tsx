@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -40,6 +40,14 @@ function isSupabaseConfigured(): boolean {
 }
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<Card><CardContent className="pt-6"><p className="text-center text-slate-500">Loading...</p></CardContent></Card>}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || '/';

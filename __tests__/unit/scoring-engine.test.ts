@@ -64,7 +64,7 @@ describe('Scoring Engine', () => {
       const question: AssessmentQuestion = {
         id: 'q1', section: 'test', domain: 'infrastructure', text: 'Test',
         type: 'single_select', options: ['A'], weight: 1, scoring: { 'A': 100 },
-        required: true, order: 1,
+        help_text: null, required: true, order: 1,
       };
       expect(scoreResponse(question, undefined)).toBe(0);
     });
@@ -74,7 +74,7 @@ describe('Scoring Engine', () => {
         id: 'q1', section: 'test', domain: 'infrastructure', text: 'Test',
         type: 'single_select', options: ['Option A', 'Option B', 'Option C'],
         weight: 1, scoring: { 'Option A': 100, 'Option B': 50, 'Option C': 0 },
-        required: true, order: 1,
+        help_text: null, required: true, order: 1,
       };
 
       expect(scoreResponse(question, makeResponse('q1', 'Option A'))).toBe(1);
@@ -86,7 +86,7 @@ describe('Scoring Engine', () => {
       const question: AssessmentQuestion = {
         id: 'q1', section: 'test', domain: 'infrastructure', text: 'Test',
         type: 'single_select', options: ['A'], weight: 2,
-        scoring: { 'A': 100 }, required: true, order: 1,
+        scoring: { 'A': 100 }, help_text: null, required: true, order: 1,
       };
       expect(scoreResponse(question, makeResponse('q1', 'A'))).toBe(2);
     });
@@ -96,7 +96,7 @@ describe('Scoring Engine', () => {
         id: 'q1', section: 'test', domain: 'security', text: 'Test multi',
         type: 'multi_select', options: ['A', 'B', 'C', 'D'],
         weight: 1, scoring: { 'A': 100, 'B': 100, 'C': 100, 'D': 100 },
-        required: true, order: 1,
+        help_text: null, required: true, order: 1,
       };
       const score = scoreResponse(question, makeResponse('q1', ['A', 'B']));
       expect(score).toBeGreaterThan(0);
@@ -105,7 +105,8 @@ describe('Scoring Engine', () => {
     it('should normalize numeric responses', () => {
       const question: AssessmentQuestion = {
         id: 'q1', section: 'test', domain: 'infrastructure', text: 'Pct',
-        type: 'number', weight: 1, required: true, order: 1,
+        type: 'number', options: null, weight: 1, scoring: null,
+        help_text: null, required: true, order: 1,
       };
       const score = scoreResponse(question, makeResponse('q1', 75));
       expect(score).toBeCloseTo(0.75);
@@ -114,7 +115,8 @@ describe('Scoring Engine', () => {
     it('should return 0 for text responses without scoring map', () => {
       const question: AssessmentQuestion = {
         id: 'q1', section: 'test', domain: 'infrastructure', text: 'Free text',
-        type: 'text', weight: 1, required: true, order: 1,
+        type: 'text', options: null, weight: 1, scoring: null,
+        help_text: null, required: true, order: 1,
       };
       expect(scoreResponse(question, makeResponse('q1', 'any text'))).toBe(0);
     });
