@@ -21,6 +21,11 @@ import {
   Scale,
   AlertTriangle,
   Settings,
+  Bot,
+  Radar,
+  ClipboardCheck,
+  GitBranch,
+  ShieldAlert,
   Code,
   CheckCircle,
   FlaskConical,
@@ -144,6 +149,15 @@ function buildProjectSections(projectId: string): NavSection[] {
       title: 'Monitoring',
       items: [
         { label: 'Dashboard', href: p('/monitoring'), icon: Activity },
+      ],
+    },
+    {
+      title: 'Agent Deployment',
+      items: [
+        { label: 'Readiness', href: p('/agent-deployment/readiness'), icon: Radar },
+        { label: 'Task Spec', href: p('/agent-deployment/task-spec'), icon: ClipboardCheck },
+        { label: 'Approval Architecture', href: p('/agent-deployment/approval-architecture'), icon: GitBranch },
+        { label: 'Harm Reduction', href: p('/agent-deployment/harm-reduction'), icon: ShieldAlert },
       ],
     },
     {
