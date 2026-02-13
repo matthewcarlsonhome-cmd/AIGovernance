@@ -7,6 +7,11 @@ function Skeleton({ className }: { className?: string }) {
 export default function PoCProjectsLoading() {
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-center py-3">
+        <p className="text-sm text-slate-400 animate-pulse">
+          Gathering proof-of-concept data...
+        </p>
+      </div>
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">

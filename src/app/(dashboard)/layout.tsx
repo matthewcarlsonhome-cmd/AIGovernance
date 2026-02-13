@@ -296,13 +296,13 @@ function getInitials(name: string): string {
 }
 
 const ROLE_LABELS: Record<UserRole, string> = {
-  admin: 'Administrator',
-  consultant: 'Consultant',
-  executive: 'Executive',
-  it: 'IT / Security',
-  legal: 'Legal / Compliance',
-  engineering: 'Engineering',
-  marketing: 'Marketing / Comms',
+  admin: 'Grand Architect',
+  consultant: 'Strategy Wizard',
+  executive: 'Decision Maker',
+  it: 'Security Guardian',
+  legal: 'Compliance Sage',
+  engineering: 'Code Captain',
+  marketing: 'Story Crafter',
 };
 
 const ROLE_COLORS: Record<UserRole, string> = {
@@ -342,9 +342,9 @@ function TopBar({ pathname, effectiveRole }: { pathname: string; effectiveRole: 
   const roleColor = role ? ROLE_COLORS[role] : 'bg-slate-600';
   const initials = getInitials(displayName);
 
-  // Time-based greeting
+  // Time-based greeting with personality
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const greeting = hour < 6 ? 'Burning the midnight oil?' : hour < 12 ? 'Good morning, champion' : hour < 17 ? 'Afternoon hustle mode' : hour < 21 ? 'Evening shift activated' : 'Night owl energy';
 
   return (
     <header className="flex h-14 items-center justify-between border-b bg-white px-6">
@@ -436,9 +436,12 @@ export default function DashboardLayout({
             <Zap className="absolute -top-1 -right-1 h-3 w-3 text-amber-500" />
           </div>
           {!collapsed && (
-            <span className="text-lg font-bold tracking-tight">
-              GovAI Studio
-            </span>
+            <div>
+              <span className="text-lg font-bold tracking-tight">
+                GovAI Studio
+              </span>
+              <p className="text-[10px] text-slate-400 -mt-0.5 tracking-wide">govern boldly</p>
+            </div>
           )}
         </div>
 
@@ -493,13 +496,13 @@ export default function DashboardLayout({
                     <FolderKanban className="h-6 w-6 text-slate-400" />
                   </div>
                   <p className="text-xs text-slate-500 mb-1">
-                    No project selected
+                    Pick your adventure
                   </p>
                   <p className="text-[11px] text-slate-400 mb-3">
-                    Select or create a project to see its navigation
+                    Select a project to unlock its full toolkit
                   </p>
-                  <Link href="/projects" className="text-xs text-blue-600 hover:text-blue-800 font-medium">
-                    Browse Projects
+                  <Link href="/projects" className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                    Explore Projects
                   </Link>
                 </div>
               )}
@@ -549,7 +552,7 @@ export default function DashboardLayout({
             ) : (
               <>
                 <PanelLeftClose className="h-4 w-4 shrink-0" />
-                <span className="text-sm">Collapse</span>
+                <span className="text-sm">Tuck away</span>
               </>
             )}
           </Button>

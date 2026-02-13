@@ -46,8 +46,8 @@ export function buildWorkQueue(projectId: string): WorkQueueItem[] {
   return [
     {
       id: 'wq-1',
-      title: 'Gate 2 approval pending',
-      description: 'Pilot deployment gate requires security sign-off before sandbox access is granted.',
+      title: 'Gate 2 needs your sign-off',
+      description: 'The pilot gate is waiting for security approval. Unblock the team!',
       href: p('/governance/gates'),
       priority: 'high',
       type: 'approval',
@@ -56,8 +56,8 @@ export function buildWorkQueue(projectId: string): WorkQueueItem[] {
     },
     {
       id: 'wq-2',
-      title: 'Complete DLP rule configuration',
-      description: 'Sandbox DLP rules not yet configured -- required before Gate 2 can be approved.',
+      title: 'DLP rules are missing',
+      description: 'No DLP? No Gate 2. Configure sandbox rules to keep things moving.',
       href: p('/sandbox/configure'),
       priority: 'high',
       type: 'action',
@@ -66,8 +66,8 @@ export function buildWorkQueue(projectId: string): WorkQueueItem[] {
     },
     {
       id: 'wq-3',
-      title: 'Sprint 2 metrics need entry',
-      description: 'Enter velocity, defect rate, and satisfaction scores for the latest sprint.',
+      title: 'Sprint 2 metrics are due',
+      description: 'Log your velocity, defect rate, and satisfaction scores while they\'re fresh.',
       href: p('/poc/sprints'),
       priority: 'medium',
       type: 'input_needed',
@@ -76,8 +76,8 @@ export function buildWorkQueue(projectId: string): WorkQueueItem[] {
     },
     {
       id: 'wq-4',
-      title: 'Compliance mapping incomplete',
-      description: '2 of 5 frameworks mapped -- HIPAA and GDPR mappings still pending.',
+      title: 'Compliance gaps to fill',
+      description: '2 of 5 frameworks mapped. HIPAA and GDPR are still waiting for you.',
       href: p('/governance/compliance'),
       priority: 'medium',
       type: 'action',
@@ -86,8 +86,8 @@ export function buildWorkQueue(projectId: string): WorkQueueItem[] {
     },
     {
       id: 'wq-5',
-      title: 'Data readiness review needed',
-      description: 'Assess data quality and classification readiness before pilot launch.',
+      title: 'Data readiness check',
+      description: 'Is the data pilot-ready? Review quality and classification before launch.',
       href: p('/discovery/data-readiness'),
       priority: 'medium',
       type: 'review',
@@ -95,8 +95,8 @@ export function buildWorkQueue(projectId: string): WorkQueueItem[] {
     },
     {
       id: 'wq-6',
-      title: 'Penetration test report due',
-      description: 'Required for Gate 2 completion checklist. Schedule and upload results.',
+      title: 'Pen test report needed',
+      description: 'Gate 2 won\'t close without it. Schedule the test and upload results.',
       href: p('/sandbox/validate'),
       priority: 'high',
       type: 'action',
@@ -105,8 +105,8 @@ export function buildWorkQueue(projectId: string): WorkQueueItem[] {
     },
     {
       id: 'wq-7',
-      title: 'RACI matrix needs assignment',
-      description: 'Define role assignments for key deliverables across the project phases.',
+      title: 'RACI matrix is bare',
+      description: 'Who owns what? Assign roles for key deliverables across all phases.',
       href: p('/governance/raci'),
       priority: 'low',
       type: 'action',
@@ -114,8 +114,8 @@ export function buildWorkQueue(projectId: string): WorkQueueItem[] {
     },
     {
       id: 'wq-8',
-      title: 'Communications plan not started',
-      description: 'Draft stakeholder messaging guide and FAQ for broader organization rollout.',
+      title: 'Comms plan needs a start',
+      description: 'Craft the stakeholder messaging guide and FAQ for the big rollout.',
       href: p('/reports/communications'),
       priority: 'low',
       type: 'action',
@@ -142,13 +142,13 @@ function priorityColor(priority: WorkQueueItem['priority']): string {
 function typeLabel(type: WorkQueueItem['type']): { text: string; className: string } {
   switch (type) {
     case 'approval':
-      return { text: 'Approval', className: 'bg-red-100 text-red-700' };
+      return { text: 'Sign Off', className: 'bg-red-100 text-red-700' };
     case 'action':
-      return { text: 'Action', className: 'bg-blue-100 text-blue-700' };
+      return { text: 'Do This', className: 'bg-blue-100 text-blue-700' };
     case 'review':
-      return { text: 'Review', className: 'bg-amber-100 text-amber-700' };
+      return { text: 'Eyes On', className: 'bg-amber-100 text-amber-700' };
     case 'input_needed':
-      return { text: 'Input Needed', className: 'bg-violet-100 text-violet-700' };
+      return { text: 'Your Input', className: 'bg-violet-100 text-violet-700' };
   }
 }
 
@@ -195,13 +195,13 @@ export function WorkQueue({
           <div>
             <CardTitle className="flex items-center gap-2 text-lg text-slate-900">
               <AlertTriangle className="h-5 w-5 text-amber-500" />
-              Your Action Items
+              Your Quest Log
             </CardTitle>
             <CardDescription className="text-slate-500">
-              {myQueueItems.length} items requiring your attention
+              {myQueueItems.length} {myQueueItems.length === 1 ? 'quest' : 'quests'} awaiting your attention
               {userRole && (
                 <span className="ml-1 text-slate-400">
-                  (filtered for {userRole})
+                  (for your role)
                 </span>
               )}
             </CardDescription>
@@ -225,8 +225,8 @@ export function WorkQueue({
         {myQueueItems.length === 0 ? (
           <div className="text-center py-8">
             <PartyPopper className="h-10 w-10 mx-auto mb-3 text-emerald-400" />
-            <p className="text-sm font-medium text-slate-700 mb-1">You&apos;re all caught up!</p>
-            <p className="text-xs text-slate-400">No pending action items for your role. Nice work!</p>
+            <p className="text-sm font-medium text-slate-700 mb-1">Quest log clear!</p>
+            <p className="text-xs text-slate-400">Nothing pending for your role. Go grab a coffee &mdash; you&apos;ve earned it.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -272,7 +272,7 @@ export function WorkQueue({
               );
             })}
             <p className="text-[10px] text-slate-400 text-center pt-1">
-              Click the checkmark to dismiss completed items
+              Hit the checkmark to mark a quest as done
             </p>
           </div>
         )}

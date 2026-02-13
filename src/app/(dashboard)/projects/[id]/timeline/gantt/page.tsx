@@ -434,7 +434,8 @@ export default function GanttPage({
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <CalendarRange className="h-6 w-6 text-slate-900" />
-            Project Timeline
+
+            The Big Picture
           </h1>
           <p className="text-slate-500 mt-1">
             {tasks.length} tasks across {PHASES.length} phases

@@ -7,6 +7,11 @@ function Skeleton({ className }: { className?: string }) {
 export default function ROILoading() {
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-center py-3">
+        <p className="text-sm text-slate-400 animate-pulse">
+          Counting the returns...
+        </p>
+      </div>
       {/* Page header */}
       <div className="space-y-2">
         <Skeleton className="h-8 w-48" />
