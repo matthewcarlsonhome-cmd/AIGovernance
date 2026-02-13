@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { CommandPalette } from '@/components/shared/command-palette';
 import type { UserRole } from '@/types';
+import { buildDemoProgress } from '@/lib/progress/calculator';
+import { CompactProgressBar } from '@/components/features/progress/project-progress-tracker';
 import {
   Shield,
   LayoutDashboard,
@@ -507,6 +509,10 @@ export default function DashboardLayout({
 
         {/* Bottom area */}
         <div className="border-t px-2 py-3 space-y-1">
+          {/* Compact progress indicator when viewing a project */}
+          {!collapsed && projectId && (
+            <CompactProgressBar progress={buildDemoProgress()} />
+          )}
           {/* Role indicator when not collapsed */}
           {!collapsed && effectiveRole && (
             <div className="px-3 py-2 mb-1">
