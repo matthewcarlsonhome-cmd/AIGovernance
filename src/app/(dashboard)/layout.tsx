@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { CommandPalette } from '@/components/shared/command-palette';
+import type { UserRole } from '@/types';
 import {
   Shield,
   LayoutDashboard,
@@ -21,7 +22,6 @@ import {
   Scale,
   AlertTriangle,
   Settings,
-  Bot,
   Radar,
   ClipboardCheck,
   GitBranch,
@@ -69,6 +69,8 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
+  /** If set, item only visible to these roles. Undefined = visible to all. */
+  roles?: UserRole[];
 }
 
 interface NavSection {
@@ -85,88 +87,61 @@ const mainNavItems: NavItem[] = [
   { label: 'Projects', href: '/projects', icon: FolderKanban },
 ];
 
+/**
+ * Reorganized navigation: 6 sections grouped by workflow phase.
+ * Each item has optional `roles` for role-based filtering.
+ */
 function buildProjectSections(projectId: string): NavSection[] {
   const p = (path: string) => `/projects/${projectId}${path}`;
   return [
     {
-      title: 'Discovery',
+      title: 'Assess & Plan',
       items: [
-        { label: 'Questionnaire', href: p('/discovery/questionnaire'), icon: ClipboardList },
-        { label: 'Readiness', href: p('/discovery/readiness'), icon: Target },
-        { label: 'Data Readiness', href: p('/discovery/data-readiness'), icon: Database },
+        { label: 'Readiness Assessment', href: p('/discovery/readiness'), icon: Target, roles: ['admin', 'consultant', 'executive', 'it', 'engineering'] },
+        { label: 'Questionnaire', href: p('/discovery/questionnaire'), icon: ClipboardList, roles: ['admin', 'consultant', 'it', 'engineering'] },
+        { label: 'Data Readiness', href: p('/discovery/data-readiness'), icon: Database, roles: ['admin', 'consultant', 'it', 'engineering'] },
         { label: 'Prerequisites', href: p('/discovery/prerequisites'), icon: CheckSquare },
       ],
     },
     {
-      title: 'Governance',
+      title: 'Govern & Comply',
       items: [
-        { label: 'Policies', href: p('/governance/policies'), icon: FileText },
+        { label: 'Policies & Playbook', href: p('/governance/policies'), icon: FileText, roles: ['admin', 'consultant', 'legal', 'it'] },
         { label: 'Gate Reviews', href: p('/governance/gates'), icon: ShieldCheck },
-        { label: 'Compliance', href: p('/governance/compliance'), icon: Scale },
-        { label: 'Risk', href: p('/governance/risk'), icon: AlertTriangle },
-        { label: 'Ethics Review', href: p('/governance/ethics'), icon: Heart },
-        { label: 'AI Playbook', href: p('/governance/playbook'), icon: BookOpen },
-        { label: 'Data Flows', href: p('/governance/data-flows'), icon: Network },
-        { label: 'RACI Matrix', href: p('/governance/raci'), icon: Grid3X3 },
+        { label: 'Compliance', href: p('/governance/compliance'), icon: Scale, roles: ['admin', 'consultant', 'legal', 'it'] },
+        { label: 'Risk Classification', href: p('/governance/risk'), icon: AlertTriangle, roles: ['admin', 'consultant', 'it', 'legal'] },
+        { label: 'RACI Matrix', href: p('/governance/raci'), icon: Grid3X3, roles: ['admin', 'consultant'] },
+        { label: 'Ethics & Data Flows', href: p('/governance/ethics'), icon: Heart, roles: ['admin', 'consultant', 'legal'] },
       ],
     },
     {
-      title: 'Sandbox',
+      title: 'Build & Test',
       items: [
-        { label: 'Configure', href: p('/sandbox/configure'), icon: Settings },
-        { label: 'Config Files', href: p('/sandbox/files'), icon: Code },
-        { label: 'Validation', href: p('/sandbox/validate'), icon: CheckCircle },
-        { label: 'Architecture', href: p('/sandbox/architecture'), icon: Layers },
+        { label: 'Sandbox Setup', href: p('/sandbox/configure'), icon: Settings, roles: ['admin', 'consultant', 'it', 'engineering'] },
+        { label: 'Sandbox Validation', href: p('/sandbox/validate'), icon: CheckCircle, roles: ['admin', 'consultant', 'it', 'engineering'] },
+        { label: 'Pilot Designer', href: p('/poc/pilot-design'), icon: Beaker, roles: ['admin', 'consultant', 'engineering'] },
+        { label: 'Sprint Tracker', href: p('/poc/sprints'), icon: Timer, roles: ['admin', 'consultant', 'engineering'] },
+        { label: 'Tool Comparison', href: p('/poc/compare'), icon: GitCompare, roles: ['admin', 'consultant', 'engineering'] },
+        { label: 'Agent Deployment', href: p('/agent-deployment/readiness'), icon: Radar, roles: ['admin', 'consultant', 'it', 'engineering'] },
       ],
     },
     {
-      title: 'PoC',
+      title: 'Track & Report',
       items: [
-        { label: 'Projects', href: p('/poc/projects'), icon: FlaskConical },
-        { label: 'Sprints', href: p('/poc/sprints'), icon: Timer },
-        { label: 'Compare Tools', href: p('/poc/compare'), icon: GitCompare },
-        { label: 'Metrics', href: p('/poc/metrics'), icon: TrendingUp },
-        { label: 'Pilot Design', href: p('/poc/pilot-design'), icon: Beaker },
-        { label: 'Prioritize', href: p('/poc/prioritize'), icon: ListOrdered },
-        { label: 'Vendor Eval', href: p('/poc/vendor-eval'), icon: PackageSearch },
-      ],
-    },
-    {
-      title: 'Timeline',
-      items: [
-        { label: 'Gantt Chart', href: p('/timeline/gantt'), icon: CalendarRange },
+        { label: 'Timeline', href: p('/timeline/gantt'), icon: CalendarRange },
         { label: 'Milestones', href: p('/timeline/milestones'), icon: Flag },
-        { label: 'Snapshots', href: p('/timeline/snapshots'), icon: Camera },
+        { label: 'ROI Calculator', href: p('/roi'), icon: DollarSign, roles: ['admin', 'consultant', 'executive'] },
+        { label: 'Report Generator', href: p('/reports/generate'), icon: FileOutput },
+        { label: 'Meeting Notes', href: p('/meetings'), icon: Calendar },
       ],
     },
     {
-      title: 'Change Mgmt',
+      title: 'Team & Change',
       items: [
-        { label: 'Change Plan', href: p('/change-management'), icon: RefreshCw },
-      ],
-    },
-    {
-      title: 'Monitoring',
-      items: [
-        { label: 'Dashboard', href: p('/monitoring'), icon: Activity },
-      ],
-    },
-    {
-      title: 'Agent Deployment',
-      items: [
-        { label: 'Readiness', href: p('/agent-deployment/readiness'), icon: Radar },
-        { label: 'Task Spec', href: p('/agent-deployment/task-spec'), icon: ClipboardCheck },
-        { label: 'Approval Architecture', href: p('/agent-deployment/approval-architecture'), icon: GitBranch },
-        { label: 'Harm Reduction', href: p('/agent-deployment/harm-reduction'), icon: ShieldAlert },
-      ],
-    },
-    {
-      title: 'Reports',
-      items: [
-        { label: 'Generate', href: p('/reports/generate'), icon: FileOutput },
-        { label: 'History', href: p('/reports/history'), icon: History },
-        { label: 'Communications', href: p('/reports/communications'), icon: MessageSquare },
-        { label: 'Client Brief', href: p('/reports/client-brief'), icon: Briefcase },
+        { label: 'Team Members', href: p('/team'), icon: Users },
+        { label: 'Change Management', href: p('/change-management'), icon: RefreshCw, roles: ['admin', 'consultant', 'marketing'] },
+        { label: 'Communications', href: p('/reports/communications'), icon: MessageSquare, roles: ['admin', 'consultant', 'marketing'] },
+        { label: 'Monitoring', href: p('/monitoring'), icon: Activity, roles: ['admin', 'consultant', 'it', 'engineering'] },
       ],
     },
   ];
@@ -177,11 +152,6 @@ function buildProjectItems(projectId: string) {
   return {
     setupItem: { label: 'Setup Guide', href: p('/setup'), icon: Rocket } as NavItem,
     overviewItem: { label: 'Overview', href: p('/overview'), icon: BarChart3 } as NavItem,
-    extraItems: [
-      { label: 'ROI Calculator', href: p('/roi'), icon: DollarSign },
-      { label: 'Meetings', href: p('/meetings'), icon: Calendar },
-      { label: 'Team', href: p('/team'), icon: Users },
-    ] as NavItem[],
   };
 }
 
@@ -193,6 +163,18 @@ function extractProjectId(pathname: string): string | null {
   // Exclude "new" — that's the create-project page, not a real project
   if (id === 'new') return null;
   return id;
+}
+
+/** Filter nav sections by user role */
+function filterSectionsByRole(sections: NavSection[], role: UserRole | undefined): NavSection[] {
+  return sections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) =>
+        !item.roles || (role && item.roles.includes(role))
+      ),
+    }))
+    .filter((section) => section.items.length > 0);
 }
 
 /* ------------------------------------------------------------------ */
@@ -242,7 +224,9 @@ function CollapsibleSection({
   collapsed: boolean;
   pathname: string;
 }) {
-  const [isOpen, setIsOpen] = useState(true);
+  // Auto-expand if any child is active
+  const hasActiveChild = section.items.some((item) => pathname === item.href);
+  const [isOpen, setIsOpen] = useState(hasActiveChild);
 
   if (collapsed) {
     return (
@@ -260,7 +244,12 @@ function CollapsibleSection({
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center justify-between px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-600 transition-colors"
       >
-        {section.title}
+        <span className="flex items-center gap-1.5">
+          {section.title}
+          <span className="text-[10px] font-normal text-slate-300">
+            ({section.items.length})
+          </span>
+        </span>
         {isOpen ? (
           <ChevronDown className="h-3 w-3" />
         ) : (
@@ -292,6 +281,16 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
+const ROLE_LABELS: Record<UserRole, string> = {
+  admin: 'Administrator',
+  consultant: 'Consultant',
+  executive: 'Executive',
+  it: 'IT / Security',
+  legal: 'Legal / Compliance',
+  engineering: 'Engineering',
+  marketing: 'Marketing / Comms',
+};
+
 function TopBar({ pathname }: { pathname: string }) {
   const { data: currentUser } = useCurrentUser();
 
@@ -315,7 +314,7 @@ function TopBar({ pathname }: { pathname: string }) {
 
   const displayName = currentUser?.full_name || currentUser?.email?.split('@')[0] || 'User';
   const displayRole = currentUser?.role
-    ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)
+    ? ROLE_LABELS[currentUser.role]
     : '';
   const initials = getInitials(displayName);
 
@@ -366,10 +365,13 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const { data: currentUser } = useCurrentUser();
   const projectId = extractProjectId(pathname);
 
   // Build project-scoped nav only when viewing a real project
-  const projectSections = projectId ? buildProjectSections(projectId) : [];
+  const allSections = projectId ? buildProjectSections(projectId) : [];
+  // Filter by user role — admin and consultant see everything
+  const projectSections = filterSectionsByRole(allSections, currentUser?.role);
   const projectNav = projectId ? buildProjectItems(projectId) : null;
 
   return (
@@ -397,7 +399,7 @@ export default function DashboardLayout({
         </div>
 
         {/* Scrollable nav region */}
-        <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-6">
+        <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-4">
           {/* Main nav */}
           <div className="space-y-1">
             {!collapsed && (
@@ -415,20 +417,20 @@ export default function DashboardLayout({
               <Separator />
 
               {/* Current Project */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {!collapsed && (
                   <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                     Current Project
                   </p>
                 )}
 
+                {/* Overview (always visible) */}
+                <NavLink item={projectNav.overviewItem} collapsed={collapsed} pathname={pathname} />
+
                 {/* Setup Guide */}
                 <NavLink item={projectNav.setupItem} collapsed={collapsed} pathname={pathname} />
 
-                {/* Overview */}
-                <NavLink item={projectNav.overviewItem} collapsed={collapsed} pathname={pathname} />
-
-                {/* Sections */}
+                {/* Sections — role-filtered */}
                 {projectSections.map((section) => (
                   <CollapsibleSection
                     key={section.title}
@@ -436,12 +438,6 @@ export default function DashboardLayout({
                     collapsed={collapsed}
                     pathname={pathname}
                   />
-                ))}
-
-                {/* Extra items */}
-                <Separator />
-                {projectNav.extraItems.map((item) => (
-                  <NavLink key={item.href} item={item} collapsed={collapsed} pathname={pathname} />
                 ))}
               </div>
             </>

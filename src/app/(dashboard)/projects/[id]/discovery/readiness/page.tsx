@@ -206,7 +206,7 @@ export default function ReadinessPage({
   // Build radar chart data
   const radarData = domainScores.map((ds: DomainScore) => ({
     domain: DOMAIN_META[ds.domain]?.label || ds.domain,
-    score: ds.score,
+    score: ds.percentage,
     fullMark: 100,
   }));
 
@@ -216,7 +216,7 @@ export default function ReadinessPage({
       id: `${ds.domain}-${i}`,
       text: rec,
       domain: ds.domain,
-      priority: ds.score < 50 ? 'High' : ds.score < 70 ? 'Medium' : 'Low',
+      priority: ds.percentage < 50 ? 'High' : ds.percentage < 70 ? 'Medium' : 'Low',
     }))
   ).sort((a, b) => {
     const order = { High: 0, Medium: 1, Low: 2 };
@@ -314,7 +314,7 @@ export default function ReadinessPage({
                       <span className="font-medium">{meta.label}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={cn('font-semibold', scoreColor(ds.score))}>{ds.score}</span>
+                      <span className={cn('font-semibold', scoreColor(ds.percentage))}>{ds.percentage}</span>
                       <span className="text-slate-400">/100</span>
                       {ds.passed ? (
                         <CheckCircle2 className="h-4 w-4 text-emerald-500" />
@@ -325,8 +325,8 @@ export default function ReadinessPage({
                   </div>
                   <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
                     <div
-                      className={cn('h-full rounded-full transition-all', scoreBarColor(ds.score))}
-                      style={{ width: `${ds.score}%` }}
+                      className={cn('h-full rounded-full transition-all', scoreBarColor(ds.percentage))}
+                      style={{ width: `${ds.percentage}%` }}
                     />
                   </div>
                 </div>
@@ -354,7 +354,7 @@ export default function ReadinessPage({
                       </div>
                       <CardTitle className="text-base">{meta.label}</CardTitle>
                     </div>
-                    <span className={cn('text-2xl font-bold', scoreColor(ds.score))}>{ds.score}</span>
+                    <span className={cn('text-2xl font-bold', scoreColor(ds.percentage))}>{ds.percentage}</span>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -454,7 +454,7 @@ export default function ReadinessPage({
             ];
             for (const ds of domainScores) {
               const meta = DOMAIN_META[ds.domain];
-              lines.push(`${meta?.label ?? ds.domain}: ${ds.score}/100 (${ds.passed ? 'PASS' : 'NEEDS IMPROVEMENT'})`);
+              lines.push(`${meta?.label ?? ds.domain}: ${ds.percentage}/100 (${ds.passed ? 'PASS' : 'NEEDS IMPROVEMENT'})`);
               for (const rec of (ds.recommendations || [])) {
                 lines.push(`  - ${rec}`);
               }

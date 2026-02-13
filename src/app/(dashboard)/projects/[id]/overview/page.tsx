@@ -7,16 +7,18 @@ import {
   Activity,
   ArrowRight,
   Calendar,
+  CheckCircle2,
+  Circle,
   Clock,
   FileText,
-  LayoutDashboard,
+  Loader2,
   Play,
-  Search,
-  Settings,
   Shield,
   Target,
   TrendingUp,
   Users,
+  AlertTriangle,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -26,13 +28,12 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import type { ProjectStatus, ScoreDomain } from '@/types';
+import type { ProjectStatus, UserRole } from '@/types';
 import { useProject } from '@/hooks/use-projects';
+import { useCurrentUser } from '@/hooks/use-auth';
+import { buildDemoProgress, type PhaseProgress } from '@/lib/progress/calculator';
 
 /* -------------------------------------------------------------------------- */
 /*  Fallback demo data                                                         */
@@ -51,64 +52,101 @@ const DEMO_PROJECT = {
   rating: 'Moderate Feasibility' as const,
 };
 
-interface DomainScoreEntry {
-  domain: ScoreDomain;
-  label: string;
-  score: number;
-  color: string;
-}
+/* -------------------------------------------------------------------------- */
+/*  Work Queue Items                                                           */
+/* -------------------------------------------------------------------------- */
 
-const DOMAIN_SCORES: DomainScoreEntry[] = [
-  { domain: 'infrastructure', label: 'Infrastructure', score: 78, color: 'bg-emerald-500' },
-  { domain: 'security', label: 'Security', score: 65, color: 'bg-amber-500' },
-  { domain: 'governance', label: 'Governance', score: 58, color: 'bg-orange-500' },
-  { domain: 'engineering', label: 'Engineering', score: 82, color: 'bg-emerald-500' },
-  { domain: 'business', label: 'Business', score: 71, color: 'bg-emerald-500' },
-];
-
-interface ProgressCard {
-  label: string;
-  detail: string;
-  value: number;
-  max: number;
-  icon: React.ElementType;
+interface WorkQueueItem {
+  id: string;
+  title: string;
+  description: string;
   href: string;
+  priority: 'high' | 'medium' | 'low';
+  type: 'approval' | 'action' | 'review' | 'input_needed';
+  roles: UserRole[];
 }
 
-const PROGRESS_CARDS: ProgressCard[] = [
-  {
-    label: 'Discovery',
-    detail: '3 of 5 sections complete',
-    value: 3,
-    max: 5,
-    icon: Search,
-    href: 'discovery/questionnaire',
-  },
-  {
-    label: 'Governance',
-    detail: '1 of 4 policies drafted',
-    value: 1,
-    max: 4,
-    icon: Shield,
-    href: 'governance/policies',
-  },
-  {
-    label: 'Sandbox',
-    detail: 'Not started',
-    value: 0,
-    max: 3,
-    icon: Settings,
-    href: 'sandbox/configure',
-  },
-  {
-    label: 'Timeline',
-    detail: '3 of 12 tasks complete',
-    value: 3,
-    max: 12,
-    icon: Calendar,
-    href: 'timeline/gantt',
-  },
-];
+function buildWorkQueue(projectId: string): WorkQueueItem[] {
+  const p = (path: string) => `/projects/${projectId}${path}`;
+  return [
+    {
+      id: 'wq-1',
+      title: 'Gate 2 approval pending',
+      description: 'Pilot deployment gate requires security sign-off',
+      href: p('/governance/gates'),
+      priority: 'high',
+      type: 'approval',
+      roles: ['admin', 'consultant', 'it', 'executive'],
+    },
+    {
+      id: 'wq-2',
+      title: 'Complete DLP rule configuration',
+      description: 'Sandbox DLP rules not yet configured — required for Gate 2',
+      href: p('/sandbox/configure'),
+      priority: 'high',
+      type: 'action',
+      roles: ['admin', 'consultant', 'it'],
+    },
+    {
+      id: 'wq-3',
+      title: 'Sprint 2 metrics need entry',
+      description: 'Velocity, defect rate, and satisfaction scores due',
+      href: p('/poc/sprints'),
+      priority: 'medium',
+      type: 'input_needed',
+      roles: ['admin', 'consultant', 'engineering'],
+    },
+    {
+      id: 'wq-4',
+      title: 'Compliance mapping incomplete',
+      description: '2 of 5 frameworks mapped — HIPAA and GDPR pending',
+      href: p('/governance/compliance'),
+      priority: 'medium',
+      type: 'action',
+      roles: ['admin', 'consultant', 'legal', 'it'],
+    },
+    {
+      id: 'wq-5',
+      title: 'Data readiness review needed',
+      description: 'Assess data quality and classification readiness',
+      href: p('/discovery/data-readiness'),
+      priority: 'medium',
+      type: 'review',
+      roles: ['admin', 'consultant', 'it', 'engineering'],
+    },
+    {
+      id: 'wq-6',
+      title: 'Penetration test report due',
+      description: 'Required for Gate 2 completion checklist',
+      href: p('/sandbox/validate'),
+      priority: 'high',
+      type: 'action',
+      roles: ['admin', 'it'],
+    },
+    {
+      id: 'wq-7',
+      title: 'RACI matrix needs assignment',
+      description: 'Role assignments not yet defined for key deliverables',
+      href: p('/governance/raci'),
+      priority: 'low',
+      type: 'action',
+      roles: ['admin', 'consultant'],
+    },
+    {
+      id: 'wq-8',
+      title: 'Communications plan not started',
+      description: 'Stakeholder messaging guide and FAQ needed',
+      href: p('/reports/communications'),
+      priority: 'low',
+      type: 'action',
+      roles: ['admin', 'consultant', 'marketing'],
+    },
+  ];
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Activity Feed                                                              */
+/* -------------------------------------------------------------------------- */
 
 interface ActivityEntry {
   id: string;
@@ -118,42 +156,12 @@ interface ActivityEntry {
 }
 
 const RECENT_ACTIVITY: ActivityEntry[] = [
-  {
-    id: '1',
-    text: 'Assessment questionnaire started by Sarah Chen',
-    timestamp: '2 hours ago',
-    icon: FileText,
-  },
-  {
-    id: '2',
-    text: 'AUP policy draft created by Michael Torres',
-    timestamp: '5 hours ago',
-    icon: Shield,
-  },
-  {
-    id: '3',
-    text: 'Infrastructure domain assessment completed',
-    timestamp: '1 day ago',
-    icon: Target,
-  },
-  {
-    id: '4',
-    text: 'Team member Alex Rivera added to the project',
-    timestamp: '2 days ago',
-    icon: Users,
-  },
-  {
-    id: '5',
-    text: 'Project created and discovery phase initiated',
-    timestamp: '3 days ago',
-    icon: Play,
-  },
-  {
-    id: '6',
-    text: 'Executive sponsor approval received',
-    timestamp: '3 days ago',
-    icon: TrendingUp,
-  },
+  { id: '1', text: 'Gate 1 (Sandbox Access) approved by system', timestamp: '1 day ago', icon: Shield },
+  { id: '2', text: 'Sprint 1 metrics captured — velocity +62%', timestamp: '2 days ago', icon: TrendingUp },
+  { id: '3', text: 'AUP policy draft created by Michael Torres', timestamp: '3 days ago', icon: FileText },
+  { id: '4', text: 'Assessment questionnaire completed (25/25)', timestamp: '4 days ago', icon: Target },
+  { id: '5', text: 'Team member Alex Rivera added to the project', timestamp: '5 days ago', icon: Users },
+  { id: '6', text: 'Project created and discovery phase initiated', timestamp: '6 days ago', icon: Play },
 ];
 
 /* -------------------------------------------------------------------------- */
@@ -166,26 +174,42 @@ function daysRemaining(target: string): number {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function scoreColor(score: number): string {
-  if (score >= 75) return 'text-emerald-600';
-  if (score >= 60) return 'text-amber-600';
-  if (score >= 40) return 'text-orange-600';
-  return 'text-red-500';
+function phaseStatusIcon(status: PhaseProgress['status']): React.ReactElement {
+  switch (status) {
+    case 'complete':
+      return <CheckCircle2 className="h-5 w-5 text-emerald-600" />;
+    case 'in_progress':
+      return <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />;
+    case 'not_started':
+      return <Circle className="h-5 w-5 text-slate-300" />;
+  }
 }
 
-function ratingBadgeVariant(
-  rating: string
-): 'default' | 'secondary' | 'destructive' | 'outline' {
-  if (rating.includes('High')) return 'default';
-  if (rating.includes('Moderate')) return 'secondary';
-  return 'destructive';
+function priorityColor(priority: WorkQueueItem['priority']): string {
+  switch (priority) {
+    case 'high':
+      return 'border-l-red-500 bg-red-50/50';
+    case 'medium':
+      return 'border-l-amber-500 bg-amber-50/50';
+    case 'low':
+      return 'border-l-slate-300 bg-slate-50/50';
+  }
+}
+
+function typeLabel(type: WorkQueueItem['type']): { text: string; className: string } {
+  switch (type) {
+    case 'approval':
+      return { text: 'Approval', className: 'bg-red-100 text-red-700' };
+    case 'action':
+      return { text: 'Action', className: 'bg-blue-100 text-blue-700' };
+    case 'review':
+      return { text: 'Review', className: 'bg-amber-100 text-amber-700' };
+    case 'input_needed':
+      return { text: 'Input Needed', className: 'bg-violet-100 text-violet-700' };
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -199,12 +223,11 @@ export default function ProjectOverviewPage({
 }): React.ReactElement {
   const { id } = use(params);
   const { data: fetchedProject, isLoading, error } = useProject(id);
+  const { data: currentUser } = useCurrentUser();
 
   if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
   if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
 
-  // Merge fetched project data with demo data shape for display compatibility
-  const rawProject = fetchedProject ?? DEMO_PROJECT;
   const project = {
     ...DEMO_PROJECT,
     ...(fetchedProject ? {
@@ -219,190 +242,240 @@ export default function ProjectOverviewPage({
     } : {}),
   };
   const remaining = daysRemaining(project.targetDate);
+  const progress = buildDemoProgress();
+  const userRole = currentUser?.role;
+
+  // Filter work queue by user role
+  const allQueueItems = buildWorkQueue(id);
+  const myQueueItems = allQueueItems.filter(
+    (item) => !userRole || item.roles.includes(userRole)
+  );
 
   return (
-    <div className="space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-      {/* ------------------------------------------------------------------ */}
-      {/*  Top Section – Project name, status, dates                          */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* ── Header ────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
               {project.name}
             </h1>
-            <Badge variant="secondary" className="capitalize">
-              {project.status}
-            </Badge>
+            <Badge variant="secondary" className="capitalize">{project.status}</Badge>
           </div>
-          <p className="text-sm text-slate-500">{project.description}</p>
+          <p className="text-sm text-slate-500 max-w-2xl">{project.description}</p>
         </div>
-
-        <div className="flex shrink-0 items-center gap-6 text-sm text-slate-500">
-          <div className="flex items-center gap-1.5">
-            <LayoutDashboard className="h-4 w-4" />
-            <span>
-              Phase: <span className="font-medium text-slate-900">{project.phase}</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Calendar className="h-4 w-4" />
-            <span>{formatDate(project.startDate)}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Target className="h-4 w-4" />
-            <span>{formatDate(project.targetDate)}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Clock className="h-4 w-4" />
-            <span className="font-medium text-slate-900">{remaining} days left</span>
-          </div>
+        <div className="flex items-center gap-4 text-xs text-slate-500 shrink-0">
+          <span className="flex items-center gap-1">
+            <Calendar className="h-3.5 w-3.5" />
+            {formatDate(project.startDate)} — {formatDate(project.targetDate)}
+          </span>
+          <span className="flex items-center gap-1 font-medium text-slate-700">
+            <Clock className="h-3.5 w-3.5" />
+            {remaining} days left
+          </span>
         </div>
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/*  Score Card                                                         */}
-      {/* ------------------------------------------------------------------ */}
+      {/* ── Progress Tracker ──────────────────────────────────────── */}
       <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg">Feasibility Score</CardTitle>
-          <CardDescription>
-            Overall readiness assessment based on five evaluation domains
-          </CardDescription>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg text-slate-900">Project Progress</CardTitle>
+              <CardDescription className="text-slate-500">
+                Overall: {progress.overall}% complete across {progress.phases.length} phases
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-2.5 w-32 rounded-full bg-slate-100 overflow-hidden">
+                <div
+                  className={cn(
+                    'h-full rounded-full transition-all',
+                    progress.overall >= 75 ? 'bg-emerald-500' :
+                    progress.overall >= 50 ? 'bg-blue-500' :
+                    progress.overall >= 25 ? 'bg-amber-500' : 'bg-slate-300'
+                  )}
+                  style={{ width: `${progress.overall}%` }}
+                />
+              </div>
+              <span className="text-sm font-semibold text-slate-900">{progress.overall}%</span>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-8 lg:flex-row lg:items-center">
-            {/* Large score */}
-            <div className="flex flex-col items-center gap-2 lg:min-w-[180px]">
-              <div
-                className={cn(
-                  'flex h-28 w-28 items-center justify-center rounded-full border-4',
-                  project.feasibilityScore >= 75
-                    ? 'border-emerald-500'
-                    : project.feasibilityScore >= 60
-                    ? 'border-amber-500'
-                    : 'border-orange-500'
-                )}
-              >
-                <span className={cn('text-4xl font-bold', scoreColor(project.feasibilityScore))}>
-                  {project.feasibilityScore}
-                </span>
-              </div>
-              <Badge variant={ratingBadgeVariant(project.rating)}>{project.rating}</Badge>
-            </div>
-
-            {/* Domain bars */}
-            <div className="flex-1 space-y-3">
-              {DOMAIN_SCORES.map((d) => (
-                <div key={d.domain} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-slate-900">{d.label}</span>
-                    <span className="text-slate-500">{d.score}/100</span>
-                  </div>
-                  <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className={cn('h-full rounded-full transition-all', d.color)}
-                      style={{ width: `${d.score}%` }}
-                    />
-                  </div>
+          {/* Phase stepper */}
+          <div className="flex items-start gap-0">
+            {progress.phases.map((phase, idx) => (
+              <div key={phase.phase} className="flex-1 relative">
+                <div className="flex flex-col items-center text-center">
+                  {phaseStatusIcon(phase.status)}
+                  <p className="mt-1.5 text-xs font-semibold text-slate-900">{phase.label}</p>
+                  <p className="text-[11px] text-slate-500">{phase.percentage}%</p>
+                  <p className="text-[10px] text-slate-400">{phase.completedItems}/{phase.totalItems} items</p>
                 </div>
-              ))}
-            </div>
+                {/* Connector line */}
+                {idx < progress.phases.length - 1 && (
+                  <div className="absolute top-2.5 left-[calc(50%+12px)] right-0 h-px bg-slate-200" />
+                )}
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* ------------------------------------------------------------------ */}
-      {/*  Progress Cards Row                                                  */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {PROGRESS_CARDS.map((card) => {
-          const percentage = card.max > 0 ? Math.round((card.value / card.max) * 100) : 0;
-          const Icon = card.icon;
-
-          return (
-            <Link key={card.label} href={`/projects/${id}/${card.href}`}>
-              <Card className="group cursor-pointer transition-shadow hover:shadow-md">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100">
-                      <Icon className="h-5 w-5 text-slate-500" />
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-slate-500 opacity-0 transition-opacity group-hover:opacity-100" />
-                  </div>
-                  <CardTitle className="text-base">{card.label}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <p className="text-sm text-slate-500">{card.detail}</p>
-                  <Progress value={percentage} />
-                  <p className="text-xs text-slate-500">{percentage}% complete</p>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* ------------------------------------------------------------------ */}
-      {/*  Activity + Quick Actions                                            */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Recent Activity */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Activity className="h-5 w-5 text-slate-500" />
-              Recent Activity
-            </CardTitle>
+      {/* ── Work Queue + Health ────────────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+        {/* Work Queue */}
+        <Card className="lg:col-span-3">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-lg text-slate-900">
+                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+                  Your Action Items
+                </CardTitle>
+                <CardDescription className="text-slate-500">
+                  {myQueueItems.length} items requiring your attention
+                  {userRole && (
+                    <span className="ml-1 text-slate-400">
+                      (filtered for {userRole})
+                    </span>
+                  )}
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {RECENT_ACTIVITY.map((entry) => {
-                const Icon = entry.icon;
-                return (
-                  <div key={entry.id} className="flex items-start gap-3">
-                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100">
-                      <Icon className="h-4 w-4 text-slate-500" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-slate-900">{entry.text}</p>
-                      <p className="text-xs text-slate-500">{entry.timestamp}</p>
-                    </div>
-                  </div>
-                );
-              })}
+            {myQueueItems.length === 0 ? (
+              <div className="text-center py-8 text-slate-400">
+                <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-emerald-400" />
+                <p className="text-sm">No pending action items. You&#39;re all caught up.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {myQueueItems.slice(0, 6).map((item) => {
+                  const tl = typeLabel(item.type);
+                  return (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg border-l-4 p-3 transition-colors hover:shadow-sm group',
+                        priorityColor(item.priority),
+                      )}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-slate-900 truncate">
+                            {item.title}
+                          </p>
+                          <Badge variant="outline" className={cn('text-[10px] shrink-0', tl.className)}>
+                            {tl.text}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5 truncate">{item.description}</p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Health Panel */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg text-slate-900">Project Health</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Readiness Score */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-600">Readiness Score</span>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-16 rounded-full bg-slate-100 overflow-hidden">
+                  <div
+                    className={cn(
+                      'h-full rounded-full',
+                      project.feasibilityScore >= 75 ? 'bg-emerald-500' :
+                      project.feasibilityScore >= 60 ? 'bg-amber-500' : 'bg-orange-500'
+                    )}
+                    style={{ width: `${project.feasibilityScore}%` }}
+                  />
+                </div>
+                <span className="text-sm font-semibold text-slate-900 w-10 text-right">
+                  {project.feasibilityScore}/100
+                </span>
+              </div>
+            </div>
+            {/* Risk Level */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-600">Risk Level</span>
+              <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200 text-xs">
+                Medium
+              </Badge>
+            </div>
+            {/* Timeline Status */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-600">Timeline</span>
+              <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs">
+                On Track
+              </Badge>
+            </div>
+            {/* Gate Status */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-600">Gate Progress</span>
+              <span className="text-sm text-slate-900">1 of 3 approved</span>
+            </div>
+            {/* Budget */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-600">Budget</span>
+              <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs">
+                Within Budget
+              </Badge>
+            </div>
+
+            <div className="pt-2 border-t">
+              <Link href={`/projects/${id}/discovery/readiness`}>
+                <Button variant="outline" size="sm" className="w-full gap-2 text-xs border-slate-200 text-slate-700">
+                  <Target className="h-3.5 w-3.5" />
+                  View Full Assessment
+                  <ArrowRight className="h-3 w-3 ml-auto" />
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
-
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Quick Actions</CardTitle>
-            <CardDescription>Jump to common tasks</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Link href={`/projects/${id}/discovery/questionnaire`}>
-              <Button variant="outline" className="w-full justify-start gap-2">
-                <FileText className="h-4 w-4" />
-                Continue Assessment
-              </Button>
-            </Link>
-            <Link href={`/projects/${id}/timeline/gantt`}>
-              <Button variant="outline" className="w-full justify-start gap-2">
-                <Calendar className="h-4 w-4" />
-                View Timeline
-              </Button>
-            </Link>
-            <Link href={`/projects/${id}/reports/generate`}>
-              <Button variant="outline" className="w-full justify-start gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Generate Report
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
       </div>
+
+      {/* ── Activity Feed ─────────────────────────────────────────── */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg text-slate-900">
+            <Activity className="h-5 w-5 text-slate-500" />
+            Recent Activity
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {RECENT_ACTIVITY.map((entry) => {
+              const Icon = entry.icon;
+              return (
+                <div key={entry.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-slate-50">
+                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100">
+                    <Icon className="h-3.5 w-3.5 text-slate-500" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-slate-900">{entry.text}</p>
+                    <p className="text-xs text-slate-400">{entry.timestamp}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

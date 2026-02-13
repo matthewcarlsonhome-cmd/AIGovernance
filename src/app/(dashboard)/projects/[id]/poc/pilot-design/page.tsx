@@ -294,6 +294,14 @@ export default function PilotDesignPage({
   const [killSwitchDialogOpen, setKillSwitchDialogOpen] = React.useState(false);
   const [newKillSwitch, setNewKillSwitch] = React.useState('');
 
+  const [participantDialogOpen, setParticipantDialogOpen] = React.useState(false);
+  const [editingParticipantIdx, setEditingParticipantIdx] = React.useState<number | null>(null);
+  const [participantForm, setParticipantForm] = React.useState<ParticipantCriterion>({ criterion: '', weight: 20, ideal_profile: '' });
+
+  const [metricDialogOpen, setMetricDialogOpen] = React.useState(false);
+  const [editingMetricIdx, setEditingMetricIdx] = React.useState<number | null>(null);
+  const [metricForm, setMetricForm] = React.useState<PilotMetric>({ metric: '', baseline: '', target: '', actual: null, method: '' });
+
   // ---- Load from localStorage ----
   React.useEffect(() => {
     try {
@@ -473,6 +481,67 @@ export default function PilotDesignPage({
 
   const deleteKillSwitch = (idx: number): void => {
     setKillSwitch((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  // ---- Participant Criteria CRUD ----
+  const openAddParticipant = (): void => {
+    setEditingParticipantIdx(null);
+    setParticipantForm({ criterion: '', weight: 20, ideal_profile: '' });
+    setParticipantDialogOpen(true);
+  };
+
+  const openEditParticipant = (idx: number): void => {
+    setEditingParticipantIdx(idx);
+    setParticipantForm({ ...participants[idx] });
+    setParticipantDialogOpen(true);
+  };
+
+  const saveParticipant = (): void => {
+    if (!participantForm.criterion.trim()) return;
+    if (editingParticipantIdx !== null) {
+      setParticipants((prev) => prev.map((p, i) => (i === editingParticipantIdx ? { ...participantForm } : p)));
+    } else {
+      setParticipants((prev) => [...prev, { ...participantForm }]);
+    }
+    setParticipantDialogOpen(false);
+  };
+
+  const deleteParticipant = (idx: number): void => {
+    setParticipants((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  // ---- Quantitative Metrics CRUD ----
+  const openAddMetric = (): void => {
+    setEditingMetricIdx(null);
+    setMetricForm({ metric: '', baseline: '', target: '', actual: null, method: '' });
+    setMetricDialogOpen(true);
+  };
+
+  const openEditMetric = (idx: number): void => {
+    setEditingMetricIdx(idx);
+    setMetricForm({ ...metrics[idx] });
+    setMetricDialogOpen(true);
+  };
+
+  const saveMetric = (): void => {
+    if (!metricForm.metric.trim()) return;
+    if (editingMetricIdx !== null) {
+      setMetrics((prev) => prev.map((m, i) => (i === editingMetricIdx ? { ...metricForm } : m)));
+    } else {
+      setMetrics((prev) => [...prev, { ...metricForm }]);
+    }
+    setMetricDialogOpen(false);
+  };
+
+  const deleteMetric = (idx: number): void => {
+    setMetrics((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  // ---- Go/No-Go Evidence Update ----
+  const updateGateEvidence = (idx: number, evidence: string): void => {
+    setGoNoGoGates((prev) =>
+      prev.map((g, i) => (i === idx ? { ...g, evidence } : g))
+    );
   };
 
   // ---- Computed ----
@@ -662,19 +731,31 @@ export default function PilotDesignPage({
       {/* ---- Participant Selection Criteria ---- */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-900">
-            <Users className="h-5 w-5 text-teal-600" />
-            Participant Selection Criteria
-          </CardTitle>
-          <CardDescription className="text-slate-500">
-            Criteria for selecting pilot participants, weighted by importance.
-          </CardDescription>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-slate-900">
+                <Users className="h-5 w-5 text-teal-600" />
+                Participant Selection Criteria
+              </CardTitle>
+              <CardDescription className="text-slate-500">
+                Criteria for selecting pilot participants, weighted by importance.
+              </CardDescription>
+            </div>
+            <Button
+              size="sm"
+              className="bg-slate-900 text-white hover:bg-slate-800"
+              onClick={openAddParticipant}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Criterion
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {participants.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
               <Users className="h-8 w-8 mx-auto mb-2 text-slate-300" />
-              <p className="text-sm">Participant criteria will appear here once defined.</p>
+              <p className="text-sm">No participant criteria defined yet. Click &quot;Add Criterion&quot; to get started.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -682,8 +763,9 @@ export default function PilotDesignPage({
                 <thead>
                   <tr className="border-b border-slate-200">
                     <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Criterion</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-20">Weight</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 w-32">Weight</th>
                     <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Ideal Profile</th>
+                    <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 w-24">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -702,6 +784,22 @@ export default function PilotDesignPage({
                         </div>
                       </td>
                       <td className="py-3 px-4 text-slate-500">{pc.ideal_profile}</td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => openEditParticipant(idx)}
+                            className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => deleteParticipant(idx)}
+                            className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -773,19 +871,31 @@ export default function PilotDesignPage({
       {/* ---- Quantitative Metrics ---- */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-900">
-            <BarChart3 className="h-5 w-5 text-indigo-600" />
-            Quantitative Metrics
-          </CardTitle>
-          <CardDescription className="text-slate-500">
-            Baseline vs. target vs. actual measurements for the pilot.
-          </CardDescription>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-slate-900">
+                <BarChart3 className="h-5 w-5 text-indigo-600" />
+                Quantitative Metrics
+              </CardTitle>
+              <CardDescription className="text-slate-500">
+                Baseline vs. target vs. actual measurements for the pilot.
+              </CardDescription>
+            </div>
+            <Button
+              size="sm"
+              className="bg-slate-900 text-white hover:bg-slate-800"
+              onClick={openAddMetric}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Metric
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {metrics.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
               <BarChart3 className="h-8 w-8 mx-auto mb-2 text-slate-300" />
-              <p className="text-sm">No quantitative metrics defined yet.</p>
+              <p className="text-sm">No quantitative metrics defined yet. Click &quot;Add Metric&quot; to get started.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -796,7 +906,8 @@ export default function PilotDesignPage({
                     <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Baseline</th>
                     <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Target</th>
                     <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Actual</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Measurement Method</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Method</th>
+                    <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 w-24">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -811,6 +922,22 @@ export default function PilotDesignPage({
                         </span>
                       </td>
                       <td className="py-3 px-4 text-slate-500 text-xs">{m.method}</td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => openEditMetric(idx)}
+                            className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => deleteMetric(idx)}
+                            className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -855,11 +982,10 @@ export default function PilotDesignPage({
           ) : (
             <div className="space-y-3">
               {goNoGoGates.map((gate, idx) => (
-                <button
+                <div
                   key={idx}
-                  onClick={() => toggleGoNoGo(idx)}
                   className={cn(
-                    'w-full flex items-center gap-4 p-4 rounded-lg border transition-all text-left',
+                    'flex flex-col gap-3 p-4 rounded-lg border transition-all',
                     gate.status === 'pass'
                       ? 'border-emerald-200 bg-emerald-50/50'
                       : gate.status === 'fail'
@@ -867,15 +993,39 @@ export default function PilotDesignPage({
                       : 'border-slate-200 bg-slate-50/50',
                   )}
                 >
-                  {goNoGoIcon(gate.status)}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900">{gate.criteria}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">Threshold: {gate.threshold}</p>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => toggleGoNoGo(idx)}
+                      className="shrink-0 hover:scale-110 transition-transform"
+                      title="Click to toggle status"
+                    >
+                      {goNoGoIcon(gate.status)}
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900">{gate.criteria}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Threshold: {gate.threshold}</p>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        'text-xs capitalize shrink-0',
+                        gate.status === 'pass' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
+                        gate.status === 'fail' ? 'bg-red-100 text-red-700 border-red-200' :
+                        'bg-amber-100 text-amber-700 border-amber-200'
+                      )}
+                    >
+                      {gate.status}
+                    </Badge>
                   </div>
-                  <div className="text-xs text-slate-500 max-w-xs text-right hidden sm:block">
-                    {gate.evidence || 'No evidence yet'}
+                  <div className="ml-9">
+                    <Input
+                      value={gate.evidence}
+                      onChange={(e) => updateGateEvidence(idx, e.target.value)}
+                      placeholder="Add evidence (e.g., link to report, test results, sign-off date)..."
+                      className="text-xs border-slate-200 bg-white/70 h-8"
+                    />
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           )}
@@ -1232,6 +1382,142 @@ export default function PilotDesignPage({
             </Button>
             <Button className="bg-slate-900 text-white hover:bg-slate-800" onClick={addKillSwitch}>
               Add
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---- Participant Criteria Dialog ---- */}
+      <Dialog open={participantDialogOpen} onOpenChange={setParticipantDialogOpen}>
+        <DialogContent className="bg-white border-slate-200">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900">
+              {editingParticipantIdx !== null ? 'Edit Criterion' : 'Add Participant Criterion'}
+            </DialogTitle>
+            <DialogDescription className="text-slate-500">
+              Define criteria for selecting pilot participants.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label className="text-slate-700">Criterion Name *</Label>
+              <Input
+                value={participantForm.criterion}
+                onChange={(e) => setParticipantForm({ ...participantForm, criterion: e.target.value })}
+                placeholder="e.g., Technical Proficiency"
+                className="border-slate-200"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-700">Weight (%)</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min={5}
+                  max={100}
+                  step={5}
+                  value={participantForm.weight}
+                  onChange={(e) => setParticipantForm({ ...participantForm, weight: Number(e.target.value) })}
+                  className="flex-1 h-2 accent-teal-600"
+                />
+                <Input
+                  type="number"
+                  min={5}
+                  max={100}
+                  value={participantForm.weight}
+                  onChange={(e) => setParticipantForm({ ...participantForm, weight: Math.min(100, Math.max(5, Number(e.target.value))) })}
+                  className="w-20 text-center border-slate-200"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-700">Ideal Profile</Label>
+              <Textarea
+                value={participantForm.ideal_profile}
+                onChange={(e) => setParticipantForm({ ...participantForm, ideal_profile: e.target.value })}
+                placeholder="e.g., 3+ years with TypeScript, familiar with CI/CD"
+                className="border-slate-200"
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="border-slate-200 text-slate-700" onClick={() => setParticipantDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button className="bg-slate-900 text-white hover:bg-slate-800" onClick={saveParticipant} disabled={!participantForm.criterion.trim()}>
+              {editingParticipantIdx !== null ? 'Update' : 'Add'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---- Quantitative Metric Dialog ---- */}
+      <Dialog open={metricDialogOpen} onOpenChange={setMetricDialogOpen}>
+        <DialogContent className="bg-white border-slate-200">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900">
+              {editingMetricIdx !== null ? 'Edit Metric' : 'Add Quantitative Metric'}
+            </DialogTitle>
+            <DialogDescription className="text-slate-500">
+              Define a measurable metric with baseline and target values.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label className="text-slate-700">Metric Name *</Label>
+              <Input
+                value={metricForm.metric}
+                onChange={(e) => setMetricForm({ ...metricForm, metric: e.target.value })}
+                placeholder="e.g., Sprint Velocity"
+                className="border-slate-200"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label className="text-slate-700">Baseline</Label>
+                <Input
+                  value={metricForm.baseline}
+                  onChange={(e) => setMetricForm({ ...metricForm, baseline: e.target.value })}
+                  placeholder="e.g., 21 pts"
+                  className="border-slate-200"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-700">Target</Label>
+                <Input
+                  value={metricForm.target}
+                  onChange={(e) => setMetricForm({ ...metricForm, target: e.target.value })}
+                  placeholder="e.g., 30 pts"
+                  className="border-slate-200"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-700">Actual</Label>
+                <Input
+                  value={metricForm.actual ?? ''}
+                  onChange={(e) => setMetricForm({ ...metricForm, actual: e.target.value || null })}
+                  placeholder="Pending"
+                  className="border-slate-200"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-700">Measurement Method</Label>
+              <Input
+                value={metricForm.method}
+                onChange={(e) => setMetricForm({ ...metricForm, method: e.target.value })}
+                placeholder="e.g., JIRA story points per sprint"
+                className="border-slate-200"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="border-slate-200 text-slate-700" onClick={() => setMetricDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button className="bg-slate-900 text-white hover:bg-slate-800" onClick={saveMetric} disabled={!metricForm.metric.trim()}>
+              {editingMetricIdx !== null ? 'Update' : 'Add'}
             </Button>
           </DialogFooter>
         </DialogContent>
