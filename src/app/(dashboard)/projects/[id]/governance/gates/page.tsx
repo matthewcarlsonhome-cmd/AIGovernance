@@ -318,11 +318,10 @@ export default function GateReviewPage({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Three-Gate Review Board
+            The Three Gates
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Track progress through the three approval gates required for AI tool
-            deployment from sandbox to production.
+            Three checkpoints between sandbox and production. Clear each one to level up your deployment.
           </p>
         </div>
         <div className="text-right">

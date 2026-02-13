@@ -9,37 +9,37 @@ import { AlertTriangle, RefreshCw, Home, LogOut } from 'lucide-react';
 function getErrorGuidance(message: string): { title: string; guidance: string } {
   if (message.includes('authentication') || message.includes('Unauthorized') || message.includes('401')) {
     return {
-      title: 'Authentication Error',
-      guidance: 'Your session may have expired. Try signing in again.',
+      title: 'Session Expired',
+      guidance: 'Looks like your session wandered off. A quick sign-in will get you right back.',
     };
   }
   if (message.includes('permission') || message.includes('Forbidden') || message.includes('403')) {
     return {
-      title: 'Access Denied',
-      guidance: 'You do not have permission to access this resource. Contact your administrator if you believe this is a mistake.',
+      title: 'No Entry',
+      guidance: 'This area is off-limits for your current role. If that seems wrong, your admin can sort it out.',
     };
   }
   if (message.includes('not found') || message.includes('404')) {
     return {
-      title: 'Not Found',
-      guidance: 'The requested resource could not be found. It may have been moved or deleted.',
+      title: 'Lost in Space',
+      guidance: 'We looked everywhere but couldn\'t find what you\'re after. It might have been moved or removed.',
     };
   }
   if (message.includes('network') || message.includes('fetch') || message.includes('ECONNREFUSED')) {
     return {
-      title: 'Connection Error',
-      guidance: 'Cannot connect to the server. Check your internet connection and try again.',
+      title: 'Connection Dropped',
+      guidance: 'We can\'t reach the server right now. Check your internet connection and give it another shot.',
     };
   }
   if (message.includes('Supabase') || message.includes('supabase')) {
     return {
-      title: 'Database Error',
-      guidance: 'There was a problem connecting to the database. Verify your Supabase configuration in .env.local.',
+      title: 'Database Hiccup',
+      guidance: 'The database connection is acting up. Double-check your Supabase config in .env.local.',
     };
   }
   return {
-    title: 'Something Went Wrong',
-    guidance: 'An unexpected error occurred. Try refreshing the page or going back to the dashboard.',
+    title: 'Oops, Something Broke',
+    guidance: 'Well, that wasn\'t supposed to happen. Try refreshing or head back to the dashboard.',
   };
 }
 

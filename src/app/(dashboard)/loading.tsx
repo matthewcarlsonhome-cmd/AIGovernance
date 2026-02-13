@@ -7,6 +7,11 @@ function Skeleton({ className }: { className?: string }) {
 export default function DashboardLoading() {
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-center py-4">
+        <p className="text-sm text-slate-400 animate-pulse">
+          Warming up your mission control...
+        </p>
+      </div>
       <div className="flex items-center justify-between">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-10 w-32" />

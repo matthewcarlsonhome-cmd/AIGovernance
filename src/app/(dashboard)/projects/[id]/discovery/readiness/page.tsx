@@ -100,10 +100,10 @@ function scoreBarColor(score: number): string {
 
 function ratingLabel(rating: string): string {
   const labels: Record<string, string> = {
-    high: 'High Feasibility',
-    moderate: 'Moderate Feasibility',
-    conditional: 'Conditional Feasibility',
-    not_ready: 'Not Ready',
+    high: 'Ready to Launch',
+    moderate: 'Almost There',
+    conditional: 'Needs Some Work',
+    not_ready: 'Building the Foundation',
   };
   return labels[rating] || rating;
 }
@@ -182,14 +182,15 @@ export default function ReadinessPage({
         </div>
         <Card className="flex flex-col items-center justify-center py-16">
           <CardContent className="text-center">
-            <ListChecks className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-slate-900 mb-2">No Assessment Data Yet</h2>
+            <ListChecks className="h-12 w-12 text-indigo-300 mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-slate-900 mb-2">Your Scorecard Awaits</h2>
             <p className="text-sm text-slate-500 mb-6 max-w-md">
-              Complete the discovery questionnaire first to generate your feasibility scores and readiness assessment across all five domains.
+              Take the 25-question readiness quiz first. It only takes a few minutes and
+              unlocks your personalized feasibility scores across all five domains.
             </p>
             <Link href={`/projects/${id}/discovery/questionnaire`}>
-              <Button className="bg-slate-900 text-white hover:bg-slate-800 gap-2">
-                Start Questionnaire <ArrowRight className="h-4 w-4" />
+              <Button className="gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-200">
+                Take the Quiz <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </CardContent>
@@ -228,10 +229,14 @@ export default function ReadinessPage({
       {/* Page header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight">
-          Readiness Assessment Dashboard
+          {overallScore >= 75 ? 'You\'re Ready to Roll!' : overallScore >= 50 ? 'Getting There!' : 'Your Starting Point'}
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          AI governance feasibility results based on your assessment responses
+          {overallScore >= 75
+            ? 'Your organization is well-positioned for AI governance. Here\'s the full picture.'
+            : overallScore >= 50
+            ? 'A solid foundation with some areas to strengthen. Let\'s see what to prioritize.'
+            : 'Every journey starts somewhere. Here\'s your roadmap to readiness.'}
         </p>
       </div>
 
@@ -338,7 +343,7 @@ export default function ReadinessPage({
 
       {/* Domain Detail Cards */}
       <div className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold">Domain Details</h2>
+        <h2 className="mb-4 text-lg font-semibold">The Breakdown</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {domainScores.map((ds: DomainScore) => {
             const meta = DOMAIN_META[ds.domain];
@@ -362,12 +367,12 @@ export default function ReadinessPage({
                     {ds.passed ? (
                       <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
                         <CheckCircle2 className="mr-1 h-3 w-3" />
-                        Pass
+                        Nailed It
                       </Badge>
                     ) : (
                       <Badge variant="secondary" className="bg-orange-100 text-orange-700 hover:bg-orange-100">
                         <AlertTriangle className="mr-1 h-3 w-3" />
-                        Needs Improvement
+                        Room to Grow
                       </Badge>
                     )}
                     <span className="text-xs text-slate-500">
@@ -404,10 +409,10 @@ export default function ReadinessPage({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Lightbulb className="h-5 w-5 text-amber-500" />
-              Prioritized Recommendations
+              Your Game Plan
             </CardTitle>
             <CardDescription>
-              Actionable items ranked by impact on your readiness score
+              Highest-impact moves first &mdash; tackle these to boost your score fastest
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -473,18 +478,18 @@ export default function ReadinessPage({
             URL.revokeObjectURL(url);
           }}>
             <Download className="h-4 w-4" />
-            Download Report
+            Grab the Report
           </Button>
           <Link href={`/projects/${id}/discovery/prerequisites`}>
             <Button variant="outline" className="gap-2">
               <ListChecks className="h-4 w-4" />
-              View Remediation Tasks
+              See What to Fix
             </Button>
           </Link>
         </div>
         <Link href={`/projects/${id}/governance/policies`}>
           <Button className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
-            Continue to Governance
+            Onward to Governance
             <ArrowRight className="h-4 w-4" />
           </Button>
         </Link>

@@ -7,6 +7,12 @@ function Skeleton({ className }: { className?: string }) {
 export default function QuestionnaireLoading() {
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-center py-3">
+        <p className="text-sm text-slate-400 animate-pulse">
+          Preparing your readiness questionnaire...
+        </p>
+      </div>
+
       {/* Page header */}
       <div className="space-y-2">
         <Skeleton className="h-8 w-72" />
@@ -29,7 +35,6 @@ export default function QuestionnaireLoading() {
           <Skeleton className="h-4 w-80" />
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Question items */}
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="space-y-3">
               <Skeleton className="h-5 w-full max-w-lg" />

@@ -19,6 +19,10 @@ import {
   Shield,
   Users,
   AlertTriangle,
+  Rocket,
+  Sparkles,
+  PartyPopper,
+  Zap,
 } from 'lucide-react';
 import {
   Card,
@@ -101,7 +105,7 @@ function HealthBadge({ score }: { score: number | undefined }) {
   if (!score) {
     return (
       <Badge variant="outline" className="text-xs bg-slate-50 text-slate-400 border-slate-200">
-        No score
+        Not scored yet
       </Badge>
     );
   }
@@ -109,7 +113,7 @@ function HealthBadge({ score }: { score: number | undefined }) {
     return (
       <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
         <ArrowUpRight className="h-3 w-3 mr-0.5" />
-        Healthy
+        Thriving
       </Badge>
     );
   }
@@ -117,14 +121,14 @@ function HealthBadge({ score }: { score: number | undefined }) {
     return (
       <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
         <Minus className="h-3 w-3 mr-0.5" />
-        Moderate
+        Getting There
       </Badge>
     );
   }
   return (
     <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">
       <ArrowDownRight className="h-3 w-3 mr-0.5" />
-      At Risk
+      Needs Love
     </Badge>
   );
 }
@@ -147,15 +151,15 @@ const phaseColors: Record<string, string> = {
 
 function getPhaseLabel(status: string): string {
   const labels: Record<string, string> = {
-    discovery: 'Discovery',
-    governance: 'Governance',
-    sandbox: 'Sandbox',
-    poc: 'PoC Evaluation',
-    pilot: 'Pilot',
-    evaluation: 'Evaluation',
-    production: 'Production',
-    completed: 'Completed',
-    on_hold: 'On Hold',
+    discovery: 'Exploring',
+    governance: 'Governing',
+    sandbox: 'Building',
+    poc: 'Proving It',
+    pilot: 'Piloting',
+    evaluation: 'Evaluating',
+    production: 'Live!',
+    completed: 'Shipped',
+    on_hold: 'Paused',
   };
   return labels[status] || status;
 }
@@ -206,7 +210,7 @@ interface ActivityItem {
 const DEMO_ACTIVITIES: ActivityItem[] = [
   {
     id: 'act-1',
-    action: 'Completed assessment',
+    action: 'crushed the assessment',
     resource: 'Enterprise AI Coding Pilot',
     user: 'Sarah Chen',
     time: '2 hours ago',
@@ -215,7 +219,7 @@ const DEMO_ACTIVITIES: ActivityItem[] = [
   },
   {
     id: 'act-2',
-    action: 'Updated policy',
+    action: 'leveled up the policy',
     resource: 'Acceptable Use Policy v3',
     user: 'James Wilson',
     time: '4 hours ago',
@@ -224,7 +228,7 @@ const DEMO_ACTIVITIES: ActivityItem[] = [
   },
   {
     id: 'act-3',
-    action: 'Added team member',
+    action: 'recruited a new ally',
     resource: 'Legal Document Assistant',
     user: 'Maria Garcia',
     time: '6 hours ago',
@@ -233,7 +237,7 @@ const DEMO_ACTIVITIES: ActivityItem[] = [
   },
   {
     id: 'act-4',
-    action: 'Flagged risk',
+    action: 'spotted a risk',
     resource: 'Data Classification - Tier 2',
     user: 'Alex Kim',
     time: '1 day ago',
@@ -242,7 +246,7 @@ const DEMO_ACTIVITIES: ActivityItem[] = [
   },
   {
     id: 'act-5',
-    action: 'Generated report',
+    action: 'shipped a report',
     resource: 'Executive Summary - Q1 2026',
     user: 'Sarah Chen',
     time: '1 day ago',
@@ -256,13 +260,13 @@ const DEMO_ACTIVITIES: ActivityItem[] = [
 /* ------------------------------------------------------------------ */
 
 const STATUS_CHART_COLORS: Record<string, string> = {
-  Discovery: '#f59e0b',
-  Governance: '#a855f7',
-  Sandbox: '#10b981',
-  'PoC Evaluation': '#3b82f6',
-  Pilot: '#6366f1',
-  Production: '#22c55e',
-  Completed: '#94a3b8',
+  Exploring: '#f59e0b',
+  Governing: '#a855f7',
+  Building: '#10b981',
+  'Proving It': '#3b82f6',
+  Piloting: '#6366f1',
+  'Live!': '#22c55e',
+  Shipped: '#94a3b8',
 };
 
 function StatusDistributionChart({ projects }: { projects: Project[] }) {
@@ -279,8 +283,9 @@ function StatusDistributionChart({ projects }: { projects: Project[] }) {
 
   if (chartData.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[200px] text-sm text-slate-400">
-        No project data to display
+      <div className="flex flex-col items-center justify-center h-[200px] text-sm text-slate-400">
+        <BarChart className="h-8 w-8 text-slate-200 mb-2" />
+        <span>Charts will appear once projects are rolling</span>
       </div>
     );
   }
@@ -381,7 +386,7 @@ function SetupStatusBanner() {
           <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
           <div className="flex-1">
             <p className="text-sm font-medium text-amber-800">
-              Setup incomplete — {failedChecks.length} issue{failedChecks.length !== 1 ? 's' : ''} detected
+              Almost there! {failedChecks.length} thing{failedChecks.length !== 1 ? 's' : ''} left to set up
             </p>
             <ul className="mt-2 space-y-1">
               {checks.map((c) => (
@@ -432,8 +437,8 @@ export default function DashboardPage() {
         <SetupStatusBanner />
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
-            <p className="text-slate-500">AI Governance overview</p>
+            <h1 className="text-2xl font-bold tracking-tight">Welcome, pioneer!</h1>
+            <p className="text-slate-500">Let&apos;s get your governance HQ set up</p>
           </div>
           <Link href="/projects/new">
             <Button className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
@@ -442,17 +447,20 @@ export default function DashboardPage() {
             </Button>
           </Link>
         </div>
-        <Card className="p-12 text-center">
-          <FolderKanban className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-slate-900">Get started with GovAI Studio</h3>
+        <Card className="p-12 text-center border-dashed border-2 border-slate-200">
+          <div className="relative inline-block mb-4">
+            <Rocket className="h-16 w-16 text-indigo-300 mx-auto" />
+            <Sparkles className="h-6 w-6 text-amber-400 absolute -top-1 -right-3 animate-pulse" />
+          </div>
+          <h3 className="text-xl font-semibold text-slate-900">Ready for liftoff?</h3>
           <p className="text-sm text-slate-500 mt-2 max-w-md mx-auto">
-            Create your first AI governance project to begin assessing readiness, setting up
-            policies, configuring sandboxes, and tracking your implementation.
+            Your AI governance journey starts with a single project. From readiness assessments
+            to sandbox configs to production rollout &mdash; we&apos;ll guide you every step of the way.
           </p>
           <Link href="/projects/new" className="mt-6 inline-block">
-            <Button size="lg" className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
-              <Plus className="h-5 w-5" />
-              Create Your First Project
+            <Button size="lg" className="gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-200">
+              <Rocket className="h-5 w-5" />
+              Launch Your First Project
             </Button>
           </Link>
         </Card>
@@ -481,31 +489,31 @@ export default function DashboardPage() {
 
   const stats = [
     {
-      label: 'Total Projects',
+      label: 'Projects in Motion',
       value: String(projectList.length),
-      icon: FolderKanban,
-      change: `${activeProjects.length} active`,
+      icon: Rocket,
+      change: `${activeProjects.length} cooking right now`,
       trend: activeProjects.length,
     },
     {
-      label: 'Active Assessments',
+      label: 'Assessments Done',
       value: String(scoredProjects.length),
-      icon: FileCheck,
-      change: `${projectList.length - scoredProjects.length} pending`,
+      icon: Zap,
+      change: projectList.length - scoredProjects.length > 0 ? `${projectList.length - scoredProjects.length} awaiting your genius` : 'All scored!',
       trend: scoredProjects.length,
     },
     {
-      label: 'Avg Readiness Score',
+      label: 'Readiness Pulse',
       value: avgScore > 0 ? `${avgScore}%` : '--',
       icon: TrendingUp,
-      change: avgScore >= 70 ? 'On track' : avgScore > 0 ? 'Needs attention' : 'No scores yet',
+      change: avgScore >= 70 ? 'Looking sharp!' : avgScore > 0 ? 'Room to grow' : 'Take the quiz!',
       trend: avgScore >= 70 ? 6 : avgScore > 0 ? -3 : 0,
     },
     {
-      label: 'Pending Actions',
+      label: 'To-Do Pile',
       value: String(pendingActions),
       icon: Clock,
-      change: pendingActions > 0 ? 'Requires follow-up' : 'All clear',
+      change: pendingActions > 0 ? `${pendingActions} thing${pendingActions !== 1 ? 's' : ''} to knock out` : 'Inbox zero!',
       trend: pendingActions > 0 ? -pendingActions : 0,
     },
   ];
@@ -518,13 +526,16 @@ export default function DashboardPage() {
       {/* Welcome */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
-          <p className="text-slate-500">AI Governance overview</p>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            Mission Control
+            <Sparkles className="h-5 w-5 text-amber-500" />
+          </h1>
+          <p className="text-slate-500">Your AI governance empire at a glance</p>
         </div>
         <Link href="/projects/new">
           <Button className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
-            <Plus className="h-4 w-4" />
-            New Project
+            <Rocket className="h-4 w-4" />
+            Launch New Project
           </Button>
         </Link>
       </div>
@@ -558,9 +569,9 @@ export default function DashboardPage() {
         {/* Status distribution */}
         <Card className="lg:col-span-3">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Project Status Distribution</CardTitle>
+            <CardTitle className="text-base">Where Things Stand</CardTitle>
             <CardDescription>
-              Breakdown of projects by current phase
+              A bird&apos;s-eye view of every project&apos;s journey
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -572,11 +583,11 @@ export default function DashboardPage() {
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Recent Activity</CardTitle>
+              <CardTitle className="text-base">What&apos;s Happening</CardTitle>
               <Activity className="h-4 w-4 text-slate-400" />
             </div>
             <CardDescription>
-              Latest actions across all projects
+              The latest moves from your team
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -617,7 +628,7 @@ export default function DashboardPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-tight">
-            Recent Projects
+            Your Fleet
           </h2>
           {projectList.length > 3 && (
             <Link
@@ -631,16 +642,16 @@ export default function DashboardPage() {
         </div>
 
         {projectList.length === 0 ? (
-          <Card className="p-8 text-center">
-            <FolderKanban className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900">No projects yet</h3>
+          <Card className="p-8 text-center border-dashed border-2 border-slate-200">
+            <PartyPopper className="h-12 w-12 text-indigo-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-900">The hangar is empty!</h3>
             <p className="text-sm text-slate-500 mt-2">
-              Create your first AI governance project to get started.
+              Time to build your first AI governance project. It only takes a minute.
             </p>
             <Link href="/projects/new" className="mt-4 inline-block">
               <Button className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
-                <Plus className="h-4 w-4" />
-                Create Project
+                <Rocket className="h-4 w-4" />
+                Let&apos;s Go
               </Button>
             </Link>
           </Card>
@@ -680,7 +691,7 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <CardDescription className="line-clamp-2">
-                      {project.description || 'No description provided.'}
+                      {project.description || 'A project full of potential, waiting to be described.'}
                     </CardDescription>
                     {/* Progress indicator */}
                     <div className="space-y-1">

@@ -772,9 +772,9 @@ export default function SandboxConfigurePage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Sandbox Configuration</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Build Your Sandbox</h1>
         <p className="text-slate-500">
-          Configure the isolated environment for AI coding agent evaluation.
+          Design the perfect isolated playground for your AI coding agents.
         </p>
       </div>
 
@@ -784,7 +784,7 @@ export default function SandboxConfigurePage({
           <div className="flex items-start gap-3">
             <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-blue-900 mb-1">How Sandbox Setup Works</p>
+              <p className="text-sm font-semibold text-blue-900 mb-1">Four steps to your sandbox</p>
               <p className="text-sm text-blue-800">
                 Walk through the 4-step wizard to define your sandbox infrastructure. Choose a cloud provider,
                 select the AI model to evaluate, configure security rules, and review before generating config files.

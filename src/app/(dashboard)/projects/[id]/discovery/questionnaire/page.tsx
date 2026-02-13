@@ -14,6 +14,9 @@ import {
   Code2,
   Briefcase,
   Calculator,
+  Sparkles,
+  PartyPopper,
+  Rocket,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -490,33 +493,41 @@ const DOMAINS: DomainMeta[] = [
     key: 'infrastructure',
     label: 'Infrastructure',
     icon: Server,
-    description: 'Cloud, networking, developer environments, and IaC maturity',
+    description: 'The foundation: cloud, networking, dev environments, and automation',
   },
   {
     key: 'security',
     label: 'Security',
     icon: Shield,
-    description: 'Data classification, DLP, SIEM, secrets management, and incident response',
+    description: 'Lock it down: data classification, DLP, secrets, and incident response',
   },
   {
     key: 'governance',
     label: 'Governance',
     icon: Scale,
-    description: 'Policies, compliance frameworks, vendor risk, and change management',
+    description: 'The rulebook: policies, compliance, vendor risk, and change management',
   },
   {
     key: 'engineering',
     label: 'Engineering',
     icon: Code2,
-    description: 'CI/CD, code review, testing, team readiness, and org structure',
+    description: 'The craft: CI/CD, code review, testing, and team readiness',
   },
   {
     key: 'business',
     label: 'Business',
     icon: Briefcase,
-    description: 'Executive sponsorship, outcomes, budget, timeline, and risk appetite',
+    description: 'The big picture: sponsorship, outcomes, budget, and risk appetite',
   },
 ];
+
+const DOMAIN_CELEBRATION: Record<ScoreDomain, string> = {
+  infrastructure: 'Infrastructure mapped! Your foundation is taking shape.',
+  security: 'Security assessed! You know your defenses now.',
+  governance: 'Governance complete! The rulebook is getting clearer.',
+  engineering: 'Engineering done! Your dev culture is on the record.',
+  business: 'Business locked in! The strategic picture is complete.',
+};
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                    */
@@ -806,12 +817,13 @@ export default function QuestionnairePage({
       {/*  Page header                                                      */}
       {/* ---------------------------------------------------------------- */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Feasibility Assessment Questionnaire
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+          How Ready Are You?
+          <Sparkles className="h-5 w-5 text-amber-500" />
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          Answer the questions across five domains to generate your organization&apos;s
-          AI readiness score.
+          Five domains, 25 questions, one readiness score. Let&apos;s find out
+          where you stand and what to tackle first.
         </p>
       </div>
 
@@ -820,7 +832,9 @@ export default function QuestionnairePage({
       {/* ---------------------------------------------------------------- */}
       <div className="mb-6 space-y-2">
         <div className="flex items-center justify-between text-sm">
-          <span className="font-medium text-slate-900">Overall Completion</span>
+          <span className="font-medium text-slate-900">
+            {overallPercent === 100 ? 'All done!' : overallPercent >= 75 ? 'Almost there!' : overallPercent >= 50 ? 'Halfway hero!' : overallPercent > 0 ? 'Making progress!' : 'Let\u0027s go!'}
+          </span>
           <span className="text-slate-500">
             {answeredQuestions} of {totalQuestions} questions ({overallPercent}%)
           </span>
@@ -872,6 +886,16 @@ export default function QuestionnairePage({
       {/* ---------------------------------------------------------------- */}
       {/*  Questions card                                                   */}
       {/* ---------------------------------------------------------------- */}
+      {/* Domain completion celebration */}
+      {domainCompletion[activeDomain.key].answered === domainCompletion[activeDomain.key].total && domainCompletion[activeDomain.key].total > 0 && (
+        <div className="mb-4 flex items-center gap-3 rounded-lg border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-3">
+          <PartyPopper className="h-5 w-5 text-emerald-600 shrink-0" />
+          <p className="text-sm font-medium text-emerald-800">
+            {DOMAIN_CELEBRATION[activeDomain.key]}
+          </p>
+        </div>
+      )}
+
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -989,7 +1013,7 @@ export default function QuestionnairePage({
           className="gap-2"
         >
           <ChevronLeft className="h-4 w-4" />
-          Previous Domain
+          Back
         </Button>
 
         <div className="flex items-center gap-3">
@@ -997,23 +1021,23 @@ export default function QuestionnairePage({
             <Button
               onClick={handleCalculateScore}
               disabled={isCalculating}
-              className="gap-2"
+              className="gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-200"
             >
               {isCalculating ? (
                 <>
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  Calculating...
+                  Crunching the numbers...
                 </>
               ) : (
                 <>
-                  <Calculator className="h-4 w-4" />
-                  Calculate Score
+                  <Rocket className="h-4 w-4" />
+                  Reveal My Readiness Score
                 </>
               )}
             </Button>
           ) : (
             <Button onClick={goNext} className="gap-2">
-              Next Domain
+              Onward!
               <ChevronRight className="h-4 w-4" />
             </Button>
           )}

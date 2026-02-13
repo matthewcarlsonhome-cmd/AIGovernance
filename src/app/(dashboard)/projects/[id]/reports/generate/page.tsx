@@ -1621,9 +1621,8 @@ export default function ReportGeneratePage({
           Report Builder
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          Generate persona-specific reports tailored for each stakeholder group.
-          Reports include project data, assessment results, and AI-generated
-          analysis.
+          Generate reports tailored to each audience &mdash; executives, legal, IT, engineering, or marketing.
+          Each report pulls live project data and readiness insights.
         </p>
       </div>
 

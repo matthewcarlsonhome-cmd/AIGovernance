@@ -138,14 +138,14 @@ export default function ProjectOverviewPage({
 
   // Fun encouragement based on progress
   const encouragement = progress.overall >= 80
-    ? 'Incredible progress! The finish line is in sight.'
+    ? 'You\'re in the home stretch! Victory lap incoming.'
     : progress.overall >= 60
-    ? 'Great momentum! The team is firing on all cylinders.'
+    ? 'Serious momentum here. The team is on fire.'
     : progress.overall >= 40
-    ? 'Solid progress! Each step brings you closer.'
+    ? 'Nice rhythm! You\'re building something great.'
     : progress.overall >= 20
-    ? 'Good start! The foundation is taking shape.'
-    : 'Welcome to the journey! Every great program starts here.';
+    ? 'The foundation is taking shape. Keep stacking.'
+    : 'Every epic governance program starts with step one. This is yours.';
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -158,15 +158,15 @@ export default function ProjectOverviewPage({
                 <Rocket className="h-6 w-6 text-indigo-600" />
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-indigo-900 mb-1">Welcome to your project command center</h2>
+                <h2 className="text-lg font-bold text-indigo-900 mb-1">Welcome aboard! This is your command center.</h2>
                 <p className="text-sm text-indigo-700 mb-3">
-                  This overview is your home base. From here you can track progress across all phases,
-                  see your personal action items, and monitor project health at a glance.
+                  Everything you need in one place: progress, action items, health checks.
+                  Think of it as your governance cockpit &mdash; buckle up and enjoy the ride.
                 </p>
                 <div className="flex flex-wrap gap-4 text-xs text-indigo-600">
-                  <span className="flex items-center gap-1"><Sparkles className="h-3 w-3" /> Action items are personalized to your role</span>
-                  <span className="flex items-center gap-1"><Target className="h-3 w-3" /> Progress updates automatically as you complete tasks</span>
-                  <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Team members see different items based on their role</span>
+                  <span className="flex items-center gap-1"><Sparkles className="h-3 w-3" /> Your action items are tailored to your role</span>
+                  <span className="flex items-center gap-1"><Target className="h-3 w-3" /> Progress updates itself &mdash; no manual tracking</span>
+                  <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Every team member gets their own personalized view</span>
                 </div>
               </div>
               <button
@@ -221,9 +221,9 @@ export default function ProjectOverviewPage({
         {/* Health Panel */}
         <Card className="lg:col-span-2">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg text-slate-900">Project Health</CardTitle>
+            <CardTitle className="text-lg text-slate-900">Vital Signs</CardTitle>
             <CardDescription className="text-slate-500">
-              Key indicators for your governance program
+              How your governance program is feeling today
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -250,26 +250,26 @@ export default function ProjectOverviewPage({
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-600">Risk Level</span>
               <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200 text-xs">
-                Medium
+                Manageable
               </Badge>
             </div>
             {/* Timeline Status */}
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-600">Timeline</span>
               <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs">
-                On Track
+                Smooth Sailing
               </Badge>
             </div>
             {/* Gate Status */}
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-600">Gate Progress</span>
-              <span className="text-sm text-slate-900">1 of 3 approved</span>
+              <span className="text-sm text-slate-900">1 of 3 cleared</span>
             </div>
             {/* Budget */}
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-600">Budget</span>
               <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs">
-                Within Budget
+                Looking Good
               </Badge>
             </div>
 
@@ -277,14 +277,14 @@ export default function ProjectOverviewPage({
               <Link href={`/projects/${id}/discovery/readiness`}>
                 <Button variant="outline" size="sm" className="w-full gap-2 text-xs border-slate-200 text-slate-700">
                   <Target className="h-3.5 w-3.5" />
-                  View Full Assessment
+                  Dive Into the Assessment
                   <ArrowRight className="h-3 w-3 ml-auto" />
                 </Button>
               </Link>
               <Link href="/settings">
                 <Button variant="ghost" size="sm" className="w-full gap-2 text-xs text-slate-500">
                   <Info className="h-3.5 w-3.5" />
-                  Switch role to see different action items
+                  Try a different role to see their view
                 </Button>
               </Link>
             </div>
@@ -297,10 +297,10 @@ export default function ProjectOverviewPage({
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg text-slate-900">
             <Activity className="h-5 w-5 text-slate-500" />
-            Recent Activity
+            The Story So Far
           </CardTitle>
           <CardDescription className="text-slate-500">
-            Latest updates and milestones across the project
+            Every milestone and move, captured in real time
           </CardDescription>
         </CardHeader>
         <CardContent>

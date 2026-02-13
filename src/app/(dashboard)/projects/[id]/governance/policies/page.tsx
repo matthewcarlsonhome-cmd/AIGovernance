@@ -722,11 +722,10 @@ export default function PoliciesPage({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Governance Policies
+            Your Policy Library
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Manage AI governance policy documents, track versions, and route
-            approvals.
+            Draft, version, and approve your AI governance policies. Each document is a building block.
           </p>
         </div>
         <Button

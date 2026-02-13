@@ -1032,10 +1032,10 @@ export default function SettingsPage(): React.ReactElement {
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Settings & Admin
+            Your Control Panel
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Manage your profile, team access, role permissions, and project-level configuration.
+            Tweak your profile, manage team access, switch roles, and fine-tune everything.
           </p>
         </div>
         <div className="flex items-center gap-2 mt-2 sm:mt-0">

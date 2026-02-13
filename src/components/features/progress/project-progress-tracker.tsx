@@ -45,9 +45,11 @@ export function ProjectProgressTracker({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-lg text-slate-900">Project Progress</CardTitle>
+            <CardTitle className="text-lg text-slate-900">
+              {progress.overall >= 80 ? 'Almost at the Finish Line!' : progress.overall >= 50 ? 'Making Great Progress' : progress.overall >= 25 ? 'Off to a Good Start' : 'The Journey Begins'}
+            </CardTitle>
             <CardDescription className="text-slate-500">
-              Overall: {progress.overall}% complete across {progress.phases.length} phases
+              {progress.overall}% complete across {progress.phases.length} phases
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
