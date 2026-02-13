@@ -682,6 +682,25 @@ export default function DashboardPage() {
                     <CardDescription className="line-clamp-2">
                       {project.description || 'No description provided.'}
                     </CardDescription>
+                    {/* Progress indicator */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-500">Progress</span>
+                        <span className="font-medium text-slate-700">
+                          {project.feasibility_score
+                            ? `${Math.min(Math.round(project.feasibility_score * 0.6), 100)}%`
+                            : '0%'}
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-blue-500 transition-all"
+                          style={{
+                            width: `${project.feasibility_score ? Math.min(Math.round(project.feasibility_score * 0.6), 100) : 0}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
                     <p className="text-xs text-slate-500">
                       Updated{' '}
                       {project.updated_at

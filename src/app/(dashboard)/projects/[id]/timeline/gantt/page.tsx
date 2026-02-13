@@ -1,11 +1,21 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useMemo } from 'react';
-import { CalendarRange, Download, ChevronDown, ChevronRight, Diamond } from 'lucide-react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { CalendarRange, Download, ChevronDown, ChevronRight, Diamond, Plus, Pencil, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { useTimelineTasks } from '@/hooks/use-timeline';
 
 type TaskStatus = 'complete' | 'in_progress' | 'not_started' | 'blocked';
@@ -31,7 +41,7 @@ const PHASES = [
   { name: 'Readout', color: 'bg-rose-500' },
 ];
 
-const TASKS: GanttTask[] = [
+const DEFAULT_TASKS: GanttTask[] = [
   // Discovery (days 0-4)
   { id: 't1', title: 'Complete assessment questionnaire', phase: 'Discovery', startDay: 0, duration: 3, status: 'complete', assignee: 'Consultant' },
   { id: 't2', title: 'Collect existing documents', phase: 'Discovery', startDay: 1, duration: 2, status: 'complete', assignee: 'Client' },
@@ -67,7 +77,8 @@ const TASKS: GanttTask[] = [
 ];
 
 const PROJECT_START = new Date(2026, 0, 6); // Jan 6, 2026
-const TOTAL_DAYS = 65;
+const TOTAL_DAYS = 75;
+const STORAGE_KEY = 'govai_gantt_tasks';
 
 function addDays(date: Date, days: number): Date {
   const d = new Date(date);
@@ -93,6 +104,211 @@ const statusLabels: Record<TaskStatus, string> = {
   blocked: 'Blocked',
 };
 
+const STATUS_CYCLE: TaskStatus[] = ['not_started', 'in_progress', 'complete', 'blocked'];
+
+/* -------------------------------------------------------------------------- */
+/*  Task Dialog                                                                */
+/* -------------------------------------------------------------------------- */
+
+function TaskDialog({
+  open,
+  onClose,
+  onSave,
+  onDelete,
+  task,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSave: (task: GanttTask) => void;
+  onDelete?: (id: string) => void;
+  task: GanttTask | null;
+}): React.ReactElement {
+  const [title, setTitle] = useState('');
+  const [phase, setPhase] = useState(PHASES[0].name);
+  const [startDay, setStartDay] = useState(0);
+  const [duration, setDuration] = useState(3);
+  const [status, setStatus] = useState<TaskStatus>('not_started');
+  const [assignee, setAssignee] = useState('');
+  const [isMilestone, setIsMilestone] = useState(false);
+
+  useEffect(() => {
+    if (open && task) {
+      setTitle(task.title);
+      setPhase(task.phase);
+      setStartDay(task.startDay);
+      setDuration(task.duration);
+      setStatus(task.status);
+      setAssignee(task.assignee ?? '');
+      setIsMilestone(task.isMilestone ?? false);
+    } else if (open && !task) {
+      setTitle('');
+      setPhase(PHASES[0].name);
+      setStartDay(0);
+      setDuration(3);
+      setStatus('not_started');
+      setAssignee('');
+      setIsMilestone(false);
+    }
+  }, [open, task]);
+
+  const handleSave = () => {
+    if (!title.trim()) return;
+    onSave({
+      id: task?.id ?? `t-${Date.now()}`,
+      title: title.trim(),
+      phase,
+      startDay: Math.max(0, startDay),
+      duration: Math.max(1, duration),
+      status,
+      assignee: assignee.trim() || undefined,
+      isMilestone,
+    });
+    onClose();
+  };
+
+  const startDate = addDays(PROJECT_START, startDay);
+  const endDate = addDays(PROJECT_START, startDay + duration);
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-slate-900">
+            {task ? 'Edit Task' : 'Add Task'}
+          </DialogTitle>
+          <DialogDescription className="text-slate-500">
+            {task ? 'Modify task details and scheduling' : 'Add a new task to the project timeline'}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div>
+            <Label className="text-slate-700">Task Title *</Label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g., Draft security policy"
+              className="mt-1 border-slate-200"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-slate-700">Phase</Label>
+              <select
+                value={phase}
+                onChange={(e) => setPhase(e.target.value)}
+                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+              >
+                {PHASES.map((p) => (
+                  <option key={p.name} value={p.name}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label className="text-slate-700">Status</Label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as TaskStatus)}
+                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+              >
+                {STATUS_CYCLE.map((s) => (
+                  <option key={s} value={s}>{statusLabels[s]}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-slate-700">
+                Start Day (from project start)
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                max={TOTAL_DAYS}
+                value={startDay}
+                onChange={(e) => setStartDay(Number(e.target.value))}
+                className="mt-1 border-slate-200"
+              />
+              <p className="text-xs text-slate-400 mt-1">
+                {formatDate(startDate)}
+              </p>
+            </div>
+            <div>
+              <Label className="text-slate-700">Duration (days)</Label>
+              <Input
+                type="number"
+                min={1}
+                max={60}
+                value={duration}
+                onChange={(e) => setDuration(Number(e.target.value))}
+                className="mt-1 border-slate-200"
+              />
+              <p className="text-xs text-slate-400 mt-1">
+                Ends {formatDate(endDate)}
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-slate-700">Assignee</Label>
+              <Input
+                value={assignee}
+                onChange={(e) => setAssignee(e.target.value)}
+                placeholder="e.g., Security Lead"
+                className="mt-1 border-slate-200"
+              />
+            </div>
+            <div className="flex items-end pb-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isMilestone}
+                  onChange={(e) => setIsMilestone(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 accent-slate-900"
+                />
+                <span className="text-sm text-slate-700">Milestone</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <DialogFooter className="flex items-center justify-between">
+          <div>
+            {task && onDelete && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  onDelete(task.id);
+                  onClose();
+                }}
+                className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose} className="border-slate-200 text-slate-700">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              className="bg-slate-900 text-white hover:bg-slate-800"
+              disabled={!title.trim()}
+            >
+              {task ? 'Update' : 'Add'} Task
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Page Component                                                             */
+/* -------------------------------------------------------------------------- */
+
 export default function GanttPage({
   params,
 }: {
@@ -102,20 +318,71 @@ export default function GanttPage({
   const { data: fetchedTasks, isLoading, error } = useTimelineTasks(id);
   const [zoom, setZoom] = useState<ZoomLevel>('week');
   const [collapsedPhases, setCollapsedPhases] = useState<Set<string>>(new Set());
+  const [localTasks, setLocalTasks] = useState<GanttTask[] | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<GanttTask | null>(null);
 
-  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
-  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+  // Load tasks from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_${id}`);
+      if (saved) {
+        setLocalTasks(JSON.parse(saved));
+      }
+    } catch {
+      // ignore
+    }
+    setLoaded(true);
+  }, [id]);
 
-  const tasks: GanttTask[] = (fetchedTasks && fetchedTasks.length > 0) ? fetchedTasks as unknown as GanttTask[] : TASKS;
+  const persist = useCallback((tasks: GanttTask[]) => {
+    localStorage.setItem(`${STORAGE_KEY}_${id}`, JSON.stringify(tasks));
+  }, [id]);
+
+  if (isLoading && !loaded) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
+  if (error && !loaded) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+
+  // Priority: localStorage > API > defaults
+  const tasks: GanttTask[] = localTasks ?? ((fetchedTasks && fetchedTasks.length > 0) ? fetchedTasks as unknown as GanttTask[] : DEFAULT_TASKS);
+  const maxDay = Math.max(TOTAL_DAYS, ...tasks.map(t => t.startDay + t.duration + 5));
+
+  const handleSaveTask = (task: GanttTask) => {
+    const existing = tasks.find(t => t.id === task.id);
+    let updated: GanttTask[];
+    if (existing) {
+      updated = tasks.map(t => t.id === task.id ? task : t);
+    } else {
+      updated = [...tasks, task];
+    }
+    setLocalTasks(updated);
+    persist(updated);
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    const updated = tasks.filter(t => t.id !== taskId);
+    setLocalTasks(updated);
+    persist(updated);
+  };
+
+  const handleStatusCycle = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    const currentIdx = STATUS_CYCLE.indexOf(task.status);
+    const nextStatus = STATUS_CYCLE[(currentIdx + 1) % STATUS_CYCLE.length];
+    const updated = tasks.map(t => t.id === taskId ? { ...t, status: nextStatus } : t);
+    setLocalTasks(updated);
+    persist(updated);
+  };
 
   const dayWidth = zoom === 'day' ? 40 : zoom === 'week' ? 28 : 8;
-  const totalWidth = TOTAL_DAYS * dayWidth;
+  const totalWidth = maxDay * dayWidth;
 
   const todayOffset = useMemo(() => {
     const now = new Date(2026, 1, 9); // Feb 9, 2026 for demo
     const diff = Math.floor((now.getTime() - PROJECT_START.getTime()) / (1000 * 60 * 60 * 24));
-    return Math.max(0, Math.min(diff, TOTAL_DAYS));
-  }, []);
+    return Math.max(0, Math.min(diff, maxDay));
+  }, [maxDay]);
 
   const togglePhase = (phase: string) => {
     setCollapsedPhases((prev) => {
@@ -130,15 +397,15 @@ export default function GanttPage({
   const dateHeaders = useMemo(() => {
     const headers: { label: string; left: number; width: number }[] = [];
     if (zoom === 'week') {
-      for (let d = 0; d < TOTAL_DAYS; d += 7) {
+      for (let d = 0; d < maxDay; d += 7) {
         headers.push({ label: formatDate(addDays(PROJECT_START, d)), left: d * dayWidth, width: 7 * dayWidth });
       }
     } else if (zoom === 'day') {
-      for (let d = 0; d < TOTAL_DAYS; d++) {
+      for (let d = 0; d < maxDay; d++) {
         headers.push({ label: addDays(PROJECT_START, d).getDate().toString(), left: d * dayWidth, width: dayWidth });
       }
     } else {
-      for (let m = 0; m < 3; m++) {
+      for (let m = 0; m < 4; m++) {
         const monthStart = new Date(2026, m, 1);
         const label = monthStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
         const startOffset = Math.max(0, Math.floor((monthStart.getTime() - PROJECT_START.getTime()) / (1000 * 60 * 60 * 24)));
@@ -146,24 +413,44 @@ export default function GanttPage({
       }
     }
     return headers;
-  }, [zoom, dayWidth]);
+  }, [zoom, dayWidth, maxDay]);
 
   const groupedTasks = PHASES.map((phase) => ({
     ...phase,
     tasks: tasks.filter((t) => t.phase === phase.name),
   }));
 
+  // Summary stats
+  const completedCount = tasks.filter(t => t.status === 'complete').length;
+  const inProgressCount = tasks.filter(t => t.status === 'in_progress').length;
+  const blockedCount = tasks.filter(t => t.status === 'blocked').length;
+
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <CalendarRange className="h-6 w-6 text-slate-900" />
             Project Timeline
           </h1>
-          <p className="text-slate-500 mt-1">Interactive Gantt chart - 60 day governance project</p>
+          <p className="text-slate-500 mt-1">
+            {tasks.length} tasks across {PHASES.length} phases
+            {completedCount > 0 && <span className="text-emerald-600 ml-2">{completedCount} complete</span>}
+            {inProgressCount > 0 && <span className="text-blue-600 ml-2">{inProgressCount} in progress</span>}
+            {blockedCount > 0 && <span className="text-red-600 ml-2">{blockedCount} blocked</span>}
+          </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            onClick={() => {
+              setEditingTask(null);
+              setDialogOpen(true);
+            }}
+            className="bg-slate-900 text-white hover:bg-slate-800 gap-1"
+          >
+            <Plus className="h-4 w-4" />
+            Add Task
+          </Button>
           <div className="flex border rounded-md overflow-hidden">
             {(['day', 'week', 'month'] as ZoomLevel[]).map((z) => (
               <button key={z} onClick={() => setZoom(z)} className={`px-3 py-1.5 text-sm ${zoom === z ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}>
@@ -186,7 +473,7 @@ export default function GanttPage({
       </div>
 
       {/* Legend */}
-      <div className="flex gap-4 text-xs">
+      <div className="flex gap-4 text-xs flex-wrap">
         {Object.entries(statusStyles).map(([status, color]) => (
           <div key={status} className="flex items-center gap-1.5">
             <div className={`w-3 h-3 rounded ${color}`} />
@@ -197,6 +484,9 @@ export default function GanttPage({
           <Diamond className="h-3 w-3 text-amber-500 fill-amber-500" />
           <span>Milestone</span>
         </div>
+        <div className="flex items-center gap-1.5 ml-auto text-slate-400">
+          Click a task bar to cycle status. Click <Pencil className="h-3 w-3 inline" /> to edit details.
+        </div>
       </div>
 
       {/* Gantt Chart */}
@@ -204,8 +494,11 @@ export default function GanttPage({
         <CardContent className="p-0">
           <div className="flex">
             {/* Left panel - Task list */}
-            <div className="w-[280px] shrink-0 border-r bg-slate-50">
-              <div className="h-10 border-b flex items-center px-3 text-xs font-medium text-slate-500">Task Name</div>
+            <div className="w-[300px] shrink-0 border-r bg-slate-50">
+              <div className="h-10 border-b flex items-center justify-between px-3 text-xs font-medium text-slate-500">
+                <span>Task Name</span>
+                <span>Actions</span>
+              </div>
               {groupedTasks.map((group) => (
                 <div key={group.name}>
                   <button onClick={() => togglePhase(group.name)} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-semibold bg-slate-50 border-b hover:bg-slate-100">
@@ -215,9 +508,19 @@ export default function GanttPage({
                     <Badge variant="outline" className="ml-auto text-[10px]">{group.tasks.length}</Badge>
                   </button>
                   {!collapsedPhases.has(group.name) && group.tasks.map((task) => (
-                    <div key={task.id} className="flex items-center gap-2 px-3 py-1.5 text-xs border-b hover:bg-slate-50 pl-8">
+                    <div key={task.id} className="flex items-center gap-2 px-3 py-1.5 text-xs border-b hover:bg-slate-50 pl-8 group">
                       {task.isMilestone && <Diamond className="h-3 w-3 text-amber-500 fill-amber-500 shrink-0" />}
                       <span className="truncate flex-1">{task.title}</span>
+                      <button
+                        onClick={() => {
+                          setEditingTask(task);
+                          setDialogOpen(true);
+                        }}
+                        className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                        title="Edit task"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </button>
                       <span className={`h-2 w-2 rounded-full shrink-0 ${statusStyles[task.status]}`} />
                     </div>
                   ))}
@@ -260,19 +563,25 @@ export default function GanttPage({
                           <div key={i} className="absolute top-0 h-full border-r border-dashed border-slate-200/30" style={{ left: h.left }} />
                         ))}
                         {task.isMilestone ? (
-                          <div className="absolute top-1" style={{ left: task.startDay * dayWidth + dayWidth / 2 - 8 }}>
+                          <button
+                            className="absolute top-1 cursor-pointer hover:scale-110 transition-transform"
+                            style={{ left: task.startDay * dayWidth + dayWidth / 2 - 8 }}
+                            onClick={() => handleStatusCycle(task.id)}
+                            title={`${task.title} (${statusLabels[task.status]}) - click to change status`}
+                          >
                             <Diamond className="h-5 w-5 text-amber-500 fill-amber-500" />
-                          </div>
+                          </button>
                         ) : (
-                          <div
-                            className={`absolute top-1 h-[20px] rounded-sm ${statusStyles[task.status]} shadow-sm`}
+                          <button
+                            className={`absolute top-1 h-[20px] rounded-sm ${statusStyles[task.status]} shadow-sm cursor-pointer hover:opacity-80 transition-opacity`}
                             style={{ left: task.startDay * dayWidth + 1, width: Math.max(task.duration * dayWidth - 2, 4) }}
-                            title={`${task.title} (${task.duration}d)`}
+                            title={`${task.title} (${statusLabels[task.status]}) - click to change status`}
+                            onClick={() => handleStatusCycle(task.id)}
                           >
                             {task.duration * dayWidth > 60 && (
                               <span className="text-[10px] text-white px-1 truncate block leading-[20px]">{task.title}</span>
                             )}
-                          </div>
+                          </button>
                         )}
                       </div>
                     ))}
@@ -288,6 +597,18 @@ export default function GanttPage({
           </div>
         </CardContent>
       </Card>
+
+      {/* Task Dialog */}
+      <TaskDialog
+        open={dialogOpen}
+        onClose={() => {
+          setDialogOpen(false);
+          setEditingTask(null);
+        }}
+        onSave={handleSaveTask}
+        onDelete={handleDeleteTask}
+        task={editingTask}
+      />
     </div>
   );
 }
