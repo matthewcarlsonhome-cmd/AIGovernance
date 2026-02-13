@@ -36,6 +36,7 @@ import {
   AlertTriangle,
   ArrowRight,
   Send,
+  Info,
 } from "lucide-react";
 import { useGateReviews } from '@/hooks/use-governance';
 
@@ -251,7 +252,6 @@ export default function GateReviewPage({
   const [reminderSent, setReminderSent] = React.useState<Record<string, boolean>>({});
 
   if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
-  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
 
   // Use fetched gates or fall back to demo data
   const gates: Gate[] = (fetchedGates && fetchedGates.length > 0) ? fetchedGates as unknown as Gate[] : GATES;
@@ -334,6 +334,24 @@ export default function GateReviewPage({
           </p>
         </div>
       </div>
+
+      {/* How-to guide */}
+      <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <CardContent className="py-4">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-blue-900 mb-1">How Gate Reviews Work</p>
+              <p className="text-sm text-blue-800">
+                Each gate is a formal approval checkpoint. <strong>Click a gate</strong> to expand its checklist.
+                Check off items as they are completed, submit evidence, and send reminders to approvers.
+                A gate can only be approved when all checklist items are verified and all approvers have signed off.
+                Gates must be approved in order -- Gate 2 requires Gate 1, and Gate 3 requires Gate 2.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Separator />
 

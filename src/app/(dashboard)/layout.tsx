@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/use-auth';
@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { CommandPalette } from '@/components/shared/command-palette';
 import type { UserRole } from '@/types';
+import { buildDemoProgress } from '@/lib/progress/calculator';
+import { CompactProgressBar } from '@/components/features/progress/project-progress-tracker';
 import {
   Shield,
   LayoutDashboard,
@@ -23,42 +25,28 @@ import {
   AlertTriangle,
   Settings,
   Radar,
-  ClipboardCheck,
-  GitBranch,
-  ShieldAlert,
-  Code,
   CheckCircle,
-  FlaskConical,
   Timer,
   GitCompare,
-  TrendingUp,
   CalendarRange,
   Flag,
   FileOutput,
-  History,
   Users,
   PanelLeftClose,
   PanelLeft,
   ChevronDown,
   ChevronRight,
   Grid3X3,
-  Calendar,
   DollarSign,
-  Camera,
   Rocket,
   HelpCircle,
   Heart,
-  BookOpen,
-  Network,
   RefreshCw,
   Beaker,
-  ListOrdered,
-  PackageSearch,
-  Activity,
-  Layers,
   MessageSquare,
-  Briefcase,
   Database,
+  Zap,
+  UserCog,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -79,6 +67,35 @@ interface NavSection {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Role override from settings                                        */
+/* ------------------------------------------------------------------ */
+
+function useRoleOverride(): UserRole | null {
+  const [override, setOverride] = useState<UserRole | null>(null);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('govai_user_role_override');
+      if (saved) setOverride(saved as UserRole);
+    } catch { /* ignore */ }
+
+    const handler = () => {
+      try {
+        const saved = localStorage.getItem('govai_user_role_override');
+        setOverride(saved ? (saved as UserRole) : null);
+      } catch { /* ignore */ }
+    };
+    window.addEventListener('storage', handler);
+    // Also listen for custom event from settings page
+    window.addEventListener('govai-role-change', handler);
+    return () => {
+      window.removeEventListener('storage', handler);
+      window.removeEventListener('govai-role-change', handler);
+    };
+  }, []);
+  return override;
+}
+
+/* ------------------------------------------------------------------ */
 /*  Navigation data                                                    */
 /* ------------------------------------------------------------------ */
 
@@ -88,7 +105,8 @@ const mainNavItems: NavItem[] = [
 ];
 
 /**
- * Reorganized navigation: 6 sections grouped by workflow phase.
+ * Reorganized navigation: 5 sections grouped by workflow phase.
+ * Meeting Notes and Monitoring removed per user feedback.
  * Each item has optional `roles` for role-based filtering.
  */
 function buildProjectSections(projectId: string): NavSection[] {
@@ -132,7 +150,6 @@ function buildProjectSections(projectId: string): NavSection[] {
         { label: 'Milestones', href: p('/timeline/milestones'), icon: Flag },
         { label: 'ROI Calculator', href: p('/roi'), icon: DollarSign, roles: ['admin', 'consultant', 'executive'] },
         { label: 'Report Generator', href: p('/reports/generate'), icon: FileOutput },
-        { label: 'Meeting Notes', href: p('/meetings'), icon: Calendar },
       ],
     },
     {
@@ -141,7 +158,6 @@ function buildProjectSections(projectId: string): NavSection[] {
         { label: 'Team Members', href: p('/team'), icon: Users },
         { label: 'Change Management', href: p('/change-management'), icon: RefreshCw, roles: ['admin', 'consultant', 'marketing'] },
         { label: 'Communications', href: p('/reports/communications'), icon: MessageSquare, roles: ['admin', 'consultant', 'marketing'] },
-        { label: 'Monitoring', href: p('/monitoring'), icon: Activity, roles: ['admin', 'consultant', 'it', 'engineering'] },
       ],
     },
   ];
@@ -160,7 +176,6 @@ function extractProjectId(pathname: string): string | null {
   const match = pathname.match(/^\/projects\/([^/]+)/);
   if (!match) return null;
   const id = match[1];
-  // Exclude "new" — that's the create-project page, not a real project
   if (id === 'new') return null;
   return id;
 }
@@ -198,10 +213,10 @@ function NavLink({
       href={item.href}
       title={collapsed ? item.label : undefined}
       className={cn(
-        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all',
         isActive
-          ? 'bg-slate-900 text-white'
-          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+          ? 'bg-slate-900 text-white shadow-sm'
+          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 hover:translate-x-0.5',
         collapsed && 'justify-center px-2'
       )}
     >
@@ -224,7 +239,6 @@ function CollapsibleSection({
   collapsed: boolean;
   pathname: string;
 }) {
-  // Auto-expand if any child is active
   const hasActiveChild = section.items.some((item) => pathname === item.href);
   const [isOpen, setIsOpen] = useState(hasActiveChild);
 
@@ -291,7 +305,17 @@ const ROLE_LABELS: Record<UserRole, string> = {
   marketing: 'Marketing / Comms',
 };
 
-function TopBar({ pathname }: { pathname: string }) {
+const ROLE_COLORS: Record<UserRole, string> = {
+  admin: 'bg-violet-600',
+  consultant: 'bg-blue-600',
+  executive: 'bg-amber-600',
+  it: 'bg-emerald-600',
+  legal: 'bg-rose-600',
+  engineering: 'bg-cyan-600',
+  marketing: 'bg-pink-600',
+};
+
+function TopBar({ pathname, effectiveRole }: { pathname: string; effectiveRole: UserRole | undefined }) {
   const { data: currentUser } = useCurrentUser();
 
   const getBreadcrumbs = (path: string): { label: string; href: string }[] => {
@@ -312,11 +336,15 @@ function TopBar({ pathname }: { pathname: string }) {
 
   const crumbs = getBreadcrumbs(pathname);
 
-  const displayName = currentUser?.full_name || currentUser?.email?.split('@')[0] || 'User';
-  const displayRole = currentUser?.role
-    ? ROLE_LABELS[currentUser.role]
-    : '';
+  const displayName = currentUser?.full_name || currentUser?.email?.split('@')[0] || 'Team Member';
+  const role = effectiveRole || currentUser?.role;
+  const displayRole = role ? ROLE_LABELS[role] : '';
+  const roleColor = role ? ROLE_COLORS[role] : 'bg-slate-600';
   const initials = getInitials(displayName);
+
+  // Time-based greeting
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
   return (
     <header className="flex h-14 items-center justify-between border-b bg-white px-6">
@@ -338,16 +366,25 @@ function TopBar({ pathname }: { pathname: string }) {
         ))}
       </nav>
       <div className="flex items-center gap-3">
+        <div className="hidden sm:block text-right text-sm mr-2">
+          <p className="text-xs text-slate-400">{greeting}</p>
+          <p className="font-medium leading-none text-slate-900">{displayName}</p>
+        </div>
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white text-xs font-semibold">
+          <div className={cn(
+            'flex h-8 w-8 items-center justify-center rounded-full text-white text-xs font-semibold transition-all',
+            roleColor
+          )}>
             {initials}
           </div>
-          <div className="hidden sm:block text-sm">
-            <p className="font-medium leading-none">{displayName}</p>
-            {displayRole && (
-              <p className="text-xs text-slate-500">{displayRole}</p>
-            )}
-          </div>
+          {displayRole && (
+            <span className={cn(
+              'hidden sm:inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium text-white',
+              roleColor
+            )}>
+              {displayRole}
+            </span>
+          )}
         </div>
       </div>
     </header>
@@ -366,12 +403,16 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { data: currentUser } = useCurrentUser();
+  const roleOverride = useRoleOverride();
   const projectId = extractProjectId(pathname);
+
+  // Effective role: override from settings > user's actual role
+  const effectiveRole = roleOverride || currentUser?.role;
 
   // Build project-scoped nav only when viewing a real project
   const allSections = projectId ? buildProjectSections(projectId) : [];
-  // Filter by user role — admin and consultant see everything
-  const projectSections = filterSectionsByRole(allSections, currentUser?.role);
+  // Filter by effective role
+  const projectSections = filterSectionsByRole(allSections, effectiveRole);
   const projectNav = projectId ? buildProjectItems(projectId) : null;
 
   return (
@@ -390,7 +431,10 @@ export default function DashboardLayout({
             collapsed ? 'justify-center' : 'gap-2'
           )}
         >
-          <Shield className="h-6 w-6 shrink-0 text-slate-900" />
+          <div className="relative">
+            <Shield className="h-6 w-6 shrink-0 text-slate-900" />
+            <Zap className="absolute -top-1 -right-1 h-3 w-3 text-amber-500" />
+          </div>
           {!collapsed && (
             <span className="text-lg font-bold tracking-tight">
               GovAI Studio
@@ -424,10 +468,7 @@ export default function DashboardLayout({
                   </p>
                 )}
 
-                {/* Overview (always visible) */}
                 <NavLink item={projectNav.overviewItem} collapsed={collapsed} pathname={pathname} />
-
-                {/* Setup Guide */}
                 <NavLink item={projectNav.setupItem} collapsed={collapsed} pathname={pathname} />
 
                 {/* Sections — role-filtered */}
@@ -447,12 +488,18 @@ export default function DashboardLayout({
             <>
               <Separator />
               {!collapsed && (
-                <div className="px-3 py-4 text-center">
-                  <p className="text-xs text-slate-400">
-                    Select a project to see navigation options
+                <div className="px-3 py-6 text-center">
+                  <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                    <FolderKanban className="h-6 w-6 text-slate-400" />
+                  </div>
+                  <p className="text-xs text-slate-500 mb-1">
+                    No project selected
                   </p>
-                  <Link href="/projects" className="text-xs text-slate-600 hover:text-slate-900 underline mt-1 inline-block">
-                    View Projects
+                  <p className="text-[11px] text-slate-400 mb-3">
+                    Select or create a project to see its navigation
+                  </p>
+                  <Link href="/projects" className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                    Browse Projects
                   </Link>
                 </div>
               )}
@@ -462,13 +509,29 @@ export default function DashboardLayout({
 
         {/* Bottom area */}
         <div className="border-t px-2 py-3 space-y-1">
+          {/* Compact progress indicator when viewing a project */}
+          {!collapsed && projectId && (
+            <CompactProgressBar progress={buildDemoProgress()} />
+          )}
+          {/* Role indicator when not collapsed */}
+          {!collapsed && effectiveRole && (
+            <div className="px-3 py-2 mb-1">
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <div className={cn('w-2 h-2 rounded-full', ROLE_COLORS[effectiveRole])} />
+                <span>Viewing as <strong className="text-slate-700">{ROLE_LABELS[effectiveRole]}</strong></span>
+              </div>
+              {roleOverride && (
+                <p className="text-[10px] text-amber-600 mt-0.5 pl-4">Role preview active</p>
+              )}
+            </div>
+          )}
           <NavLink
             item={{ label: 'Help & Guide', href: '/help', icon: HelpCircle }}
             collapsed={collapsed}
             pathname={pathname}
           />
           <NavLink
-            item={{ label: 'Settings', href: '/settings', icon: Settings }}
+            item={{ label: 'Admin & Settings', href: '/settings', icon: UserCog }}
             collapsed={collapsed}
             pathname={pathname}
           />
@@ -498,7 +561,7 @@ export default function DashboardLayout({
 
       {/* ---- Main content ---- */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar pathname={pathname} />
+        <TopBar pathname={pathname} effectiveRole={effectiveRole} />
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
     </div>

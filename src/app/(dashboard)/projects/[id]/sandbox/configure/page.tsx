@@ -18,6 +18,7 @@ import {
   Lock,
   Settings,
   ArrowRight,
+  Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -735,7 +736,7 @@ export default function SandboxConfigurePage({
   });
 
   if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
-  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {(error as Error).message}</p></div>;
+  // Gracefully fall through to demo data if API errors
 
   const canProceed = (): boolean => {
     switch (currentStep) {
@@ -776,6 +777,23 @@ export default function SandboxConfigurePage({
           Configure the isolated environment for AI coding agent evaluation.
         </p>
       </div>
+
+      {/* How-to guide */}
+      <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <CardContent className="py-4">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-blue-900 mb-1">How Sandbox Setup Works</p>
+              <p className="text-sm text-blue-800">
+                Walk through the 4-step wizard to define your sandbox infrastructure. Choose a cloud provider,
+                select the AI model to evaluate, configure security rules, and review before generating config files.
+                The generated configs can be exported and applied to your infrastructure. This step is <strong>required for Gate 2</strong> approval.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <StepIndicator steps={STEPS} currentStep={currentStep} />
 

@@ -1,8 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { Flag, CheckCircle, Clock, Circle } from 'lucide-react';
+import { Flag, CheckCircle, Clock, Circle, Info, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { useMilestones } from '@/hooks/use-timeline';
 
 const MILESTONES = [
@@ -26,22 +27,45 @@ export default function MilestonesPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = React.use(params);
-  const { data: fetchedMilestones, isLoading, error } = useMilestones(id);
+  const { data: fetchedMilestones, isLoading } = useMilestones(id);
 
   if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
-  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
 
+  // Gracefully fall through to demo data if API returns empty or errors
   const milestones = (fetchedMilestones && fetchedMilestones.length > 0) ? fetchedMilestones as unknown as typeof MILESTONES : MILESTONES;
 
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Flag className="h-6 w-6 text-slate-900" />
-          Project Milestones
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Flag className="h-6 w-6 text-slate-900" />
+            Project Milestones
+          </h1>
+          <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
+            <Sparkles className="mr-1 h-3 w-3" />
+            {milestones.filter(m => m.status === 'reached').length} of {milestones.length} reached
+          </Badge>
+        </div>
         <p className="text-slate-500 mt-1">Key deliverables and gate review checkpoints</p>
       </div>
+
+      {/* How-to guide */}
+      <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <CardContent className="py-4">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-blue-900 mb-1">How Milestones Work</p>
+              <p className="text-sm text-blue-800">
+                Milestones mark the key decision points in your governance journey. Each <strong>Gate review</strong> represents
+                a formal approval checkpoint -- the project cannot advance past a gate until all prerequisites are met.
+                Milestones automatically update as you complete tasks on the Timeline.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Vertical Timeline */}
       <div className="relative ml-8">

@@ -1,18 +1,21 @@
 'use client';
 
 import * as React from 'react';
-import { use, useState, useMemo } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
   CheckCircle2,
   Circle,
   Clock,
-  Filter,
   Server,
   Shield,
   Scale,
   Users,
+  Sparkles,
+  Info,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -26,7 +29,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { useAssessmentResponses } from '@/hooks/use-assessments';
+import { Input } from '@/components/ui/input';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                      */
@@ -197,6 +200,8 @@ const CATEGORIES: PrerequisiteCategory[] = [
   },
 ];
 
+const STORAGE_KEY = 'govai_prerequisites';
+
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                    */
 /* -------------------------------------------------------------------------- */
@@ -245,16 +250,22 @@ export default function PrerequisitesPage({
   params: Promise<{ id: string }>;
 }): React.ReactElement {
   const { id } = use(params);
-  const { data: responses, isLoading, error } = useAssessmentResponses(id);
 
-  if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
-  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+  // Load persisted state from localStorage
+  const [customItems, setCustomItems] = useState<PrerequisiteItem[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_items_${id}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
 
-  // Use fetched responses to determine completed items if available; fallback to demo data
-  const categories = CATEGORIES;
-
-  // Toggleable completion state
   const [completedIds, setCompletedIds] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set<string>();
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY}_completed_${id}`);
+      if (saved) return new Set(JSON.parse(saved));
+    } catch { /* ignore */ }
     const initial = new Set<string>();
     for (const cat of CATEGORIES) {
       for (const item of cat.items) {
@@ -266,22 +277,69 @@ export default function PrerequisitesPage({
     return initial;
   });
 
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newAssignee, setNewAssignee] = useState('');
+  const [newCategory, setNewCategory] = useState('infrastructure');
+  const [showGuide, setShowGuide] = useState(true);
+
+  const persistCompleted = (ids: Set<string>) => {
+    localStorage.setItem(`${STORAGE_KEY}_completed_${id}`, JSON.stringify([...ids]));
+  };
+  const persistItems = (items: PrerequisiteItem[]) => {
+    localStorage.setItem(`${STORAGE_KEY}_items_${id}`, JSON.stringify(items));
+  };
+
   const toggleComplete = (itemId: string) => {
     setCompletedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(itemId)) {
-        next.delete(itemId);
-      } else {
-        next.add(itemId);
-      }
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      persistCompleted(next);
       return next;
     });
   };
 
+  const addItem = () => {
+    if (!newTitle.trim()) return;
+    const item: PrerequisiteItem = {
+      id: `custom-${Date.now()}`,
+      title: newTitle.trim(),
+      assignedTo: newAssignee.trim() || 'Unassigned',
+      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      status: 'not_started',
+      category: newCategory,
+    };
+    const updated = [...customItems, item];
+    setCustomItems(updated);
+    persistItems(updated);
+    setNewTitle('');
+    setNewAssignee('');
+    setShowAddForm(false);
+  };
+
+  const removeCustomItem = (itemId: string) => {
+    const updated = customItems.filter(i => i.id !== itemId);
+    setCustomItems(updated);
+    persistItems(updated);
+    setCompletedIds(prev => {
+      const next = new Set(prev);
+      next.delete(itemId);
+      persistCompleted(next);
+      return next;
+    });
+  };
+
+  // Merge custom items into categories
+  const categoriesWithCustom = CATEGORIES.map(cat => ({
+    ...cat,
+    items: [...cat.items, ...customItems.filter(i => i.category === cat.key)],
+  }));
+
   // Stats
-  const allItems = CATEGORIES.flatMap((c) => c.items);
+  const allItems = categoriesWithCustom.flatMap((c) => c.items);
   const totalItems = allItems.length;
-  const completedCount = completedIds.size;
+  const completedCount = allItems.filter(i => completedIds.has(i.id)).length;
   const overallPercent = totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : 0;
 
   const inProgressCount = allItems.filter(
@@ -289,24 +347,71 @@ export default function PrerequisitesPage({
   ).length;
   const notStartedCount = totalItems - completedCount - inProgressCount;
 
+  const encouragement = overallPercent === 100
+    ? 'All prerequisites complete! You\'re ready to build.'
+    : overallPercent >= 75
+    ? 'Almost there! Just a few more items to go.'
+    : overallPercent >= 50
+    ? 'Great progress! You\'re past the halfway mark.'
+    : overallPercent > 0
+    ? 'Nice start! Keep the momentum going.'
+    : 'Let\'s get started on the prerequisites.';
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* ---------------------------------------------------------------- */}
-      {/*  Page header                                                      */}
-      {/* ---------------------------------------------------------------- */}
+      {/* Page header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Prerequisites Checklist
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Prerequisites Checklist
+          </h1>
+          <Badge variant="secondary" className="bg-violet-100 text-violet-700">
+            <Sparkles className="mr-1 h-3 w-3" />
+            {encouragement}
+          </Badge>
+        </div>
         <p className="mt-1 text-sm text-slate-500">
           Track and manage prerequisite tasks that must be completed before
           proceeding to sandbox setup and pilot execution.
         </p>
       </div>
 
-      {/* ---------------------------------------------------------------- */}
-      {/*  Overall progress                                                 */}
-      {/* ---------------------------------------------------------------- */}
+      {/* How-to guide */}
+      {showGuide && (
+        <Card className="mb-6 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <CardContent className="py-4">
+            <div className="flex items-start gap-3">
+              <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-blue-900 mb-2">How Prerequisites Work</p>
+                <ul className="text-sm text-blue-800 space-y-1.5">
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold text-blue-600 shrink-0">1.</span>
+                    <span><strong>Review each category</strong> below &mdash; Infrastructure, Security, Governance, and Team items must be in place before your pilot can launch.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold text-blue-600 shrink-0">2.</span>
+                    <span><strong>Click the circle</strong> next to any item to toggle it complete. Assign items to team members so everyone knows their responsibilities.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold text-blue-600 shrink-0">3.</span>
+                    <span><strong>Add custom items</strong> using the button below if your organization has additional requirements beyond the defaults.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold text-blue-600 shrink-0">4.</span>
+                    <span><strong>These feed into Gate Reviews</strong> &mdash; completing prerequisites unlocks Gate 2 (Sandbox Access) approval. Your progress here directly updates the project timeline.</span>
+                  </li>
+                </ul>
+                <button onClick={() => setShowGuide(false)} className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline">
+                  Got it, hide this guide
+                </button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Overall progress */}
       <Card className="mb-8">
         <CardContent className="py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -341,32 +446,93 @@ export default function PrerequisitesPage({
         </CardContent>
       </Card>
 
-      {/* ---------------------------------------------------------------- */}
-      {/*  Category sections                                                */}
-      {/* ---------------------------------------------------------------- */}
+      {/* Add item button */}
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-slate-900">Prerequisite Categories</h2>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="gap-1 border-slate-300 text-slate-700"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Add Custom Item
+        </Button>
+      </div>
+
+      {/* Add form */}
+      {showAddForm && (
+        <Card className="mb-4 border-dashed border-blue-300 bg-blue-50/30">
+          <CardContent className="py-4">
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2">
+                  <Input
+                    placeholder="Prerequisite title..."
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    className="border-slate-200"
+                    onKeyDown={(e) => e.key === 'Enter' && addItem()}
+                  />
+                </div>
+                <Input
+                  placeholder="Assign to..."
+                  value={newAssignee}
+                  onChange={(e) => setNewAssignee(e.target.value)}
+                  className="border-slate-200"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <select
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                >
+                  {CATEGORIES.map(c => (
+                    <option key={c.key} value={c.key}>{c.label}</option>
+                  ))}
+                </select>
+                <Button onClick={addItem} disabled={!newTitle.trim()} className="bg-slate-900 text-white hover:bg-slate-800" size="sm">
+                  Add Item
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowAddForm(false)}>Cancel</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Category sections */}
       <div className="space-y-6">
-        {CATEGORIES.map((category) => {
+        {categoriesWithCustom.map((category) => {
           const Icon = category.icon;
           const catCompleted = category.items.filter((i) => completedIds.has(i.id)).length;
           const catTotal = category.items.length;
           const catPercent = catTotal > 0 ? Math.round((catCompleted / catTotal) * 100) : 0;
 
           return (
-            <Card key={category.key}>
+            <Card key={category.key} className={cn(catPercent === 100 && 'border-emerald-200 bg-emerald-50/20')}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100">
-                      <Icon className="h-5 w-5 text-slate-500" />
+                    <div className={cn(
+                      'flex h-9 w-9 items-center justify-center rounded-lg',
+                      catPercent === 100 ? 'bg-emerald-100' : 'bg-slate-100'
+                    )}>
+                      <Icon className={cn('h-5 w-5', catPercent === 100 ? 'text-emerald-600' : 'text-slate-500')} />
                     </div>
                     <div>
                       <CardTitle className="text-base">{category.label}</CardTitle>
                       <CardDescription>
                         {catCompleted} of {catTotal} complete
+                        {catPercent === 100 && ' -- All done!'}
                       </CardDescription>
                     </div>
                   </div>
-                  <span className="text-sm font-medium text-slate-500">
+                  <span className={cn(
+                    'text-sm font-medium',
+                    catPercent === 100 ? 'text-emerald-600' : 'text-slate-500'
+                  )}>
                     {catPercent}%
                   </span>
                 </div>
@@ -377,37 +543,36 @@ export default function PrerequisitesPage({
                 <div className="space-y-2">
                   {category.items.map((item) => {
                     const isChecked = completedIds.has(item.id);
+                    const isCustom = item.id.startsWith('custom-');
 
                     return (
                       <div
                         key={item.id}
                         className={cn(
-                          'flex items-start gap-4 rounded-lg border px-4 py-3 transition-colors',
+                          'flex items-start gap-4 rounded-lg border px-4 py-3 transition-all',
                           isChecked
                             ? 'border-emerald-200 bg-emerald-50/50'
-                            : 'border-slate-200 bg-white hover:bg-slate-100/30'
+                            : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
                         )}
                       >
-                        {/* Checkbox */}
                         <button
                           onClick={() => toggleComplete(item.id)}
-                          className="mt-0.5 shrink-0"
+                          className="mt-0.5 shrink-0 transition-transform hover:scale-110"
                           aria-label={isChecked ? 'Mark incomplete' : 'Mark complete'}
                         >
                           {isChecked ? (
                             <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                           ) : (
-                            <Circle className="h-5 w-5 text-slate-500 hover:text-slate-900" />
+                            <Circle className="h-5 w-5 text-slate-400 hover:text-slate-600" />
                           )}
                         </button>
 
-                        {/* Content */}
                         <div className="flex-1 min-w-0">
                           <p
                             className={cn(
                               'text-sm font-medium',
                               isChecked
-                                ? 'text-slate-500 line-through'
+                                ? 'text-slate-400 line-through'
                                 : 'text-slate-900'
                             )}
                           >
@@ -422,14 +587,27 @@ export default function PrerequisitesPage({
                               <Clock className="h-3 w-3" />
                               Due {formatDate(item.dueDate)}
                             </span>
+                            {isCustom && (
+                              <Badge variant="outline" className="text-[10px] bg-violet-50 text-violet-600 border-violet-200">
+                                Custom
+                              </Badge>
+                            )}
                           </div>
                         </div>
 
-                        {/* Status badge */}
-                        <div className="shrink-0">
+                        <div className="flex items-center gap-2 shrink-0">
                           {isChecked
                             ? statusBadge('complete')
                             : statusBadge(item.status)}
+                          {isCustom && (
+                            <button
+                              onClick={() => removeCustomItem(item.id)}
+                              className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                              title="Remove custom item"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -441,17 +619,15 @@ export default function PrerequisitesPage({
         })}
       </div>
 
-      {/* ---------------------------------------------------------------- */}
-      {/*  Footer actions                                                   */}
-      {/* ---------------------------------------------------------------- */}
+      {/* Footer actions */}
       <div className="mt-8 flex items-center justify-between">
         <Link href={`/projects/${id}/discovery/readiness`}>
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2 border-slate-300 text-slate-700">
             Back to Readiness Dashboard
           </Button>
         </Link>
         <Link href={`/projects/${id}/governance/policies`}>
-          <Button className="gap-2">
+          <Button className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
             Continue to Governance
             <ArrowRight className="h-4 w-4" />
           </Button>

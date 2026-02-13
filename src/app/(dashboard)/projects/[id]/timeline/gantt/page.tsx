@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { CalendarRange, Download, ChevronDown, ChevronRight, Diamond, Plus, Pencil, Trash2, X } from 'lucide-react';
+import { CalendarRange, Download, ChevronDown, ChevronRight, Diamond, Plus, Pencil, Trash2, X, Info, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -322,6 +322,10 @@ export default function GanttPage({
   const [loaded, setLoaded] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<GanttTask | null>(null);
+  const [showGuide, setShowGuide] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return !localStorage.getItem('govai_gantt_guide_dismissed');
+  });
 
   // Load tasks from localStorage
   useEffect(() => {
@@ -341,7 +345,6 @@ export default function GanttPage({
   }, [id]);
 
   if (isLoading && !loaded) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
-  if (error && !loaded) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
 
   // Priority: localStorage > API > defaults
   const tasks: GanttTask[] = localTasks ?? ((fetchedTasks && fetchedTasks.length > 0) ? fetchedTasks as unknown as GanttTask[] : DEFAULT_TASKS);
@@ -471,6 +474,29 @@ export default function GanttPage({
           }}><Download className="h-4 w-4 mr-2" /> Export</Button>
         </div>
       </div>
+
+      {/* How-to guide */}
+      {showGuide && (
+        <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <CardContent className="py-4">
+            <div className="flex items-start gap-3">
+              <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-blue-900 mb-2">How to Use the Timeline</p>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li><strong>Click any task bar</strong> to cycle its status: Not Started, In Progress, Complete, Blocked.</li>
+                  <li><strong>Click the pencil icon</strong> next to a task name to edit details, reassign, or change dates.</li>
+                  <li><strong>Add Task button</strong> creates new tasks and assigns them to a phase and team member.</li>
+                  <li><strong>This is your master project plan</strong> -- all tasks here feed into the Progress Tracker on the Overview page. The red dashed line shows today.</li>
+                </ul>
+                <button onClick={() => { setShowGuide(false); localStorage.setItem('govai_gantt_guide_dismissed', 'true'); }} className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline">
+                  Got it, hide this guide
+                </button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Legend */}
       <div className="flex gap-4 text-xs flex-wrap">
