@@ -65,7 +65,7 @@ export default function PocProjectsPage({
   const [localProjects, setLocalProjects] = useState<typeof POC_PROJECTS>([]);
 
   if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
-  if (error) return <div className="p-8 text-center"><p className="text-red-600">Error: {error.message}</p></div>;
+  // Gracefully fall through to demo data if API errors
 
   const baseProjects = (fetchedProjects && fetchedProjects.length > 0) ? fetchedProjects as unknown as typeof POC_PROJECTS : POC_PROJECTS;
   const pocProjects = [...baseProjects, ...localProjects];
