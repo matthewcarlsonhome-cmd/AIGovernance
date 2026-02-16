@@ -33,6 +33,7 @@ import { useProject } from '@/hooks/use-projects';
 import { useCurrentUser } from '@/hooks/use-auth';
 import { buildDemoProgress } from '@/lib/progress/calculator';
 import { ProjectProgressTracker } from '@/components/features/progress/project-progress-tracker';
+import { ProjectStatusHeader } from '@/components/features/project-status/next-best-action';
 import { WorkQueue } from '@/components/features/work-queue/work-queue';
 
 /* -------------------------------------------------------------------------- */
@@ -209,6 +210,9 @@ export default function ProjectOverviewPage({
           </span>
         </div>
       </div>
+
+      {/* Next Best Action Header */}
+      <ProjectStatusHeader projectId={id} />
 
       {/* Progress Tracker */}
       <ProjectProgressTracker progress={progress} />

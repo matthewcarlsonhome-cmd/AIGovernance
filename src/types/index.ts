@@ -1091,9 +1091,436 @@ export interface DataReadinessAudit {
   updated_at: string;
 }
 
-// API Response types
+// ─────────────────────────────────────────────────────────────────────────────
+// Data Governance & Classification types (Design Doc §5C, §11)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type DataClassificationLevel = 'public' | 'internal' | 'confidential' | 'restricted';
+export type DataRetentionPeriod = '30_days' | '90_days' | '1_year' | '3_years' | '7_years' | 'indefinite';
+export type LawfulBasis = 'consent' | 'contract' | 'legal_obligation' | 'vital_interest' | 'public_task' | 'legitimate_interest';
+
+export interface DataAssetRecord {
+  id: string;
+  project_id: string;
+  organization_id: string;
+  name: string;
+  description: string;
+  type: 'database' | 'data_lake' | 'api' | 'file_system' | 'streaming' | 'feature_store' | 'document' | 'spreadsheet';
+  domain: string;
+  owner_id: string | null;
+  owner_name: string | null;
+  classification: DataClassificationLevel;
+  lawful_basis: LawfulBasis | null;
+  retention_period: DataRetentionPeriod | null;
+  retention_expires_at: string | null;
+  source_system: string | null;
+  contains_pii: boolean;
+  pii_types: string[];
+  ai_relevance: 'training' | 'inference' | 'both' | 'none';
+  approved: boolean;
+  approved_by: string | null;
+  approved_at: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface DataProcessingActivity {
+  id: string;
+  project_id: string;
+  organization_id: string;
+  data_asset_id: string;
+  purpose: string;
+  processor: string;
+  processing_type: 'collection' | 'storage' | 'analysis' | 'transformation' | 'transfer' | 'deletion';
+  transfer_region: string | null;
+  cross_border: boolean;
+  risk_flags: string[];
+  lawful_basis: LawfulBasis | null;
+  retention_period: DataRetentionPeriod | null;
+  automated_decision_making: boolean;
+  human_oversight_required: boolean;
+  status: 'active' | 'paused' | 'terminated';
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Governance Gates (Design Doc §5B, §11)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type GovernanceGateType = 'design_review' | 'data_approval' | 'security_review' | 'launch_review';
+export type GovernanceGateDecision = 'pending' | 'approved' | 'conditionally_approved' | 'rejected' | 'deferred';
+
+export interface GovernanceGateArtifact {
+  id: string;
+  name: string;
+  description: string;
+  required: boolean;
+  provided: boolean;
+  file_url: string | null;
+  verified_by: string | null;
+  verified_at: string | null;
+}
+
+export interface GovernanceGate {
+  id: string;
+  project_id: string;
+  organization_id: string;
+  gate_type: GovernanceGateType;
+  gate_order: number;
+  title: string;
+  description: string;
+  required_artifacts: GovernanceGateArtifact[];
+  decision: GovernanceGateDecision;
+  decision_rationale: string | null;
+  approver_id: string | null;
+  approver_name: string | null;
+  decided_at: string | null;
+  conditions: string[];
+  escalation_required: boolean;
+  submitted_by: string | null;
+  submitted_at: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Control Checks / Security Operations (Design Doc §5D, §11)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type ControlCheckCategory = 'auth' | 'secrets' | 'model_config' | 'logging' | 'egress' | 'storage' | 'data_retention' | 'access_control' | 'encryption';
+export type ControlCheckResult = 'pass' | 'fail' | 'warning' | 'not_applicable' | 'error';
+
+export interface ControlCheck {
+  id: string;
+  project_id: string;
+  organization_id: string;
+  control_id: string;
+  control_name: string;
+  category: ControlCheckCategory;
+  description: string;
+  result: ControlCheckResult;
+  evidence_link: string | null;
+  evidence_details: string | null;
+  remediation: string | null;
+  checked_at: string;
+  checked_by: string | null;
+  next_check_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SecurityControlStatus {
+  total_controls: number;
+  passed: number;
+  failed: number;
+  warnings: number;
+  not_applicable: number;
+  pass_rate: number;
+  by_category: Record<ControlCheckCategory, { total: number; passed: number; failed: number }>;
+  last_run_at: string | null;
+  checks: ControlCheck[];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Policy Rules / Policy-as-Code (Design Doc §5B, §8.3, §11)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type PolicyRuleSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+export type PolicyEnforcementMode = 'enforce' | 'warn' | 'audit' | 'disabled';
+
+export interface PolicyRule {
+  id: string;
+  project_id: string | null;
+  organization_id: string;
+  name: string;
+  description: string;
+  category: string;
+  rule_definition: Record<string, unknown>;
+  severity: PolicyRuleSeverity;
+  enforcement_mode: PolicyEnforcementMode;
+  applies_to: string[];
+  exceptions: PolicyRuleException[];
+  version: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface PolicyRuleException {
+  id: string;
+  reason: string;
+  approved_by: string;
+  approved_at: string;
+  expires_at: string | null;
+  compensating_controls: string[];
+}
+
+export interface PolicyEvaluationResult {
+  rule_id: string;
+  rule_name: string;
+  severity: PolicyRuleSeverity;
+  passed: boolean;
+  message: string;
+  evidence: string | null;
+  remediation: string | null;
+}
+
+export interface PolicyEvaluationSummary {
+  project_id: string;
+  total_rules: number;
+  passed: number;
+  failed: number;
+  warnings: number;
+  results: PolicyEvaluationResult[];
+  evaluated_at: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Security Incidents (Design Doc §6.5, §11)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type SecurityIncidentCategory = 'data_leak' | 'model_misuse' | 'prompt_injection' | 'compliance_breach' | 'unauthorized_access' | 'policy_violation' | 'other';
+export type SecurityIncidentSeverity = 'critical' | 'high' | 'medium' | 'low';
+export type SecurityIncidentStatus = 'open' | 'investigating' | 'contained' | 'resolved' | 'closed';
+
+export interface SecurityIncident {
+  id: string;
+  project_id: string;
+  organization_id: string;
+  category: SecurityIncidentCategory;
+  severity: SecurityIncidentSeverity;
+  title: string;
+  description: string;
+  detected_at: string;
+  detected_by: string | null;
+  status: SecurityIncidentStatus;
+  assigned_to: string | null;
+  assigned_to_name: string | null;
+  resolution: string | null;
+  resolved_at: string | null;
+  root_cause: string | null;
+  impact_assessment: string | null;
+  corrective_actions: string[];
+  linked_control_ids: string[];
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Evidence Packages (Design Doc §8.2, §11)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface EvidenceArtifact {
+  id: string;
+  type: 'policy' | 'gate_approval' | 'control_check' | 'risk_assessment' | 'data_classification' | 'audit_log' | 'report' | 'other';
+  name: string;
+  description: string;
+  file_url: string | null;
+  content_snapshot: Record<string, unknown> | null;
+  collected_at: string;
+}
+
+export interface EvidencePackage {
+  id: string;
+  project_id: string;
+  organization_id: string;
+  version: number;
+  title: string;
+  description: string | null;
+  artifact_manifest: EvidenceArtifact[];
+  gate_summaries: { gate_type: GovernanceGateType; decision: GovernanceGateDecision; decided_at: string | null }[];
+  control_summary: { total: number; passed: number; failed: number } | null;
+  risk_summary: { total: number; by_tier: Record<RiskTier, number> } | null;
+  generated_by: string | null;
+  generated_at: string;
+  file_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Audit Events (Design Doc §6.5, §8.2)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type AuditEventType =
+  | 'auth_change'
+  | 'policy_edit'
+  | 'policy_approved'
+  | 'gate_submitted'
+  | 'gate_approved'
+  | 'gate_rejected'
+  | 'risk_updated'
+  | 'data_classified'
+  | 'data_approved'
+  | 'control_check_run'
+  | 'export_generated'
+  | 'model_config_changed'
+  | 'incident_created'
+  | 'incident_resolved'
+  | 'evidence_generated'
+  | 'team_change'
+  | 'project_status_change';
+
+export interface AuditEvent {
+  id: string;
+  project_id: string | null;
+  organization_id: string;
+  event_type: AuditEventType;
+  actor_id: string;
+  actor_name: string;
+  actor_role: UserRole;
+  description: string;
+  metadata: Record<string, unknown>;
+  ip_address: string | null;
+  created_at: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pilot Setup Wizard (Design Doc §5A)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type PilotWizardStep = 'business_goal' | 'use_case' | 'data_scope' | 'risk_tier' | 'success_metrics' | 'architecture' | 'launch_checklist';
+
+export interface PilotTemplate {
+  id: string;
+  name: string;
+  domain: 'support' | 'knowledge_search' | 'document_drafting' | 'workflow_automation' | 'code_generation' | 'data_analysis' | 'custom';
+  description: string;
+  default_objectives: string[];
+  default_success_metrics: string[];
+  default_risk_tier: RiskTier;
+  estimated_duration_weeks: number;
+  prerequisites: string[];
+}
+
+export interface PilotSetup {
+  id: string;
+  project_id: string;
+  organization_id: string;
+  template_id: string | null;
+  current_step: PilotWizardStep;
+  business_goal: string | null;
+  use_case_description: string | null;
+  use_case_domain: string | null;
+  data_scope: {
+    classification: DataClassificationLevel;
+    data_sources: string[];
+    contains_pii: boolean;
+    cross_border: boolean;
+  } | null;
+  risk_tier: RiskTier | null;
+  success_metrics: { metric: string; target: string; measurement_method: string }[];
+  architecture_notes: string | null;
+  launch_checklist: { item: string; completed: boolean; required: boolean }[];
+  readiness_score: number | null;
+  status: 'draft' | 'in_progress' | 'ready' | 'launched';
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Next Best Action (Design Doc §7.2)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type ActionPriority = 'required' | 'recommended' | 'optional';
+export type ActionCategory = 'governance' | 'security' | 'data' | 'pilot' | 'review' | 'team';
+
+export interface NextBestAction {
+  id: string;
+  title: string;
+  description: string;
+  category: ActionCategory;
+  priority: ActionPriority;
+  href: string;
+  cta_label: string;
+  blocker: boolean;
+  completed: boolean;
+}
+
+export interface ProjectStatusSummary {
+  project_id: string;
+  current_phase: ProjectStatus;
+  completion_percent: number;
+  blockers: number;
+  next_actions: NextBestAction[];
+  governance_gates: { gate_type: GovernanceGateType; decision: GovernanceGateDecision }[];
+  security_posture: { pass_rate: number; critical_failures: number };
+  data_classification_complete: boolean;
+  pilot_readiness_score: number | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// KPI & Value Metrics (Design Doc §5E)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type KpiCategory = 'time_saved' | 'quality_lift' | 'error_rate' | 'adoption' | 'cost_reduction' | 'satisfaction';
+
+export interface KpiDefinition {
+  id: string;
+  project_id: string;
+  category: KpiCategory;
+  name: string;
+  description: string;
+  unit: string;
+  baseline_value: number | null;
+  target_value: number;
+  current_value: number | null;
+  measurement_method: string;
+  owner_id: string | null;
+  owner_name: string | null;
+  frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+  status: 'not_started' | 'tracking' | 'met' | 'at_risk' | 'missed';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface KpiSnapshot {
+  id: string;
+  kpi_id: string;
+  value: number;
+  confidence: 'low' | 'medium' | 'high';
+  notes: string | null;
+  captured_at: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI Threat Model (Design Doc §5D)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type ThreatCategory = 'prompt_injection' | 'data_exfiltration' | 'over_permissioned_tools' | 'unsafe_output' | 'model_poisoning' | 'denial_of_service' | 'supply_chain' | 'privacy_violation';
+
+export interface ThreatModelItem {
+  id: string;
+  project_id: string;
+  category: ThreatCategory;
+  threat_name: string;
+  description: string;
+  likelihood: RiskTier;
+  impact: RiskTier;
+  risk_score: number;
+  current_controls: string[];
+  recommended_controls: string[];
+  mitigation_status: 'open' | 'mitigated' | 'accepted' | 'transferred';
+  owner_id: string | null;
+  owner_name: string | null;
+  due_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// API Response types (updated per Design Doc §12)
 export interface ApiResponse<T = unknown> {
   data?: T;
-  error?: string;
+  error?: string | null;
   message?: string;
+  traceId?: string;
 }
