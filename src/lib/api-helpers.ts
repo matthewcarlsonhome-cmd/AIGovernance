@@ -8,6 +8,14 @@ import {
 import type { ApiResponse } from '@/types';
 
 /**
+ * Generate a unique trace ID for request correlation.
+ * Uses crypto.randomUUID() which is available in Node 19+ and all modern runtimes.
+ */
+export function generateTraceId(): string {
+  return crypto.randomUUID();
+}
+
+/**
  * Extract the client IP address from a Next.js request.
  *
  * Checks the standard `x-forwarded-for` header first (set by reverse
@@ -60,6 +68,7 @@ export function withRateLimit(
       {
         error: 'Too many requests',
         message: `Rate limit exceeded. Please retry after ${retryAfterSeconds} seconds.`,
+        traceId: generateTraceId(),
       },
       { status: 429 },
     );
@@ -80,16 +89,31 @@ export function withRateLimit(
  * @param message - Human-readable error description.
  * @param status  - HTTP status code (defaults to 500).
  */
-export function apiError(message: string, status: number = 500): NextResponse<ApiResponse> {
-  return NextResponse.json<ApiResponse>({ error: message }, { status });
+export function apiError(
+  message: string,
+  status: number = 500,
+  traceId?: string,
+): NextResponse<ApiResponse> {
+  return NextResponse.json<ApiResponse>(
+    { error: message, traceId: traceId ?? generateTraceId() },
+    { status },
+  );
 }
 
 /**
  * Create a consistent JSON success response.
  *
- * @param data   - The payload to return under the `data` key.
- * @param status - HTTP status code (defaults to 200).
+ * @param data    - The payload to return under the `data` key.
+ * @param status  - HTTP status code (defaults to 200).
+ * @param message - Optional human-readable summary.
  */
-export function apiSuccess<T>(data: T, status: number = 200): NextResponse<ApiResponse<T>> {
-  return NextResponse.json<ApiResponse<T>>({ data }, { status });
+export function apiSuccess<T>(
+  data: T,
+  status: number = 200,
+  message?: string,
+): NextResponse<ApiResponse<T>> {
+  return NextResponse.json<ApiResponse<T>>(
+    { data, message, traceId: generateTraceId() },
+    { status },
+  );
 }

@@ -1517,6 +1517,85 @@ export interface ThreatModelItem {
   updated_at: string;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Canonical Project State Machine (Design Doc §6.2, Redesign §6.2)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type ProjectState =
+  | 'draft'
+  | 'scoped'
+  | 'data_approved'
+  | 'security_approved'
+  | 'pilot_running'
+  | 'review_complete'
+  | 'decision_finalized';
+
+export interface StateTransition {
+  from: ProjectState;
+  to: ProjectState;
+  required_role: UserRole[];
+  required_gates: GovernanceGateType[];
+  label: string;
+  description: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SLA & Escalation Workflows (Design Doc §9 Phase 4)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type EscalationLevel = 'l1_owner' | 'l2_manager' | 'l3_director' | 'l4_executive';
+
+export type SlaStatus = 'within' | 'warning' | 'breached';
+
+export interface SlaPolicy {
+  id: string;
+  name: string;
+  description: string;
+  target_days: number;
+  warning_days: number;
+  applies_to: 'risk' | 'gate_review' | 'control_failure' | 'incident';
+  escalation_chain: EscalationLevel[];
+  organization_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EscalationRecord {
+  id: string;
+  sla_policy_id: string;
+  resource_type: string;
+  resource_id: string;
+  project_id: string;
+  organization_id: string;
+  current_level: EscalationLevel;
+  status: SlaStatus;
+  opened_at: string;
+  due_at: string;
+  escalated_at: string | null;
+  resolved_at: string | null;
+  assigned_to: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin / Adoption Analytics (Design Doc §9 Phase 4, Redesign §13)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface AdoptionMetrics {
+  period: string;
+  weekly_active_teams: number;
+  projects_created: number;
+  pilots_launched: number;
+  governance_artifacts_completed: number;
+  report_exports: number;
+  avg_time_to_first_pilot_days: number | null;
+  workflow_completion_rate: number;
+  data_classification_pct: number;
+  controls_passing_pct: number;
+}
+
 // API Response types (updated per Design Doc §12)
 export interface ApiResponse<T = unknown> {
   data?: T;

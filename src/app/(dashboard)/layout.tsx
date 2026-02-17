@@ -106,6 +106,7 @@ function useRoleOverride(): UserRole | null {
 const mainNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Projects', href: '/projects', icon: FolderKanban },
+  { label: 'Portfolio Posture', href: '/portfolio', icon: Shield, roles: ['admin', 'consultant', 'executive'] },
 ];
 
 /**
@@ -156,6 +157,7 @@ function buildProjectSections(projectId: string): NavSection[] {
         { label: 'Timeline', href: p('/timeline/gantt'), icon: CalendarRange },
         { label: 'Milestones', href: p('/timeline/milestones'), icon: Flag },
         { label: 'ROI Calculator', href: p('/roi'), icon: DollarSign, roles: ['admin', 'consultant', 'executive'] },
+        { label: 'KPI Metrics', href: p('/metrics'), icon: BarChart3, roles: ['admin', 'consultant', 'executive'] },
         { label: 'Monitoring', href: p('/monitoring'), icon: Activity, roles: ['admin', 'consultant', 'it'] },
         { label: 'Security Dashboard', href: p('/monitoring/security'), icon: Shield, roles: ['admin', 'consultant', 'it'] },
       ],
