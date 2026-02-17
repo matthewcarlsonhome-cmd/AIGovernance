@@ -1596,6 +1596,53 @@ export interface AdoptionMetrics {
   controls_passing_pct: number;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Outcome Metrics — target vs actual (Redesign §9, §10, §11)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface OutcomeMetric {
+  id: string;
+  project_id: string;
+  name: string;
+  category: 'value' | 'quality' | 'adoption' | 'efficiency' | 'risk';
+  target_value: number;
+  actual_value: number | null;
+  unit: string;
+  confidence: 'low' | 'medium' | 'high';
+  measurement_date: string | null;
+  notes: string | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Executive Decision Brief (Redesign §11.1)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ExecutiveDecisionBrief {
+  project_id: string;
+  generated_at: string;
+  trace_id: string;
+  recommendation: 'go' | 'conditional_go' | 'no_go';
+  recommendation_rationale: string;
+  value_summary: {
+    kpi_attainment_pct: number | null;
+    top_wins: string[];
+    concerns: string[];
+  };
+  risk_posture: {
+    total_risks: number;
+    high_critical_open: number;
+    control_pass_rate: number;
+    unresolved_items: string[];
+  };
+  governance_status: {
+    gates_passed: number;
+    gates_total: number;
+    data_classified: boolean;
+    evidence_exported: boolean;
+  };
+  next_steps: string[];
+}
+
 // API Response types (updated per Design Doc §12)
 export interface ApiResponse<T = unknown> {
   data?: T;

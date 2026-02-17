@@ -28,13 +28,14 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { ProjectStatus } from '@/types';
+import type { ProjectStatus, ProjectState } from '@/types';
 import { useProject } from '@/hooks/use-projects';
 import { useCurrentUser } from '@/hooks/use-auth';
 import { buildDemoProgress } from '@/lib/progress/calculator';
 import { ProjectProgressTracker } from '@/components/features/progress/project-progress-tracker';
 import { ProjectStatusHeader } from '@/components/features/project-status/next-best-action';
 import { WorkQueue } from '@/components/features/work-queue/work-queue';
+import { STATE_ORDER, STATE_LABELS, getStateProgress } from '@/lib/state-machine';
 
 /* -------------------------------------------------------------------------- */
 /*  Fallback demo data                                                         */
@@ -90,6 +91,53 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+function ProjectStateMachineBar({ currentState }: { currentState: ProjectState }): React.ReactElement {
+  const currentIdx = STATE_ORDER.indexOf(currentState);
+  const progress = getStateProgress(currentState);
+
+  return (
+    <Card>
+      <CardContent className="py-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium text-slate-500">Project Lifecycle</span>
+          <span className="text-xs font-medium text-slate-700">{progress}% complete</span>
+        </div>
+        <div className="flex items-center gap-1">
+          {STATE_ORDER.map((state, i) => {
+            const isComplete = i < currentIdx;
+            const isCurrent = i === currentIdx;
+            return (
+              <React.Fragment key={state}>
+                {i > 0 && (
+                  <div className={cn(
+                    'h-0.5 flex-1',
+                    isComplete ? 'bg-green-400' : 'bg-slate-200',
+                  )} />
+                )}
+                <div
+                  className={cn(
+                    'flex items-center justify-center rounded-full text-xs font-medium shrink-0',
+                    isComplete ? 'w-6 h-6 bg-green-500 text-white' :
+                    isCurrent ? 'w-6 h-6 bg-blue-500 text-white ring-2 ring-blue-200' :
+                    'w-6 h-6 bg-slate-200 text-slate-500',
+                  )}
+                  title={STATE_LABELS[state]}
+                >
+                  {isComplete ? '\u2713' : i + 1}
+                </div>
+              </React.Fragment>
+            );
+          })}
+        </div>
+        <div className="flex justify-between mt-2">
+          <span className="text-xs text-slate-400">{STATE_LABELS[STATE_ORDER[0]]}</span>
+          <span className="text-xs font-medium text-blue-600">{STATE_LABELS[currentState]}</span>
+          <span className="text-xs text-slate-400">{STATE_LABELS[STATE_ORDER[STATE_ORDER.length - 1]]}</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 /* -------------------------------------------------------------------------- */
 /*  Page Component                                                             */
@@ -210,6 +258,9 @@ export default function ProjectOverviewPage({
           </span>
         </div>
       </div>
+
+      {/* Project State Machine */}
+      <ProjectStateMachineBar currentState="scoped" />
 
       {/* Next Best Action Header */}
       <ProjectStatusHeader projectId={id} />

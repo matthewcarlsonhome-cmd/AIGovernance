@@ -119,6 +119,15 @@ function buildProjectSections(projectId: string): NavSection[] {
   const p = (path: string) => `/projects/${projectId}${path}`;
   return [
     {
+      title: 'Workspaces',
+      items: [
+        { label: 'Plan', href: p('/plan'), icon: Target },
+        { label: 'Govern', href: p('/govern'), icon: ShieldCheck },
+        { label: 'Execute', href: p('/execute'), icon: Rocket },
+        { label: 'Decide', href: p('/decide'), icon: Scale },
+      ],
+    },
+    {
       title: 'Pilot Setup',
       items: [
         { label: 'Pilot Wizard', href: p('/pilot-setup'), icon: Zap },
