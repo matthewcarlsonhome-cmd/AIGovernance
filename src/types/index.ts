@@ -1643,6 +1643,147 @@ export interface ExecutiveDecisionBrief {
   next_steps: string[];
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Pilot Intake Scorecard (Design Doc v3 §5.1A)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type IntakeRiskPath = 'fast_track' | 'standard' | 'high_risk';
+
+export interface PilotIntakeQuestion {
+  id: string;
+  question: string;
+  options: { label: string; value: string; score: number }[];
+  weight: number;
+}
+
+export interface PilotIntakeResponse {
+  question_id: string;
+  selected_value: string;
+  score: number;
+}
+
+export interface PilotIntakeResult {
+  id: string;
+  project_id: string;
+  responses: PilotIntakeResponse[];
+  total_score: number;
+  max_score: number;
+  risk_path: IntakeRiskPath;
+  recommended_actions: string[];
+  created_at: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Risk Exception Workflow (Design Doc v3 §5.1D)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type ExceptionStatus = 'requested' | 'approved' | 'denied' | 'expired' | 'revoked';
+
+export interface RiskException {
+  id: string;
+  project_id: string;
+  organization_id: string;
+  risk_id: string | null;
+  control_id: string | null;
+  title: string;
+  justification: string;
+  compensating_controls: string[];
+  requested_by: string;
+  requested_at: string;
+  approved_by: string | null;
+  approved_at: string | null;
+  expires_at: string;
+  status: ExceptionStatus;
+  expiry_reminder_sent: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Workflow Mapping Matrix (Design Doc v3 §5.2, Phase 0)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type CanonicalWorkflowStep = 'scope' | 'classify' | 'control_check' | 'approve' | 'execute' | 'decide';
+
+export interface WorkflowMapping {
+  page_route: string;
+  page_title: string;
+  workflow_step: CanonicalWorkflowStep;
+  workspace: 'plan' | 'govern' | 'execute' | 'decide';
+  decision_supported: string;
+  status: 'keep' | 'consolidate' | 'remove';
+  consolidate_into?: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Action Queue (Design Doc v3 §5.3)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type ActionQueueItemType = 'gate_review' | 'risk_exception' | 'control_failure' | 'sla_breach' | 'approval_request' | 'task_overdue';
+
+export interface ActionQueueItem {
+  id: string;
+  project_id: string;
+  project_name: string;
+  type: ActionQueueItemType;
+  title: string;
+  description: string;
+  priority: RiskTier;
+  due_date: string | null;
+  assigned_to: string | null;
+  assigned_to_name: string | null;
+  resource_type: string;
+  resource_id: string;
+  href: string;
+  created_at: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Portfolio Heatmap (Design Doc v3 §5.1F)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface PortfolioHeatmapProject {
+  project_id: string;
+  project_name: string;
+  state: ProjectState;
+  risk_score: number;
+  control_pass_rate: number;
+  kpi_attainment: number | null;
+  decision_status: ExecutiveDecisionBrief['recommendation'] | null;
+  blockers: number;
+  days_in_current_state: number;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Domain Services (Design Doc v3 §8.1)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ProjectLifecycleContext {
+  project_id: string;
+  organization_id: string;
+  current_state: ProjectState;
+  actor: { id: string; name: string; role: UserRole };
+}
+
+export interface GovernanceControlContext {
+  project_id: string;
+  organization_id: string;
+  gates: GovernanceGate[];
+  controls: ControlCheck[];
+  risks: RiskClassification[];
+  exceptions: RiskException[];
+}
+
+export interface DecisionSupportContext {
+  project_id: string;
+  kpi_summary: { overall_attainment_pct: number | null; met: number; at_risk: number; missed: number };
+  risk_posture: { total: number; high_critical_open: number; control_pass_rate: number };
+  gate_status: { passed: number; total: number };
+  evidence_complete: boolean;
+  outcome_metrics: OutcomeMetric[];
+}
+
 // API Response types (updated per Design Doc §12)
 export interface ApiResponse<T = unknown> {
   data?: T;
