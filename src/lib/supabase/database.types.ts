@@ -136,6 +136,30 @@ export type ActionItemPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 export type RaciAssignment = 'R' | 'A' | 'C' | 'I';
 
+// New enums for Phase 1-2 tables
+export type DataClassificationLevel = 'public' | 'internal' | 'confidential' | 'restricted';
+export type DataRetentionPeriod = '30_days' | '90_days' | '1_year' | '3_years' | '7_years' | 'indefinite';
+export type LawfulBasis = 'consent' | 'contract' | 'legal_obligation' | 'vital_interest' | 'public_task' | 'legitimate_interest';
+export type DataProcessingType = 'collection' | 'storage' | 'analysis' | 'transformation' | 'transfer' | 'deletion';
+export type GovernanceGateType = 'design_review' | 'data_approval' | 'security_review' | 'launch_review';
+export type GovernanceGateDecision = 'pending' | 'approved' | 'conditionally_approved' | 'rejected' | 'deferred';
+export type PilotWizardStep = 'business_goal' | 'use_case' | 'data_scope' | 'risk_tier' | 'success_metrics' | 'architecture' | 'launch_checklist';
+export type PilotSetupStatus = 'draft' | 'in_progress' | 'ready' | 'launched';
+export type ControlCheckCategory = 'auth' | 'secrets' | 'model_config' | 'logging' | 'egress' | 'storage' | 'data_retention' | 'access_control' | 'encryption';
+export type ControlCheckResult = 'pass' | 'fail' | 'warning' | 'not_applicable' | 'error';
+export type PolicyRuleSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+export type PolicyEnforcementMode = 'enforce' | 'warn' | 'audit' | 'disabled';
+export type SecurityIncidentCategory = 'data_leak' | 'model_misuse' | 'prompt_injection' | 'compliance_breach' | 'unauthorized_access' | 'policy_violation' | 'other';
+export type SecurityIncidentSeverity = 'critical' | 'high' | 'medium' | 'low';
+export type SecurityIncidentStatus = 'open' | 'investigating' | 'contained' | 'resolved' | 'closed';
+export type AuditEventType =
+  | 'auth_change' | 'policy_edit' | 'policy_approved'
+  | 'gate_submitted' | 'gate_approved' | 'gate_rejected'
+  | 'risk_updated' | 'data_classified' | 'data_approved'
+  | 'control_check_run' | 'export_generated' | 'model_config_changed'
+  | 'incident_created' | 'incident_resolved' | 'evidence_generated'
+  | 'team_change' | 'project_status_change';
+
 // ---------------------------------------------------------------------------
 // Table definitions
 // ---------------------------------------------------------------------------
@@ -1634,6 +1658,583 @@ export interface Database {
           resource_type?: string;
           resource_id?: string | null;
           details?: Json;
+          ip_address?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      // ── Data Governance (Phase 1-2) ────────────────────────────
+
+      data_asset_records: {
+        Row: {
+          id: string;
+          project_id: string;
+          organization_id: string;
+          name: string;
+          description: string;
+          type: string;
+          domain: string;
+          owner_id: string | null;
+          owner_name: string | null;
+          classification: DataClassificationLevel;
+          lawful_basis: LawfulBasis | null;
+          retention_period: DataRetentionPeriod | null;
+          retention_expires_at: string | null;
+          source_system: string | null;
+          contains_pii: boolean;
+          pii_types: Json;
+          ai_relevance: string;
+          approved: boolean;
+          approved_by: string | null;
+          approved_at: string | null;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          organization_id: string;
+          name: string;
+          description: string;
+          type: string;
+          domain: string;
+          owner_id?: string | null;
+          owner_name?: string | null;
+          classification: DataClassificationLevel;
+          lawful_basis?: LawfulBasis | null;
+          retention_period?: DataRetentionPeriod | null;
+          retention_expires_at?: string | null;
+          source_system?: string | null;
+          contains_pii?: boolean;
+          pii_types?: Json;
+          ai_relevance?: string;
+          approved?: boolean;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          organization_id?: string;
+          name?: string;
+          description?: string;
+          type?: string;
+          domain?: string;
+          owner_id?: string | null;
+          owner_name?: string | null;
+          classification?: DataClassificationLevel;
+          lawful_basis?: LawfulBasis | null;
+          retention_period?: DataRetentionPeriod | null;
+          retention_expires_at?: string | null;
+          source_system?: string | null;
+          contains_pii?: boolean;
+          pii_types?: Json;
+          ai_relevance?: string;
+          approved?: boolean;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [];
+      };
+
+      data_processing_activities: {
+        Row: {
+          id: string;
+          project_id: string;
+          organization_id: string;
+          data_asset_id: string;
+          purpose: string;
+          processor: string;
+          processing_type: DataProcessingType;
+          transfer_region: string | null;
+          cross_border: boolean;
+          risk_flags: Json;
+          lawful_basis: LawfulBasis | null;
+          retention_period: DataRetentionPeriod | null;
+          automated_decision_making: boolean;
+          human_oversight_required: boolean;
+          status: string;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          organization_id: string;
+          data_asset_id: string;
+          purpose: string;
+          processor: string;
+          processing_type: DataProcessingType;
+          transfer_region?: string | null;
+          cross_border?: boolean;
+          risk_flags?: Json;
+          lawful_basis?: LawfulBasis | null;
+          retention_period?: DataRetentionPeriod | null;
+          automated_decision_making?: boolean;
+          human_oversight_required?: boolean;
+          status?: string;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          organization_id?: string;
+          data_asset_id?: string;
+          purpose?: string;
+          processor?: string;
+          processing_type?: DataProcessingType;
+          transfer_region?: string | null;
+          cross_border?: boolean;
+          risk_flags?: Json;
+          lawful_basis?: LawfulBasis | null;
+          retention_period?: DataRetentionPeriod | null;
+          automated_decision_making?: boolean;
+          human_oversight_required?: boolean;
+          status?: string;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [];
+      };
+
+      governance_gates: {
+        Row: {
+          id: string;
+          project_id: string;
+          organization_id: string;
+          gate_type: GovernanceGateType;
+          gate_order: number;
+          title: string;
+          description: string | null;
+          required_artifacts: Json;
+          decision: GovernanceGateDecision;
+          decision_rationale: string | null;
+          approver_id: string | null;
+          approver_name: string | null;
+          decided_at: string | null;
+          conditions: Json;
+          escalation_required: boolean;
+          submitted_by: string | null;
+          submitted_at: string | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          organization_id: string;
+          gate_type: GovernanceGateType;
+          gate_order: number;
+          title: string;
+          description?: string | null;
+          required_artifacts?: Json;
+          decision?: GovernanceGateDecision;
+          decision_rationale?: string | null;
+          approver_id?: string | null;
+          approver_name?: string | null;
+          decided_at?: string | null;
+          conditions?: Json;
+          escalation_required?: boolean;
+          submitted_by?: string | null;
+          submitted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          organization_id?: string;
+          gate_type?: GovernanceGateType;
+          gate_order?: number;
+          title?: string;
+          description?: string | null;
+          required_artifacts?: Json;
+          decision?: GovernanceGateDecision;
+          decision_rationale?: string | null;
+          approver_id?: string | null;
+          approver_name?: string | null;
+          decided_at?: string | null;
+          conditions?: Json;
+          escalation_required?: boolean;
+          submitted_by?: string | null;
+          submitted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [];
+      };
+
+      pilot_setups: {
+        Row: {
+          id: string;
+          project_id: string;
+          organization_id: string;
+          template_id: string | null;
+          current_step: PilotWizardStep;
+          business_goal: string | null;
+          use_case_description: string | null;
+          use_case_domain: string | null;
+          data_scope: Json | null;
+          risk_tier: RiskTier | null;
+          success_metrics: Json;
+          architecture_notes: string | null;
+          launch_checklist: Json;
+          readiness_score: number | null;
+          status: PilotSetupStatus;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          organization_id: string;
+          template_id?: string | null;
+          current_step?: PilotWizardStep;
+          business_goal?: string | null;
+          use_case_description?: string | null;
+          use_case_domain?: string | null;
+          data_scope?: Json | null;
+          risk_tier?: RiskTier | null;
+          success_metrics?: Json;
+          architecture_notes?: string | null;
+          launch_checklist?: Json;
+          readiness_score?: number | null;
+          status?: PilotSetupStatus;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          organization_id?: string;
+          template_id?: string | null;
+          current_step?: PilotWizardStep;
+          business_goal?: string | null;
+          use_case_description?: string | null;
+          use_case_domain?: string | null;
+          data_scope?: Json | null;
+          risk_tier?: RiskTier | null;
+          success_metrics?: Json;
+          architecture_notes?: string | null;
+          launch_checklist?: Json;
+          readiness_score?: number | null;
+          status?: PilotSetupStatus;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [];
+      };
+
+      // ── Security & Evidence (Phase 1-2) ────────────────────────
+
+      control_checks: {
+        Row: {
+          id: string;
+          project_id: string;
+          organization_id: string;
+          control_id: string;
+          control_name: string;
+          category: ControlCheckCategory;
+          description: string | null;
+          result: ControlCheckResult;
+          evidence_link: string | null;
+          evidence_details: string | null;
+          remediation: string | null;
+          checked_at: string;
+          checked_by: string | null;
+          next_check_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          organization_id: string;
+          control_id: string;
+          control_name: string;
+          category: ControlCheckCategory;
+          description?: string | null;
+          result: ControlCheckResult;
+          evidence_link?: string | null;
+          evidence_details?: string | null;
+          remediation?: string | null;
+          checked_at?: string;
+          checked_by?: string | null;
+          next_check_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          organization_id?: string;
+          control_id?: string;
+          control_name?: string;
+          category?: ControlCheckCategory;
+          description?: string | null;
+          result?: ControlCheckResult;
+          evidence_link?: string | null;
+          evidence_details?: string | null;
+          remediation?: string | null;
+          checked_at?: string;
+          checked_by?: string | null;
+          next_check_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      policy_rules: {
+        Row: {
+          id: string;
+          project_id: string | null;
+          organization_id: string;
+          name: string;
+          description: string | null;
+          category: string;
+          rule_definition: Json;
+          severity: PolicyRuleSeverity;
+          enforcement_mode: PolicyEnforcementMode;
+          applies_to: Json;
+          exceptions: Json;
+          version: number;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          project_id?: string | null;
+          organization_id: string;
+          name: string;
+          description?: string | null;
+          category: string;
+          rule_definition?: Json;
+          severity: PolicyRuleSeverity;
+          enforcement_mode?: PolicyEnforcementMode;
+          applies_to?: Json;
+          exceptions?: Json;
+          version?: number;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          project_id?: string | null;
+          organization_id?: string;
+          name?: string;
+          description?: string | null;
+          category?: string;
+          rule_definition?: Json;
+          severity?: PolicyRuleSeverity;
+          enforcement_mode?: PolicyEnforcementMode;
+          applies_to?: Json;
+          exceptions?: Json;
+          version?: number;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [];
+      };
+
+      security_incidents: {
+        Row: {
+          id: string;
+          project_id: string;
+          organization_id: string;
+          category: SecurityIncidentCategory;
+          severity: SecurityIncidentSeverity;
+          title: string;
+          description: string | null;
+          detected_at: string;
+          detected_by: string | null;
+          status: SecurityIncidentStatus;
+          assigned_to: string | null;
+          assigned_to_name: string | null;
+          resolution: string | null;
+          resolved_at: string | null;
+          root_cause: string | null;
+          impact_assessment: string | null;
+          corrective_actions: Json;
+          linked_control_ids: Json;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          organization_id: string;
+          category: SecurityIncidentCategory;
+          severity: SecurityIncidentSeverity;
+          title: string;
+          description?: string | null;
+          detected_at?: string;
+          detected_by?: string | null;
+          status?: SecurityIncidentStatus;
+          assigned_to?: string | null;
+          assigned_to_name?: string | null;
+          resolution?: string | null;
+          resolved_at?: string | null;
+          root_cause?: string | null;
+          impact_assessment?: string | null;
+          corrective_actions?: Json;
+          linked_control_ids?: Json;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          organization_id?: string;
+          category?: SecurityIncidentCategory;
+          severity?: SecurityIncidentSeverity;
+          title?: string;
+          description?: string | null;
+          detected_at?: string;
+          detected_by?: string | null;
+          status?: SecurityIncidentStatus;
+          assigned_to?: string | null;
+          assigned_to_name?: string | null;
+          resolution?: string | null;
+          resolved_at?: string | null;
+          root_cause?: string | null;
+          impact_assessment?: string | null;
+          corrective_actions?: Json;
+          linked_control_ids?: Json;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [];
+      };
+
+      evidence_packages: {
+        Row: {
+          id: string;
+          project_id: string;
+          organization_id: string;
+          version: number;
+          title: string;
+          description: string | null;
+          artifact_manifest: Json;
+          gate_summaries: Json;
+          control_summary: Json | null;
+          risk_summary: Json | null;
+          generated_by: string | null;
+          generated_at: string;
+          file_url: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          organization_id: string;
+          version?: number;
+          title: string;
+          description?: string | null;
+          artifact_manifest?: Json;
+          gate_summaries?: Json;
+          control_summary?: Json | null;
+          risk_summary?: Json | null;
+          generated_by?: string | null;
+          generated_at?: string;
+          file_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          organization_id?: string;
+          version?: number;
+          title?: string;
+          description?: string | null;
+          artifact_manifest?: Json;
+          gate_summaries?: Json;
+          control_summary?: Json | null;
+          risk_summary?: Json | null;
+          generated_by?: string | null;
+          generated_at?: string;
+          file_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      audit_events: {
+        Row: {
+          id: string;
+          project_id: string | null;
+          organization_id: string;
+          event_type: AuditEventType;
+          actor_id: string;
+          actor_name: string;
+          actor_role: string;
+          description: string;
+          metadata: Json;
+          ip_address: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id?: string | null;
+          organization_id: string;
+          event_type: AuditEventType;
+          actor_id: string;
+          actor_name: string;
+          actor_role: string;
+          description: string;
+          metadata?: Json;
+          ip_address?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string | null;
+          organization_id?: string;
+          event_type?: AuditEventType;
+          actor_id?: string;
+          actor_name?: string;
+          actor_role?: string;
+          description?: string;
+          metadata?: Json;
           ip_address?: string | null;
           created_at?: string;
         };
