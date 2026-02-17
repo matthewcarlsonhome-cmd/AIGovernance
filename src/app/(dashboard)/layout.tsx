@@ -47,6 +47,10 @@ import {
   Database,
   Zap,
   UserCog,
+  Activity,
+  Briefcase,
+  History,
+  Network,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -105,59 +109,65 @@ const mainNavItems: NavItem[] = [
 ];
 
 /**
- * Reorganized navigation: 5 sections grouped by workflow phase.
- * Meeting Notes and Monitoring removed per user feedback.
+ * Navigation restructured to 6-area Information Architecture.
+ * Areas: Home (mainNavItems), Pilot Setup, Governance,
+ * Build & Validate, Launch & Monitor, Reports.
  * Each item has optional `roles` for role-based filtering.
  */
 function buildProjectSections(projectId: string): NavSection[] {
   const p = (path: string) => `/projects/${projectId}${path}`;
   return [
     {
-      title: 'Assess & Plan',
+      title: 'Pilot Setup',
       items: [
-        { label: 'Readiness Assessment', href: p('/discovery/readiness'), icon: Target, roles: ['admin', 'consultant', 'executive', 'it', 'engineering'] },
-        { label: 'Questionnaire', href: p('/discovery/questionnaire'), icon: ClipboardList, roles: ['admin', 'consultant', 'it', 'engineering'] },
-        { label: 'Data Readiness', href: p('/discovery/data-readiness'), icon: Database, roles: ['admin', 'consultant', 'it', 'engineering'] },
+        { label: 'Pilot Wizard', href: p('/pilot-setup'), icon: Zap },
+        { label: 'Setup Guide', href: p('/setup'), icon: Rocket },
+        { label: 'Pilot Designer', href: p('/poc/pilot-design'), icon: Beaker, roles: ['admin', 'consultant', 'engineering'] },
         { label: 'Prerequisites', href: p('/discovery/prerequisites'), icon: CheckSquare },
       ],
     },
     {
-      title: 'Govern & Comply',
+      title: 'Governance',
       items: [
-        { label: 'Policies & Playbook', href: p('/governance/policies'), icon: FileText, roles: ['admin', 'consultant', 'legal', 'it'] },
+        { label: 'Policies', href: p('/governance/policies'), icon: FileText, roles: ['admin', 'consultant', 'legal', 'it'] },
         { label: 'Gate Reviews', href: p('/governance/gates'), icon: ShieldCheck },
         { label: 'Compliance', href: p('/governance/compliance'), icon: Scale, roles: ['admin', 'consultant', 'legal', 'it'] },
-        { label: 'Risk Classification', href: p('/governance/risk'), icon: AlertTriangle, roles: ['admin', 'consultant', 'it', 'legal'] },
-        { label: 'RACI Matrix', href: p('/governance/raci'), icon: Grid3X3, roles: ['admin', 'consultant'] },
+        { label: 'Risk', href: p('/governance/risk'), icon: AlertTriangle, roles: ['admin', 'consultant', 'it', 'legal'] },
+        { label: 'RACI', href: p('/governance/raci'), icon: Grid3X3, roles: ['admin', 'consultant'] },
         { label: 'Ethics & Data Flows', href: p('/governance/ethics'), icon: Heart, roles: ['admin', 'consultant', 'legal'] },
+        { label: 'Data Classification', href: p('/governance/data-classification'), icon: Database, roles: ['admin', 'consultant', 'it', 'legal'] },
+        { label: 'Security Controls', href: p('/governance/security-controls'), icon: ShieldCheck, roles: ['admin', 'consultant', 'it'] },
       ],
     },
     {
-      title: 'Build & Test',
+      title: 'Build & Validate',
       items: [
         { label: 'Sandbox Setup', href: p('/sandbox/configure'), icon: Settings, roles: ['admin', 'consultant', 'it', 'engineering'] },
         { label: 'Sandbox Validation', href: p('/sandbox/validate'), icon: CheckCircle, roles: ['admin', 'consultant', 'it', 'engineering'] },
-        { label: 'Pilot Designer', href: p('/poc/pilot-design'), icon: Beaker, roles: ['admin', 'consultant', 'engineering'] },
         { label: 'Sprint Tracker', href: p('/poc/sprints'), icon: Timer, roles: ['admin', 'consultant', 'engineering'] },
         { label: 'Tool Comparison', href: p('/poc/compare'), icon: GitCompare, roles: ['admin', 'consultant', 'engineering'] },
         { label: 'Agent Deployment', href: p('/agent-deployment/readiness'), icon: Radar, roles: ['admin', 'consultant', 'it', 'engineering'] },
+        { label: 'Architecture', href: p('/sandbox/architecture'), icon: Network, roles: ['admin', 'consultant', 'it', 'engineering'] },
       ],
     },
     {
-      title: 'Track & Report',
+      title: 'Launch & Monitor',
       items: [
         { label: 'Timeline', href: p('/timeline/gantt'), icon: CalendarRange },
         { label: 'Milestones', href: p('/timeline/milestones'), icon: Flag },
         { label: 'ROI Calculator', href: p('/roi'), icon: DollarSign, roles: ['admin', 'consultant', 'executive'] },
-        { label: 'Report Generator', href: p('/reports/generate'), icon: FileOutput },
+        { label: 'Monitoring', href: p('/monitoring'), icon: Activity, roles: ['admin', 'consultant', 'it'] },
+        { label: 'Security Dashboard', href: p('/monitoring/security'), icon: Shield, roles: ['admin', 'consultant', 'it'] },
       ],
     },
     {
-      title: 'Team & Change',
+      title: 'Reports',
       items: [
-        { label: 'Team Members', href: p('/team'), icon: Users },
-        { label: 'Change Management', href: p('/change-management'), icon: RefreshCw, roles: ['admin', 'consultant', 'marketing'] },
+        { label: 'Report Generator', href: p('/reports/generate'), icon: FileOutput },
+        { label: 'Report History', href: p('/reports/history'), icon: History },
+        { label: 'Client Brief', href: p('/reports/client-brief'), icon: Briefcase },
         { label: 'Communications', href: p('/reports/communications'), icon: MessageSquare, roles: ['admin', 'consultant', 'marketing'] },
+        { label: 'Evidence Packages', href: p('/reports/evidence'), icon: FileOutput, roles: ['admin', 'consultant', 'legal'] },
       ],
     },
   ];
@@ -166,7 +176,6 @@ function buildProjectSections(projectId: string): NavSection[] {
 function buildProjectItems(projectId: string) {
   const p = (path: string) => `/projects/${projectId}${path}`;
   return {
-    setupItem: { label: 'Setup Guide', href: p('/setup'), icon: Rocket } as NavItem,
     overviewItem: { label: 'Overview', href: p('/overview'), icon: BarChart3 } as NavItem,
   };
 }
@@ -472,7 +481,6 @@ export default function DashboardLayout({
                 )}
 
                 <NavLink item={projectNav.overviewItem} collapsed={collapsed} pathname={pathname} />
-                <NavLink item={projectNav.setupItem} collapsed={collapsed} pathname={pathname} />
 
                 {/* Sections — role-filtered */}
                 {projectSections.map((section) => (
