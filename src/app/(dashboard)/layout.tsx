@@ -106,6 +106,8 @@ function useRoleOverride(): UserRole | null {
 const mainNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Projects', href: '/projects', icon: FolderKanban },
+  { label: 'Portfolio Posture', href: '/portfolio', icon: Shield, roles: ['admin', 'consultant', 'executive'] },
+  { label: 'Portfolio Heatmap', href: '/portfolio/heatmap', icon: Grid3X3, roles: ['admin', 'consultant', 'executive'] },
 ];
 
 /**
@@ -118,8 +120,20 @@ function buildProjectSections(projectId: string): NavSection[] {
   const p = (path: string) => `/projects/${projectId}${path}`;
   return [
     {
+      title: 'Workspaces',
+      items: [
+        { label: 'Plan', href: p('/plan'), icon: Target },
+        { label: 'Govern', href: p('/govern'), icon: ShieldCheck },
+        { label: 'Execute', href: p('/execute'), icon: Rocket },
+        { label: 'Decide', href: p('/decide'), icon: Scale },
+        { label: 'Workflow', href: p('/workflow'), icon: RefreshCw },
+        { label: 'Action Queue', href: p('/action-queue'), icon: ClipboardList },
+      ],
+    },
+    {
       title: 'Pilot Setup',
       items: [
+        { label: 'Intake Scorecard', href: p('/intake'), icon: ClipboardList },
         { label: 'Pilot Wizard', href: p('/pilot-setup'), icon: Zap },
         { label: 'Setup Guide', href: p('/setup'), icon: Rocket },
         { label: 'Pilot Designer', href: p('/poc/pilot-design'), icon: Beaker, roles: ['admin', 'consultant', 'engineering'] },
@@ -129,10 +143,12 @@ function buildProjectSections(projectId: string): NavSection[] {
     {
       title: 'Governance',
       items: [
+        { label: 'Control Center', href: p('/controls'), icon: Shield },
         { label: 'Policies', href: p('/governance/policies'), icon: FileText, roles: ['admin', 'consultant', 'legal', 'it'] },
         { label: 'Gate Reviews', href: p('/governance/gates'), icon: ShieldCheck },
         { label: 'Compliance', href: p('/governance/compliance'), icon: Scale, roles: ['admin', 'consultant', 'legal', 'it'] },
         { label: 'Risk', href: p('/governance/risk'), icon: AlertTriangle, roles: ['admin', 'consultant', 'it', 'legal'] },
+        { label: 'Exceptions', href: p('/governance/exceptions'), icon: AlertTriangle, roles: ['admin', 'consultant', 'it', 'legal'] },
         { label: 'RACI', href: p('/governance/raci'), icon: Grid3X3, roles: ['admin', 'consultant'] },
         { label: 'Ethics & Data Flows', href: p('/governance/ethics'), icon: Heart, roles: ['admin', 'consultant', 'legal'] },
         { label: 'Data Classification', href: p('/governance/data-classification'), icon: Database, roles: ['admin', 'consultant', 'it', 'legal'] },
@@ -156,13 +172,17 @@ function buildProjectSections(projectId: string): NavSection[] {
         { label: 'Timeline', href: p('/timeline/gantt'), icon: CalendarRange },
         { label: 'Milestones', href: p('/timeline/milestones'), icon: Flag },
         { label: 'ROI Calculator', href: p('/roi'), icon: DollarSign, roles: ['admin', 'consultant', 'executive'] },
+        { label: 'KPI Metrics', href: p('/metrics'), icon: BarChart3, roles: ['admin', 'consultant', 'executive'] },
         { label: 'Monitoring', href: p('/monitoring'), icon: Activity, roles: ['admin', 'consultant', 'it'] },
         { label: 'Security Dashboard', href: p('/monitoring/security'), icon: Shield, roles: ['admin', 'consultant', 'it'] },
       ],
     },
     {
-      title: 'Reports',
+      title: 'Reports & Decisions',
       items: [
+        { label: 'Decision Hub', href: p('/decision-hub'), icon: Scale },
+        { label: 'Executive Brief', href: p('/executive-brief'), icon: Briefcase },
+        { label: 'Outcome Metrics', href: p('/outcomes'), icon: Target },
         { label: 'Report Generator', href: p('/reports/generate'), icon: FileOutput },
         { label: 'Report History', href: p('/reports/history'), icon: History },
         { label: 'Client Brief', href: p('/reports/client-brief'), icon: Briefcase },

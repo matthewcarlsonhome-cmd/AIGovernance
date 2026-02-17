@@ -859,6 +859,14 @@ const PROJECT_LINKS: QuickLink[] = [
     color: 'text-amber-700',
     bgColor: 'bg-amber-100',
   },
+  {
+    title: 'Admin Analytics',
+    description: 'Platform adoption metrics, workflow completion, and governance health.',
+    href: '/settings/analytics',
+    icon: Monitor,
+    color: 'text-indigo-700',
+    bgColor: 'bg-indigo-100',
+  },
 ];
 
 function ProjectSettingsSection(): React.ReactElement {

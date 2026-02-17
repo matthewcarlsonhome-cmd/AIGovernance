@@ -133,7 +133,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
+        { error: 'Validation failed', message: JSON.stringify(parsed.error.flatten().fieldErrors) },
         { status: 400 },
       );
     }
