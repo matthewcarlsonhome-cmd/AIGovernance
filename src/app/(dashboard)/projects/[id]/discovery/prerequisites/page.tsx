@@ -399,7 +399,7 @@ export default function PrerequisitesPage({
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="font-bold text-blue-600 shrink-0">4.</span>
-                    <span><strong>These feed into Gate Reviews</strong> &mdash; completing prerequisites unlocks Gate 2 (Sandbox Access) approval. Your progress here directly updates the project timeline.</span>
+                    <span><strong>These feed into Gate Reviews</strong> &mdash; completing prerequisites is required for Gate 2 (Sandbox Access) approval. Your progress here directly updates the project timeline.</span>
                   </li>
                 </ul>
                 <button onClick={() => setShowGuide(false)} className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline">

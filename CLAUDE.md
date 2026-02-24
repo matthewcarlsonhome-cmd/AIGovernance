@@ -19,7 +19,7 @@ of AI coding agents (Claude Code, OpenAI Codex, and similar tools).
 - **DOCX:** docx (docx-js)
 - **Dates:** date-fns
 - **Validation:** Zod
-- **Deployment:** Vercel
+- **Deployment:** Render (or Vercel)
 
 ## Architecture Rules
 1. Use Server Components by default. Add `'use client'` only when needed for interactivity.
@@ -70,7 +70,23 @@ src/
             history/      # Previously generated reports
           team/           # Team member management + roles
           setup/          # Project setup guide (phase checklist, onboarding)
+          my-tasks/       # Role-filtered task queue (primary project landing)
+          project-plan/   # Master project plan (all phases, all tasks)
+          controls/       # Consolidated governance control center
+          decision-hub/   # Decision brief + evidence + metrics
+          executive-brief/# One-page go/no-go recommendation
+          outcomes/       # Outcome metrics with trend charts
+          intake/         # Pilot intake scorecard (10 questions)
+          action-queue/   # Priority-sorted pending actions
+          workflow/       # Canonical workflow progress
+        new/
+          onboarding/     # 5-step onboarding wizard
       settings/           # Org settings, billing, integrations
+        integrations/     # Integration marketplace
+        analytics/        # Adoption analytics
+        audit/            # Audit log viewer
+      portfolio/
+        heatmap/          # Cross-project health heatmap
     api/
       assessments/        # Assessment CRUD + scoring engine
       reports/            # Report generation endpoints
@@ -100,6 +116,18 @@ src/
     config-gen/           # Sandbox config file generators (JSON, TOML, YAML, HCL)
     report-gen/           # Report generation logic (PDF + DOCX)
     ai/                   # Claude API integration + prompt templates
+    tasks/                # Task engine: role assignment, phase gating, due dates
+    notifications/        # In-memory notification store and generators
+    exceptions/           # Risk exception workflow (create/approve/deny/revoke)
+    intake/               # Pilot intake scorecard (10 weighted questions)
+    workflow/             # Canonical workflow mapping (6 steps, 35 page mappings)
+    services/             # Governance readiness + decision support services
+    integrations/         # Integration framework (10-connector catalog)
+    rbac/                 # RBAC: 27 permissions, 7 roles, tenant isolation
+    events/               # Domain event bus (35+ typed events)
+    metrics/              # KPI catalog (11 standard metrics)
+    escalation/           # SLA policies and escalation engine
+    state-machine/        # 7-state project FSM with transition guards
     utils/                # Shared utilities
   types/                  # TypeScript type definitions
   stores/                 # Zustand stores
@@ -323,7 +351,62 @@ GET/POST          /api/timeline/milestones
 GET/POST          /api/timeline/snapshots
 ```
 
+## Navigation Architecture (Design Spec V4)
+The sidebar uses **phase-driven navigation** instead of category-based:
+- 5 project phases: Scope & Assess → Classify & Govern → Approve & Gate → Build & Test → Evaluate & Decide
+- Active phase is expanded; completed phases collapse; future phases show as locked
+- Role-based filtering within each phase (each page has optional `roles` array)
+- "My Tasks" is the primary project landing page (role-filtered task queue)
+- "Project Plan" shows all tasks across all phases in a master view
+
+### Phase-to-Page Mapping
+- **Phase 1 (Scope & Assess):** intake, questionnaire, readiness, prerequisites, team
+- **Phase 2 (Classify & Govern):** data-classification, policies, compliance, risk, raci, ethics, security-controls
+- **Phase 3 (Approve & Gate):** gates, evidence, exceptions, controls
+- **Phase 4 (Build & Test):** sandbox/configure, sandbox/validate, pilot-design, sprints, compare, monitoring
+- **Phase 5 (Evaluate & Decide):** outcomes, decision-hub, executive-brief, roi, reports/generate, action-queue
+
+### Role Labels (Professional — no gamified titles)
+| Role Key | Display Label |
+|---|---|
+| `admin` | Project Administrator |
+| `consultant` | Governance Consultant |
+| `executive` | Executive Sponsor |
+| `it` | IT / Security Lead |
+| `legal` | Legal / Compliance Lead |
+| `engineering` | Engineering Lead |
+| `marketing` | Communications Lead |
+
+### Task Engine (`lib/tasks/`)
+- `role-assignment.ts` — Maps ~35 task types to responsible roles and project phases
+- `phase-gating.ts` — Exit criteria per phase, phase status evaluation, advance checks
+- `due-dates.ts` — Auto-calculate task deadlines from project timeline (phase-weighted)
+
+### Tone Rules
+- **No gamified language.** No "wizard", "champion", "fleet", "liftoff", "mission control", etc.
+- Use direct, professional labels: "Dashboard" not "Mission Control", "Create Project" not "Launch New Project"
+- Activity verbs: "completed", "updated", "added", "flagged", "generated" — not "crushed", "leveled up", "shipped"
+
+## New API Routes (added in v3/v4)
+```
+GET/POST          /api/exceptions
+GET/POST          /api/intake
+GET               /api/action-queue
+GET/POST          /api/decision
+GET               /api/governance/readiness
+```
+
+## Shared Components
+- `components/shared/notification-center.tsx` — Bell icon + dropdown notification panel (role-filtered)
+- `components/shared/contextual-help.tsx` — Floating "Guide" button with context-aware help panel
+- `components/shared/command-palette.tsx` — Cmd+K command palette
+
+## Packages NOT installed (do not import)
+- `@sentry/nextjs` — deferred
+- `@tanstack/react-table` — referenced but not yet added
+- `cmdk` — not yet added
+
 ## Current Sprint
-Sprint focus: Codex handoff brief alignment — API routes, setup experience,
-strict TypeScript, build-passing CI. Sentry integration is deferred (not
-installed).
+Sprint focus: Design Spec V4 implementation — phase-driven navigation, role-based
+task queuing, onboarding wizard, professional tone overhaul. All gamified language
+removed. Build passes with zero TS errors. Sentry integration deferred.

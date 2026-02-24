@@ -467,7 +467,7 @@ export default function HelpPage() {
         <div className="flex items-center gap-3 mb-2">
           <Shield className="h-8 w-8 text-slate-900" />
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Your Field Guide
+            Help &amp; Documentation
           </h1>
         </div>
         <p className="text-sm text-slate-500">

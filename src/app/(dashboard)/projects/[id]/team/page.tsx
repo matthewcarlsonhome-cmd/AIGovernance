@@ -231,10 +231,10 @@ export default function TeamPage({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            The Crew
+            Project Team
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Your governance squad. Manage members, assign roles, and distribute the work.
+            Manage team members, roles, and assignments.
           </p>
         </div>
         <Button
