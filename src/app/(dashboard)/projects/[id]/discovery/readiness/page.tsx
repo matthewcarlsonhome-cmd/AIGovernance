@@ -185,12 +185,12 @@ export default function ReadinessPage({
             <ListChecks className="h-12 w-12 text-indigo-300 mx-auto mb-4" />
             <h2 className="text-lg font-semibold text-slate-900 mb-2">Your Scorecard Awaits</h2>
             <p className="text-sm text-slate-500 mb-6 max-w-md">
-              Take the 25-question readiness quiz first. It only takes a few minutes and
-              unlocks your personalized feasibility scores across all five domains.
+              Complete the 25-question readiness assessment first. It only takes a few minutes and
+              generates your feasibility scores across all five domains.
             </p>
             <Link href={`/projects/${id}/discovery/questionnaire`}>
-              <Button className="gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-200">
-                Take the Quiz <ArrowRight className="h-4 w-4" />
+              <Button className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
+                Start Assessment <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </CardContent>
