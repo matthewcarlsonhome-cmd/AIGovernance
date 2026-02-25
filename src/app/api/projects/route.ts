@@ -85,6 +85,19 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     // Use service role client for data queries (bypasses RLS)
     const db = await createServiceRoleClient();
 
+    // Resolve the user's organization_id for tenant isolation
+    const { data: userProfile } = await db
+      .from('users')
+      .select('organization_id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const orgId = userProfile?.organization_id;
+    if (!orgId) {
+      // User has no org yet — return empty list (they need to call /api/auth/me first)
+      return NextResponse.json({ data: [] });
+    }
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 100);
@@ -93,6 +106,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     let query = db
       .from('projects')
       .select('*')
+      .eq('organization_id', orgId)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -166,52 +180,25 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     // Use service role client for data operations (bypasses RLS)
     const db = await createServiceRoleClient();
 
-    // Resolve organization_id: use provided value, or look up from user profile
-    let organizationId = parsed.data.organization_id;
-    if (!organizationId) {
-      const { data: userProfile, error: profileErr } = await db
-        .from('users')
-        .select('organization_id')
-        .eq('id', user.id)
-        .maybeSingle();
-      if (profileErr) {
-        console.error('[POST /api/projects] User profile lookup failed:', profileErr.message);
-      }
-      organizationId = userProfile?.organization_id ?? undefined;
+    // Resolve organization_id from the authenticated user's profile.
+    // Never fall back to "any existing org" — that would break tenant isolation.
+    const { data: userProfile, error: profileErr } = await db
+      .from('users')
+      .select('organization_id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (profileErr) {
+      console.error('[POST /api/projects] User profile lookup failed:', profileErr.message);
     }
 
-    // If still no org, try to find any existing organization
-    if (!organizationId) {
-      const { data: existingOrg, error: orgErr } = await db
-        .from('organizations')
-        .select('id')
-        .limit(1)
-        .maybeSingle();
-      if (orgErr) {
-        console.error('[POST /api/projects] Org lookup failed:', orgErr.message);
-      }
-      organizationId = existingOrg?.id ?? undefined;
-    }
+    const organizationId = parsed.data.organization_id || userProfile?.organization_id;
 
-    // Last resort: create an organization if none exist
     if (!organizationId) {
-      console.log('[POST /api/projects] No organization found, creating one...');
-      const emailDomain = (user.email ?? 'example.com').split('@')[1] ?? 'example';
-      const orgSlug = `${emailDomain.replace(/[^a-z0-9-]/gi, '-').toLowerCase()}-${Date.now()}`;
-      const { data: newOrg, error: newOrgErr } = await db
-        .from('organizations')
-        .insert({ name: 'My Organization', slug: orgSlug })
-        .select('id')
-        .single();
-      if (newOrgErr) {
-        console.error('[POST /api/projects] Failed to create org:', newOrgErr.message);
-        return NextResponse.json(
-          { error: 'Failed to create project', message: 'No organization available. Please refresh the page and try again.' },
-          { status: 500 },
-        );
-      }
-      organizationId = newOrg.id;
-      console.log('[POST /api/projects] Created org:', organizationId);
+      return NextResponse.json(
+        { error: 'No organization found', message: 'Your user profile is not linked to an organization. Please sign out and sign back in to complete setup.' },
+        { status: 400 },
+      );
     }
 
     // Build insert payload — only include columns we know exist
