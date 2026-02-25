@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Circle,
   Clock,
+  ClipboardList,
   AlertTriangle,
   FileText,
   Shield,
@@ -63,330 +64,26 @@ const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 /* -------------------------------------------------------------------------- */
-/*  Role-based demo data                                                      */
+/*  Role-based task data                                                      */
 /* -------------------------------------------------------------------------- */
 
-function getTasksForRole(role: UserRole): DemoTask[] {
-  const roleTaskMap: Record<UserRole, DemoTask[]> = {
-    consultant: [
-      // Action needed
-      {
-        id: 'c1', title: 'Draft Acceptable Use Policy (AUP)', description: 'Create the initial AUP document defining permitted uses of AI coding agents across engineering teams.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-02-28', priority: 'required', status: 'action_needed',
-        ctaLabel: 'Open Policy Editor', ctaHref: 'governance/policies', blocking: 'AUP Legal Review',
-      },
-      {
-        id: 'c2', title: 'Map SOC2 compliance controls', description: 'Map existing SOC2 controls to AI governance requirements and identify gaps.',
-        assignedBy: 'James Wright', dueDate: '2026-03-03', priority: 'required', status: 'action_needed',
-        ctaLabel: 'Open Compliance Mapper', ctaHref: 'governance/compliance',
-      },
-      {
-        id: 'c3', title: 'Define RACI matrix', description: 'Establish responsibility assignments for all governance tasks across the project lifecycle.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-05', priority: 'recommended', status: 'action_needed',
-        ctaLabel: 'Open RACI Editor', ctaHref: 'governance/policies',
-      },
-      {
-        id: 'c4', title: 'Update risk register', description: 'Review and update the risk classification for all identified AI deployment risks.',
-        assignedBy: 'Maria Lopez', dueDate: '2026-03-07', priority: 'recommended', status: 'action_needed',
-        ctaLabel: 'Open Risk Manager', ctaHref: 'governance/risk',
-      },
-      {
-        id: 'c5', title: 'Prepare Gate 1 evidence package', description: 'Compile all required documentation and evidence for the scope review gate.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-10', priority: 'optional', status: 'action_needed',
-        ctaLabel: 'Open Gate Review', ctaHref: 'governance/gates',
-      },
-      // Upcoming
-      {
-        id: 'c6', title: 'Generate executive brief', description: 'Auto-generate the executive summary report with go/no-go recommendation.',
-        assignedBy: 'James Wright', dueDate: '2026-04-12', priority: 'required', status: 'upcoming',
-        scheduledPhase: 5,
-      },
-      {
-        id: 'c7', title: 'Outcome metrics analysis', description: 'Analyze pilot sprint results and calculate ROI for the decision package.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-04-08', priority: 'required', status: 'upcoming',
-        blockedBy: 'Sprint 2 Execution',
-      },
-      {
-        id: 'c8', title: 'ROI calculation', description: 'Calculate return-on-investment based on pilot metrics and organizational data.',
-        assignedBy: 'James Wright', dueDate: '2026-04-10', priority: 'recommended', status: 'upcoming',
-        scheduledPhase: 5,
-      },
-      // Completed
-      {
-        id: 'c9', title: 'Complete intake scorecard', description: 'Initial assessment of organization readiness.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-02-05', completedDate: '2026-02-05', priority: 'required', status: 'completed',
-      },
-      {
-        id: 'c10', title: 'Run discovery questionnaire', description: 'Conducted the full 25-question discovery questionnaire.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-02-06', completedDate: '2026-02-06', priority: 'required', status: 'completed',
-      },
-      {
-        id: 'c11', title: 'Review readiness assessment', description: 'Reviewed and validated the readiness assessment results.',
-        assignedBy: 'James Wright', dueDate: '2026-02-08', completedDate: '2026-02-08', priority: 'required', status: 'completed',
-      },
-    ],
-    admin: [
-      {
-        id: 'a1', title: 'Assign remaining team members', description: 'Ensure all project roles are filled with appropriate team members.',
-        assignedBy: 'System', dueDate: '2026-02-27', priority: 'required', status: 'action_needed',
-        ctaLabel: 'Manage Team', ctaHref: 'team', blocking: 'RACI Matrix',
-      },
-      {
-        id: 'a2', title: 'Configure project notifications', description: 'Set up email and in-app notification rules for gate reviews and SLA warnings.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-01', priority: 'recommended', status: 'action_needed',
-        ctaLabel: 'Open Settings', ctaHref: 'setup',
-      },
-      {
-        id: 'a3', title: 'Schedule Gate 1 review meeting', description: 'Coordinate calendar invites for all gate reviewers and prepare the agenda.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-05', priority: 'required', status: 'action_needed',
-        ctaLabel: 'Open Meetings', ctaHref: 'meetings',
-      },
-      {
-        id: 'a4', title: 'Upload compliance evidence files', description: 'Upload supporting documents for SOC2 and HIPAA compliance mapping.',
-        assignedBy: 'Maria Lopez', dueDate: '2026-03-08', priority: 'recommended', status: 'action_needed',
-        ctaLabel: 'Upload Files', ctaHref: 'governance/compliance',
-      },
-      {
-        id: 'a5', title: 'Set up sandbox access permissions', description: 'Grant appropriate sandbox access to engineering and IT team members.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-15', priority: 'required', status: 'upcoming',
-        scheduledPhase: 4,
-      },
-      {
-        id: 'a6', title: 'Archive Phase 1 documents', description: 'Archive completed discovery documents for audit trail.',
-        assignedBy: 'System', dueDate: '2026-03-18', priority: 'optional', status: 'upcoming',
-        scheduledPhase: 3,
-      },
-      {
-        id: 'a7', title: 'Assign project team', description: 'Initial team assignments completed.',
-        assignedBy: 'System', dueDate: '2026-02-04', completedDate: '2026-02-04', priority: 'required', status: 'completed',
-      },
-      {
-        id: 'a8', title: 'Complete prerequisites checklist', description: 'All prerequisite items verified and checked off.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-02-09', completedDate: '2026-02-09', priority: 'required', status: 'completed',
-      },
-      {
-        id: 'a9', title: 'RACI matrix draft', description: 'Initial RACI draft created and circulated for review.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-02-18', completedDate: '2026-02-18', priority: 'required', status: 'completed',
-      },
-    ],
-    executive: [
-      {
-        id: 'e1', title: 'Review Gate 1 submission', description: 'Review the scope review gate evidence package and approve or request changes.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-07', priority: 'required', status: 'action_needed',
-        ctaLabel: 'Open Gate Review', ctaHref: 'governance/gates', blocking: 'Security Review Gate',
-      },
-      {
-        id: 'e2', title: 'Approve risk exception request', description: 'Review and approve the temporary DLP scanning exception for sandbox environment.',
-        assignedBy: 'Maria Lopez', dueDate: '2026-03-03', priority: 'required', status: 'action_needed',
-        ctaLabel: 'Review Exception', ctaHref: 'governance/risk',
-      },
-      {
-        id: 'e3', title: 'Sign off on budget allocation', description: 'Approve the pilot budget including sandbox infrastructure and tool licenses.',
-        assignedBy: 'James Wright', dueDate: '2026-03-10', priority: 'recommended', status: 'action_needed',
-        ctaLabel: 'View ROI Analysis', ctaHref: 'roi',
-      },
-      {
-        id: 'e4', title: 'Review executive brief', description: 'Review the auto-generated executive summary and go/no-go recommendation.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-04-12', priority: 'required', status: 'upcoming',
-        scheduledPhase: 5,
-      },
-      {
-        id: 'e5', title: 'Go/No-Go decision', description: 'Make final production deployment decision based on pilot results.',
-        assignedBy: 'System', dueDate: '2026-04-15', priority: 'required', status: 'upcoming',
-        blockedBy: 'Executive Brief',
-      },
-      {
-        id: 'e6', title: 'Gate 3 pilot approval', description: 'Final gate approval to proceed with production rollout.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-14', priority: 'required', status: 'upcoming',
-        scheduledPhase: 3,
-      },
-      {
-        id: 'e7', title: 'Approved project charter', description: 'Reviewed and signed the project charter document.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-01-20', completedDate: '2026-01-20', priority: 'required', status: 'completed',
-      },
-      {
-        id: 'e8', title: 'Reviewed feasibility assessment', description: 'Reviewed the initial feasibility score and readiness report.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-02-10', completedDate: '2026-02-10', priority: 'required', status: 'completed',
-      },
-    ],
-    it: [
-      {
-        id: 'it1', title: 'Complete data classification', description: 'Classify all data repositories that will be accessible to AI coding agents.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-02-28', priority: 'required', status: 'action_needed',
-        ctaLabel: 'Open Data Classification', ctaHref: 'governance/policies', blocking: 'Security Controls Baseline',
-      },
-      {
-        id: 'it2', title: 'Define security controls baseline', description: 'Establish the minimum security controls required for sandbox and production environments.',
-        assignedBy: 'Maria Lopez', dueDate: '2026-03-03', priority: 'required', status: 'action_needed',
-        ctaLabel: 'Open Security Controls', ctaHref: 'governance/compliance', blockedBy: 'Data Classification',
-      },
-      {
-        id: 'it3', title: 'Configure DLP egress rules', description: 'Set up Data Loss Prevention scanning rules for AI agent output traffic.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-05', priority: 'required', status: 'action_needed',
-        ctaLabel: 'Open Controls', ctaHref: 'controls',
-      },
-      {
-        id: 'it4', title: 'Review SOC2 control mapping', description: 'Validate the SOC2 compliance control mapping against IT infrastructure.',
-        assignedBy: 'James Wright', dueDate: '2026-03-08', priority: 'recommended', status: 'action_needed',
-        ctaLabel: 'Open Compliance', ctaHref: 'governance/compliance',
-      },
-      {
-        id: 'it5', title: 'Sandbox configuration', description: 'Configure the isolated sandbox environment for pilot testing.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-18', priority: 'required', status: 'upcoming',
-        scheduledPhase: 4,
-      },
-      {
-        id: 'it6', title: 'Sandbox validation', description: 'Run health checks and validate sandbox environment readiness.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-20', priority: 'required', status: 'upcoming',
-        blockedBy: 'Sandbox Configuration',
-      },
-      {
-        id: 'it7', title: 'Monitoring setup', description: 'Deploy monitoring and alerting for sandbox and production environments.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-25', priority: 'recommended', status: 'upcoming',
-        scheduledPhase: 4,
-      },
-      {
-        id: 'it8', title: 'Data readiness review', description: 'Completed initial data readiness assessment.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-02-10', completedDate: '2026-02-10', priority: 'required', status: 'completed',
-      },
-      {
-        id: 'it9', title: 'Network architecture review', description: 'Reviewed network segmentation plan for sandbox isolation.',
-        assignedBy: 'James Wright', dueDate: '2026-02-14', completedDate: '2026-02-14', priority: 'required', status: 'completed',
-      },
-    ],
-    legal: [
-      {
-        id: 'l1', title: 'Review AUP policy draft', description: 'Legal review of the Acceptable Use Policy for AI coding agents.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-02-28', priority: 'required', status: 'action_needed',
-        ctaLabel: 'Open Policy Review', ctaHref: 'governance/policies', blocking: 'Gate 1 Evidence Package',
-      },
-      {
-        id: 'l2', title: 'Complete HIPAA compliance mapping', description: 'Map HIPAA requirements to AI governance controls for healthcare data handling.',
-        assignedBy: 'James Wright', dueDate: '2026-03-01', priority: 'required', status: 'action_needed',
-        ctaLabel: 'Open Compliance Mapper', ctaHref: 'governance/compliance',
-      },
-      {
-        id: 'l3', title: 'Conduct ethics review', description: 'Review the ethical implications and establish guidelines for AI agent use.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-05', priority: 'required', status: 'action_needed',
-        ctaLabel: 'Open Ethics Review', ctaHref: 'governance/policies', blocking: 'Gate 1 Review',
-      },
-      {
-        id: 'l4', title: 'Review IP ownership clauses', description: 'Assess intellectual property ownership for AI-generated code outputs.',
-        assignedBy: 'Maria Lopez', dueDate: '2026-03-08', priority: 'recommended', status: 'action_needed',
-        ctaLabel: 'Open Policy Editor', ctaHref: 'governance/policies',
-      },
-      {
-        id: 'l5', title: 'Draft exception request template', description: 'Create a standardized template for risk exception requests.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-10', priority: 'optional', status: 'action_needed',
-        ctaLabel: 'Open Risk Manager', ctaHref: 'governance/risk',
-      },
-      {
-        id: 'l6', title: 'Exception requests (if needed)', description: 'Process any exception requests that arise from gate reviews.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-12', priority: 'recommended', status: 'upcoming',
-        scheduledPhase: 3,
-      },
-      {
-        id: 'l7', title: 'Vendor contract review', description: 'Review AI vendor contracts for compliance and liability terms.',
-        assignedBy: 'James Wright', dueDate: '2026-03-15', priority: 'required', status: 'upcoming',
-        blockedBy: 'Ethics Review',
-      },
-      {
-        id: 'l8', title: 'Data handling policy review', description: 'Reviewed and approved the data handling policy.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-02-21', completedDate: '2026-02-21', priority: 'required', status: 'completed',
-      },
-      {
-        id: 'l9', title: 'HIPAA initial assessment', description: 'Completed preliminary HIPAA gap analysis.',
-        assignedBy: 'James Wright', dueDate: '2026-02-22', completedDate: '2026-02-22', priority: 'required', status: 'completed',
-      },
-      {
-        id: 'l10', title: 'Regulatory landscape scan', description: 'Completed scan of applicable AI regulations.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-02-15', completedDate: '2026-02-15', priority: 'recommended', status: 'completed',
-      },
-    ],
-    engineering: [
-      {
-        id: 'eng1', title: 'Design sandbox architecture', description: 'Define the technical architecture for the isolated sandbox environment.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-01', priority: 'required', status: 'action_needed',
-        ctaLabel: 'Open Sandbox Config', ctaHref: 'sandbox/configure', blocking: 'Sandbox Setup',
-      },
-      {
-        id: 'eng2', title: 'Define pilot project scope', description: 'Select and scope the proof-of-concept projects for AI agent evaluation.',
-        assignedBy: 'James Wright', dueDate: '2026-03-05', priority: 'required', status: 'action_needed',
-        ctaLabel: 'Open PoC Projects', ctaHref: 'poc/projects',
-      },
-      {
-        id: 'eng3', title: 'Set up baseline metrics collection', description: 'Establish current development velocity and quality baselines for comparison.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-08', priority: 'recommended', status: 'action_needed',
-        ctaLabel: 'Open Metrics', ctaHref: 'poc/metrics',
-      },
-      {
-        id: 'eng4', title: 'Configure tool comparison framework', description: 'Set up the evaluation framework for comparing Claude Code vs Codex.',
-        assignedBy: 'James Wright', dueDate: '2026-03-12', priority: 'recommended', status: 'action_needed',
-        ctaLabel: 'Open Tool Comparison', ctaHref: 'poc/compare',
-      },
-      {
-        id: 'eng5', title: 'Sprint 1 execution', description: 'Run the first pilot sprint using AI coding agents.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-29', priority: 'required', status: 'upcoming',
-        scheduledPhase: 4,
-      },
-      {
-        id: 'eng6', title: 'Sprint 2 execution', description: 'Run the second pilot sprint with refined configurations.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-04-05', priority: 'required', status: 'upcoming',
-        blockedBy: 'Sprint 1 Execution',
-      },
-      {
-        id: 'eng7', title: 'Pilot design', description: 'Design the pilot execution plan and success criteria.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-22', priority: 'required', status: 'upcoming',
-        scheduledPhase: 4,
-      },
-      {
-        id: 'eng8', title: 'Reviewed tool evaluation criteria', description: 'Reviewed and approved evaluation rubric for AI tools.',
-        assignedBy: 'James Wright', dueDate: '2026-02-12', completedDate: '2026-02-12', priority: 'required', status: 'completed',
-      },
-      {
-        id: 'eng9', title: 'Submitted codebase readiness checklist', description: 'Verified codebase readiness for AI agent integration.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-02-15', completedDate: '2026-02-15', priority: 'required', status: 'completed',
-      },
-    ],
-    marketing: [
-      {
-        id: 'm1', title: 'Draft stakeholder communication plan', description: 'Create the internal communications strategy for AI governance rollout.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-01', priority: 'required', status: 'action_needed',
-        ctaLabel: 'Open Change Management', ctaHref: 'change-management',
-      },
-      {
-        id: 'm2', title: 'Create FAQ document', description: 'Draft frequently asked questions about AI coding agents for internal teams.',
-        assignedBy: 'James Wright', dueDate: '2026-03-05', priority: 'recommended', status: 'action_needed',
-        ctaLabel: 'Open Reports', ctaHref: 'reports/generate',
-      },
-      {
-        id: 'm3', title: 'Design change management narrative', description: 'Develop the change management story and key messaging for leadership.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-08', priority: 'recommended', status: 'action_needed',
-        ctaLabel: 'Open Change Management', ctaHref: 'change-management',
-      },
-      {
-        id: 'm4', title: 'Prepare pilot announcement', description: 'Draft the internal announcement for the AI pilot program launch.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-03-20', priority: 'required', status: 'upcoming',
-        scheduledPhase: 4,
-      },
-      {
-        id: 'm5', title: 'Post-pilot success story', description: 'Prepare the success metrics narrative for broader organizational rollout.',
-        assignedBy: 'James Wright', dueDate: '2026-04-12', priority: 'recommended', status: 'upcoming',
-        scheduledPhase: 5,
-      },
-      {
-        id: 'm6', title: 'Completed stakeholder analysis', description: 'Identified and categorized all stakeholder groups.',
-        assignedBy: 'Sarah Chen', dueDate: '2026-02-10', completedDate: '2026-02-10', priority: 'required', status: 'completed',
-      },
-      {
-        id: 'm7', title: 'Reviewed messaging guidelines', description: 'Reviewed and approved initial messaging guidelines.',
-        assignedBy: 'James Wright', dueDate: '2026-02-14', completedDate: '2026-02-14', priority: 'recommended', status: 'completed',
-      },
-    ],
-  };
-
-  return roleTaskMap[role] ?? roleTaskMap.consultant;
+function getTasksForRole(_role: UserRole): DemoTask[] {
+  return [];
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Role task descriptions (shown in empty state)                             */
+/* -------------------------------------------------------------------------- */
+
+const ROLE_TASK_DESCRIPTIONS: Record<UserRole, string> = {
+  admin: 'Team assignments, project configuration, meeting scheduling, access permissions, document archival',
+  consultant: 'Assessment questionnaires, policy drafts, evidence packages, readiness reviews, ROI calculations',
+  executive: 'Gate approvals, risk acceptance decisions, budget sign-offs, go/no-go decisions',
+  it: 'Sandbox configuration, security control checks, data classification, DLP rules, monitoring setup',
+  legal: 'Policy reviews, compliance mapping, ethics reviews, IP assessments, exception request processing',
+  engineering: 'Sandbox architecture, pilot project scoping, baseline metrics, tool comparison, sprint execution',
+  marketing: 'Stakeholder communication plans, FAQ documents, change management narratives, pilot announcements',
+};
 
 /* -------------------------------------------------------------------------- */
 /*  useRoleOverride hook                                                      */
@@ -572,7 +269,9 @@ export default function MyTasksPage({ params }: { params: Promise<{ id: string }
 
   const totalTasks = tasks.length;
   const completedCount = completedTasks.length;
-  const phaseProgress = Math.round((completedCount / totalTasks) * 100);
+  const phaseProgress = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
+
+  const hasNoTasks = tasks.length === 0;
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
@@ -591,8 +290,8 @@ export default function MyTasksPage({ params }: { params: Promise<{ id: string }
         <div className="mt-4 p-4 rounded-lg bg-slate-50 border border-slate-200">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <Badge className="bg-blue-100 text-blue-800 border-transparent text-xs">Phase 2 of 5</Badge>
-              <span className="text-sm font-medium text-slate-700">Classify &amp; Govern</span>
+              <Badge className="bg-slate-100 text-slate-600 border-transparent text-xs">Phase 1 of 5</Badge>
+              <span className="text-sm font-medium text-slate-700">Scope &amp; Assess</span>
             </div>
             <span className="text-sm text-slate-500">{completedCount} of {totalTasks} tasks complete</span>
           </div>
@@ -605,50 +304,99 @@ export default function MyTasksPage({ params }: { params: Promise<{ id: string }
         </div>
       </div>
 
-      {/* Requires Your Action */}
-      <section className="mb-10">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">
-            {actionTasks.length}
+      {hasNoTasks ? (
+        /* Empty state */
+        <div className="text-center py-16">
+          <div className="flex justify-center mb-4">
+            <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100">
+              <ClipboardList className="h-8 w-8 text-slate-400" />
+            </div>
           </div>
-          <h2 className="text-lg font-semibold text-slate-900">Requires Your Action</h2>
-        </div>
-        <div className="space-y-3">
-          {actionTasks.map((task) => (
-            <ActionTaskCard key={task.id} task={task} projectId={projectId} />
-          ))}
-        </div>
-      </section>
+          <h2 className="text-xl font-semibold text-slate-900 mb-2">No tasks assigned yet</h2>
+          <p className="text-sm text-slate-500 max-w-lg mx-auto mb-8">
+            Tasks are assigned based on your role as the project progresses through each phase.
+            As your team completes assessments, drafts policies, and reviews gates, relevant
+            action items will appear here.
+          </p>
 
-      <Separator className="mb-10 bg-slate-200" />
+          <Card className="max-w-xl mx-auto text-left border border-slate-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold text-slate-700">
+                Typical tasks for {ROLE_LABELS[role]}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-sm text-slate-500">{ROLE_TASK_DESCRIPTIONS[role]}</p>
+            </CardContent>
+          </Card>
 
-      {/* Upcoming */}
-      <section className="mb-10">
-        <div className="flex items-center gap-2 mb-4">
-          <Clock className="h-5 w-5 text-slate-400" />
-          <h2 className="text-lg font-semibold text-slate-700">Upcoming</h2>
-        </div>
-        <div className="space-y-2">
-          {upcomingTasks.map((task) => (
-            <UpcomingTaskCard key={task.id} task={task} />
-          ))}
-        </div>
-      </section>
+          <Separator className="my-8 bg-slate-200 max-w-xl mx-auto" />
 
-      <Separator className="mb-10 bg-slate-200" />
+          <div className="max-w-xl mx-auto text-left">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3">Tasks by role across the project</h3>
+            <div className="space-y-2">
+              {(Object.keys(ROLE_LABELS) as UserRole[]).map((roleKey) => (
+                <div key={roleKey} className="flex items-start gap-2 text-sm">
+                  <span className={cn(
+                    'font-medium shrink-0 w-48',
+                    roleKey === role ? 'text-blue-700' : 'text-slate-600',
+                  )}>
+                    {ROLE_LABELS[roleKey]}
+                  </span>
+                  <span className="text-slate-500">{ROLE_TASK_DESCRIPTIONS[roleKey]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Requires Your Action */}
+          <section className="mb-10">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">
+                {actionTasks.length}
+              </div>
+              <h2 className="text-lg font-semibold text-slate-900">Requires Your Action</h2>
+            </div>
+            <div className="space-y-3">
+              {actionTasks.map((task) => (
+                <ActionTaskCard key={task.id} task={task} projectId={projectId} />
+              ))}
+            </div>
+          </section>
 
-      {/* Recently Completed */}
-      <section className="mb-8">
-        <div className="flex items-center gap-2 mb-4">
-          <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-          <h2 className="text-lg font-semibold text-slate-700">Recently Completed</h2>
-        </div>
-        <div className="space-y-2">
-          {completedTasks.map((task) => (
-            <CompletedTaskCard key={task.id} task={task} />
-          ))}
-        </div>
-      </section>
+          <Separator className="mb-10 bg-slate-200" />
+
+          {/* Upcoming */}
+          <section className="mb-10">
+            <div className="flex items-center gap-2 mb-4">
+              <Clock className="h-5 w-5 text-slate-400" />
+              <h2 className="text-lg font-semibold text-slate-700">Upcoming</h2>
+            </div>
+            <div className="space-y-2">
+              {upcomingTasks.map((task) => (
+                <UpcomingTaskCard key={task.id} task={task} />
+              ))}
+            </div>
+          </section>
+
+          <Separator className="mb-10 bg-slate-200" />
+
+          {/* Recently Completed */}
+          <section className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+              <h2 className="text-lg font-semibold text-slate-700">Recently Completed</h2>
+            </div>
+            <div className="space-y-2">
+              {completedTasks.map((task) => (
+                <CompletedTaskCard key={task.id} task={task} />
+              ))}
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 }

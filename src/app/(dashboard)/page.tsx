@@ -7,7 +7,6 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  FileText,
   ArrowRight,
   Plus,
   AlertCircle,
@@ -16,9 +15,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   CheckCircle2,
-  Shield,
-  Users,
   AlertTriangle,
+  Eye,
 } from 'lucide-react';
 import {
   Card,
@@ -29,7 +27,6 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { useProjects } from '@/hooks/use-projects';
 import { useHealth } from '@/hooks/use-health';
 import type { Project } from '@/types';
@@ -188,68 +185,6 @@ function TrendIndicator({ value, suffix = '' }: { value: number; suffix?: string
     </span>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/*  Demo activity feed data                                            */
-/* ------------------------------------------------------------------ */
-
-interface ActivityItem {
-  id: string;
-  action: string;
-  resource: string;
-  user: string;
-  time: string;
-  icon: React.ElementType;
-  iconColor: string;
-}
-
-const DEMO_ACTIVITIES: ActivityItem[] = [
-  {
-    id: 'act-1',
-    action: 'completed the assessment',
-    resource: 'Enterprise AI Coding Pilot',
-    user: 'Sarah Chen',
-    time: '2 hours ago',
-    icon: CheckCircle2,
-    iconColor: 'text-emerald-500',
-  },
-  {
-    id: 'act-2',
-    action: 'updated the policy',
-    resource: 'Acceptable Use Policy v3',
-    user: 'James Wilson',
-    time: '4 hours ago',
-    icon: Shield,
-    iconColor: 'text-blue-500',
-  },
-  {
-    id: 'act-3',
-    action: 'added a team member',
-    resource: 'Legal Document Assistant',
-    user: 'Maria Garcia',
-    time: '6 hours ago',
-    icon: Users,
-    iconColor: 'text-violet-500',
-  },
-  {
-    id: 'act-4',
-    action: 'flagged a risk',
-    resource: 'Data Classification - Tier 2',
-    user: 'Alex Kim',
-    time: '1 day ago',
-    icon: AlertTriangle,
-    iconColor: 'text-amber-500',
-  },
-  {
-    id: 'act-5',
-    action: 'generated a report',
-    resource: 'Executive Summary - Q1 2026',
-    user: 'Sarah Chen',
-    time: '1 day ago',
-    icon: FileText,
-    iconColor: 'text-slate-500',
-  },
-];
 
 /* ------------------------------------------------------------------ */
 /*  Status distribution chart                                          */
@@ -418,6 +353,41 @@ function SetupStatusBanner() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Sample project CTA banner                                          */
+/* ------------------------------------------------------------------ */
+
+function SampleProjectBanner() {
+  return (
+    <Card className="border-blue-200 bg-blue-50">
+      <CardContent className="pt-5">
+        <div className="flex items-start gap-4 sm:items-center sm:flex-row flex-col">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100">
+            <Eye className="h-5 w-5 text-blue-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-blue-900">
+              Explore a Sample Project
+            </p>
+            <p className="text-sm text-blue-700 mt-0.5">
+              See how GovAI Studio guides an enterprise AI coding agent pilot from assessment through go/no-go decision. This sample demonstrates all 5 project phases with realistic data.
+            </p>
+          </div>
+          <Link href="/projects/sample/overview" className="shrink-0">
+            <Button
+              size="sm"
+              className="gap-2 bg-blue-600 text-white hover:bg-blue-700"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              View Sample Project
+            </Button>
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -431,6 +401,7 @@ export default function DashboardPage() {
     return (
       <div className="space-y-8">
         <SetupStatusBanner />
+        <SampleProjectBanner />
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Welcome</h1>
@@ -585,34 +556,13 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-0">
-              {DEMO_ACTIVITIES.map((activity, idx) => {
-                const Icon = activity.icon;
-                return (
-                  <div key={activity.id}>
-                    <div className="flex items-start gap-3 py-2.5">
-                      <div className="mt-0.5 shrink-0">
-                        <Icon className={`h-4 w-4 ${activity.iconColor}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm leading-snug">
-                          <span className="font-medium">{activity.user}</span>{' '}
-                          <span className="text-slate-600">{activity.action}</span>
-                        </p>
-                        <p className="text-xs text-slate-500 truncate">
-                          {activity.resource}
-                        </p>
-                      </div>
-                      <span className="text-[11px] text-slate-400 whitespace-nowrap">
-                        {activity.time}
-                      </span>
-                    </div>
-                    {idx < DEMO_ACTIVITIES.length - 1 && (
-                      <Separator />
-                    )}
-                  </div>
-                );
-              })}
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Activity className="h-8 w-8 text-slate-200 mb-3" />
+              <p className="text-sm text-slate-500 max-w-xs">
+                Activity will appear here as your team works on projects
+                &mdash; assessments completed, policies drafted, gates
+                reviewed, and more.
+              </p>
             </div>
           </CardContent>
         </Card>

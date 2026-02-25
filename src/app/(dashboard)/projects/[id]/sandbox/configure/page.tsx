@@ -778,6 +778,26 @@ export default function SandboxConfigurePage({
         </p>
       </div>
 
+      {/* What You'll Need */}
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+        <div className="flex items-start gap-3">
+          <Info className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <h2 className="text-sm font-semibold text-amber-900 mb-2">What You&apos;ll Need</h2>
+            <ul className="space-y-1.5 text-sm text-amber-800 list-disc list-inside">
+              <li>Cloud provider account with admin access (AWS, GCP, or Azure)</li>
+              <li>VPC/network CIDR range for the sandbox (e.g. 10.0.0.0/16)</li>
+              <li>Approved domain allowlist for AI model API endpoints</li>
+              <li>DLP tool credentials if integrating data loss prevention</li>
+              <li>SIEM endpoint URL for security log forwarding</li>
+            </ul>
+            <p className="mt-3 text-xs text-amber-700">
+              Configuration generates infrastructure-as-code files you can review before deploying.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* How-to guide */}
       <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
         <CardContent className="py-4">

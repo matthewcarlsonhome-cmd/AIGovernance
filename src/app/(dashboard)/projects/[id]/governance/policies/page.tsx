@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   FileText,
+  Info,
   Plus,
   Eye,
   Pencil,
@@ -40,6 +41,8 @@ import {
   X,
   ShieldCheck,
   Mail,
+  BookOpen,
+  Layers,
 } from "lucide-react";
 import { usePolicies } from "@/hooks/use-governance";
 
@@ -287,6 +290,175 @@ Establishes requirements for the evaluation, selection, onboarding, and ongoing 
       { name: "Rachel Foster", role: "Legal Counsel", status: "pending" },
       { name: "Maria Lopez", role: "CISO", status: "pending" },
     ],
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Policy Starter Templates
+// ---------------------------------------------------------------------------
+
+interface PolicyStarterTemplate {
+  id: string;
+  title: string;
+  type: string;
+  description: string;
+  icon: "aup" | "irp" | "data";
+  content: string;
+}
+
+const POLICY_STARTER_TEMPLATES: PolicyStarterTemplate[] = [
+  {
+    id: "tpl-aup",
+    title: "Acceptable Use Policy (AUP)",
+    type: "Acceptable Use",
+    description:
+      "Comprehensive policy defining permitted and prohibited uses of AI coding assistants, data handling obligations, and enforcement procedures.",
+    icon: "aup",
+    content: `AI ACCEPTABLE USE POLICY (AUP)
+Version 0.1 (DRAFT) | Effective Date: [DATE]
+Classification: Internal — All Employees
+Owner: [POLICY OWNER / TITLE]
+
+1. PURPOSE AND SCOPE
+This policy establishes the acceptable use requirements for AI-powered coding assistants deployed within [Organization Name]. It applies to all employees, contractors, interns, and third-party personnel who access or interact with AI coding tools in the course of their work. The policy covers all environments — development, staging, and production — across every business unit and subsidiary.
+
+2. APPROVED AI TOOLS
+The following AI coding assistants are authorized for use within the managed sandbox environment. No other AI tools may be used for organizational work without prior written approval from the IT / Security Lead.
+  - Claude Code (Anthropic) — approved for code generation, review, and documentation
+  - GitHub Copilot (Microsoft / OpenAI) — approved for code completion and suggestion
+  - Amazon CodeWhisperer — approved for code generation within AWS environments
+  - [Add or remove tools as appropriate for your organization]
+
+3. PERMITTED USE CASES
+Authorized personnel may use approved AI tools for the following activities, provided all other sections of this policy are observed:
+  - Code generation and completion for approved project repositories
+  - Automated and assisted code review, including refactoring suggestions
+  - Generation of documentation, inline comments, and technical specifications
+  - Test generation, including unit tests, integration tests, and test data scaffolding
+  - Debugging assistance and root-cause analysis for non-sensitive application code
+  - Translation of code between approved programming languages
+
+4. PROHIBITED ACTIVITIES
+The following activities are strictly prohibited when using AI coding tools:
+  - Entering production data, customer data, or any data classified as Confidential or Restricted into AI prompts or context windows
+  - Submitting personally identifiable information (PII), protected health information (PHI), payment card data, or credentials into any AI tool
+  - Bypassing or circumventing code review processes for AI-generated code
+  - Disabling, modifying, or circumventing managed settings, DLP rules, or network egress controls
+  - Using personal AI accounts or unapproved AI services for organizational work
+  - Generating security-critical code (authentication, encryption, access control) without mandatory human review and sign-off
+
+5. DATA HANDLING REQUIREMENTS
+  - No PII, PHI, financial records, API keys, secrets, or credentials shall be included in AI prompts
+  - Proprietary algorithms, trade secrets, and patent-pending code must not be provided as context
+  - All AI interaction logs are retained for a minimum of [90 / 180 / 365] days for audit purposes
+  - Data Loss Prevention (DLP) tools must remain active and unmodified during all AI sessions
+  - Teams must redact or anonymize sensitive data before including it in AI-assisted workflows
+
+6. MONITORING AND ENFORCEMENT
+  - All AI tool usage is subject to automated logging, including prompts, completions, and session metadata
+  - Periodic audits of AI usage logs will be conducted by the IT / Security Lead on a [monthly / quarterly] basis
+  - Violations of this policy may result in immediate revocation of AI tool access, disciplinary action up to and including termination, and legal referral where applicable
+  - Suspected incidents must be reported through the standard incident response process within [24] hours
+
+7. ACKNOWLEDGMENT
+All personnel granted access to AI coding tools must sign this policy acknowledgment prior to receiving access credentials. Re-certification is required annually or upon any material policy revision.
+
+Signature: _________________________  Date: _______________
+Printed Name: ______________________  Title: _______________`,
+  },
+  {
+    id: "tpl-irp",
+    title: "Incident Response Plan — AI Addendum",
+    type: "Incident Response",
+    description:
+      "Extends your existing IRP to cover AI-specific incidents including data leakage, prompt injection, model hallucination, and unauthorized tool usage.",
+    icon: "irp",
+    content: `INCIDENT RESPONSE PLAN — AI ADDENDUM
+Version 0.1 (DRAFT) | Proposed Effective Date: [DATE]
+Classification: Internal — Security Team, IT Operations
+Owner: [INCIDENT RESPONSE TEAM LEAD]
+
+1. PURPOSE
+This addendum extends the existing Incident Response Plan (IRP) to address security incidents that arise specifically from the use of AI coding assistants. It defines AI-specific incident categories, severity classifications, response procedures, and escalation paths. This addendum should be read in conjunction with the master IRP document and does not replace any existing procedures.
+
+2. AI-SPECIFIC INCIDENT CATEGORIES
+The following incident categories are unique to or materially affected by AI coding tool usage:
+  - Data Leakage via AI: Sensitive, confidential, or restricted data is transmitted to an AI service through prompts, context windows, or file uploads — whether intentional or accidental.
+  - Model Hallucination in Production: AI-generated code that contains fabricated API calls, non-existent library references, or logically incorrect implementations is deployed to a production environment without adequate human review.
+  - Prompt Injection: A malicious actor crafts input that manipulates AI tool behavior, causing it to bypass safety controls, exfiltrate data, or produce harmful output.
+  - Unauthorized AI Tool Usage: Personnel use unapproved AI tools (shadow AI) for organizational work, creating unmonitored data flows and compliance gaps.
+
+3. SEVERITY CLASSIFICATION
+  - Critical (P1): PII, PHI, or credentials confirmed exposed through an AI tool; requires immediate containment. Response SLA: 1 hour.
+  - High (P2): Proprietary source code or trade secrets submitted to an AI training pipeline; hallucinated code deployed to production causing service impact. Response SLA: 4 hours.
+  - Medium (P3): Policy violation detected (e.g., unauthorized use of a personal AI account for work); no confirmed data exposure. Response SLA: 24 hours.
+  - Low (P4): Shadow AI usage detected with no sensitive data involvement; minor policy deviations. Response SLA: 72 hours.
+
+4. RESPONSE PROCEDURES
+All AI-related incidents follow the standard five-phase response model:
+  a) Detection — Automated DLP alerts, usage log anomalies, peer reports, or audit findings trigger incident identification. AI-specific monitoring dashboards should be reviewed daily by the on-call security analyst.
+  b) Containment — Immediately revoke the affected user's AI tool access. If data leakage is suspected, engage the AI vendor's data deletion process. Isolate any AI-generated code that may be compromised.
+  c) Eradication — Remove or quarantine AI-generated artifacts that are affected. Rotate any credentials or secrets that may have been exposed. Patch prompt injection vectors if applicable.
+  d) Recovery — Restore clean code from version control. Re-enable AI tool access only after root cause is confirmed and remediation is verified. Conduct a targeted code review of recent AI-assisted commits.
+  e) Lessons Learned — Document the incident timeline, root cause, and remediation steps within [5] business days. Update this addendum and related policies as needed. Share anonymized findings with the broader team.
+
+5. ROLES AND RESPONSIBILITIES
+  - Incident Commander: Coordinates the response, makes containment decisions, and owns the post-incident report.
+  - IT / Security Lead: Executes technical containment, log analysis, and evidence preservation.
+  - Legal Counsel: Assesses regulatory notification obligations (GDPR, HIPAA, state breach laws) and advises on disclosure.
+  - Communications Lead: Manages internal and external communications if the incident requires stakeholder notification.
+  - Engineering Lead: Reviews AI-generated code, identifies blast radius, and leads remediation.
+
+6. ESCALATION MATRIX
+  | Severity | Response Time | Notification Chain                                |
+  |----------|---------------|---------------------------------------------------|
+  | Critical | 1 hour        | CISO, General Counsel, CEO, Board (if breach)     |
+  | High     | 4 hours       | CISO, CTO, Legal Counsel                          |
+  | Medium   | 24 hours      | Security Lead, IT Manager, Compliance Officer      |
+  | Low      | 72 hours      | Security Analyst, Team Lead                        |`,
+  },
+  {
+    id: "tpl-data",
+    title: "Data Classification Policy",
+    type: "Data Classification",
+    description:
+      "Defines classification levels and rules governing which data may be used with AI tools, including retention, redaction, and cross-border requirements.",
+    icon: "data",
+    content: `DATA CLASSIFICATION POLICY — AI TOOL USAGE
+Version 0.1 (DRAFT) | Working Document
+Classification: Internal — Governance Team, IT, Legal
+Owner: [DATA GOVERNANCE OFFICER / TITLE]
+
+1. CLASSIFICATION LEVELS
+All organizational data shall be assigned one of the following classification levels. Classification is the responsibility of the data owner and must be reviewed annually or upon any material change in data usage.
+  - Public: Information approved for unrestricted external distribution. Examples: published marketing materials, open-source code, public documentation, press releases.
+  - Internal: Information intended for general internal use that would not cause material harm if disclosed. Examples: internal tools, non-sensitive application code, team process documents, meeting notes without sensitive content.
+  - Confidential: Information whose unauthorized disclosure could cause significant harm to the organization. Examples: proprietary algorithms, pre-release product designs, financial forecasts, strategic plans, vendor contracts, internal audit reports.
+  - Restricted: The most sensitive category. Unauthorized disclosure could cause severe regulatory, financial, or reputational damage. Examples: PII, PHI, payment card data, credentials and secrets, encryption keys, legal hold materials, board communications.
+
+2. AI-SPECIFIC DATA RULES
+The following rules govern which classification levels may interact with AI coding tools:
+  - Public data: May be used freely with any approved AI tool without additional controls.
+  - Internal data: May be used within the managed sandbox environment with standard DLP and audit logging active. No additional approval required.
+  - Confidential data: Must NOT be entered into AI prompts, context windows, or file uploads unless an explicit exception has been granted by the Data Governance Officer and the CISO. If an exception is granted, enhanced logging and real-time monitoring must be enabled for the duration of the session.
+  - Restricted data: Is STRICTLY PROHIBITED from any interaction with AI tools, with no exceptions. Any accidental exposure of Restricted data to an AI tool constitutes a security incident and must be reported immediately per the Incident Response Plan.
+
+3. DATA FLOW REQUIREMENTS
+  - All data entering AI tool prompts must be reviewed against its classification level prior to submission.
+  - Automated pre-submission scanning should be enabled where technically feasible to detect and block Confidential or Restricted data.
+  - Redaction procedures: Before including any dataset in an AI workflow, teams must remove or replace all PII fields, credentials, internal hostnames, and proprietary identifiers with synthetic or anonymized equivalents.
+  - AI-generated output must inherit the classification of the highest-classified input used in its generation. For example, if Internal data is used as context, the output is classified as Internal at minimum.
+
+4. RETENTION AND DELETION
+  - AI interaction logs (prompts, completions, session metadata) shall be retained for [90 / 180 / 365] days, aligned with the organization's general data retention schedule.
+  - Upon termination of an AI vendor relationship, the organization shall exercise contractual data deletion rights and obtain written confirmation that all organizational data — including cached prompts and fine-tuning data — has been permanently removed.
+  - Right to deletion: Individuals may request deletion of their personal data from AI interaction logs in accordance with applicable privacy regulations (GDPR Article 17, CCPA, etc.).
+
+5. CROSS-BORDER CONSIDERATIONS
+  - AI API calls that transmit organizational data must comply with applicable data residency requirements. Teams must verify the geographic location of AI vendor processing infrastructure before onboarding.
+  - For data subject to GDPR, ensure that appropriate transfer mechanisms (Standard Contractual Clauses, adequacy decisions, or Binding Corporate Rules) are in place before data is processed by an AI vendor outside the EEA.
+  - For data subject to sector-specific regulations (HIPAA, ITAR, CMMC), confirm that the AI vendor's processing environment meets the relevant compliance certifications and that a Business Associate Agreement or equivalent is executed where required.
+  - Maintain a register of all AI tools and the jurisdictions in which they process data, updated quarterly by the IT / Security Lead.`,
   },
 ];
 
@@ -735,6 +907,26 @@ export default function PoliciesPage({
           <Plus className="h-4 w-4" />
           New Policy
         </Button>
+      </div>
+
+      {/* What You'll Need */}
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+        <div className="flex items-start gap-3">
+          <Info className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <h2 className="text-sm font-semibold text-amber-900 mb-2">What You&apos;ll Need</h2>
+            <ul className="space-y-1.5 text-sm text-amber-800 list-disc list-inside">
+              <li>Existing acceptable use policies for reference or adaptation</li>
+              <li>Incident response plan (IRP) to create an AI-specific addendum</li>
+              <li>Data classification standards from your security team</li>
+              <li>Legal team review schedule and approval workflow</li>
+              <li>Compliance framework requirements (SOC2, HIPAA, NIST, GDPR)</li>
+            </ul>
+            <p className="mt-3 text-xs text-amber-700">
+              Each policy includes a starter template. Customize to match your organization&apos;s requirements.
+            </p>
+          </div>
+        </div>
       </div>
 
       <Separator />

@@ -11,6 +11,7 @@ import {
   Filter,
   Ban,
   AlertTriangle,
+  Info,
   Target,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -83,80 +84,53 @@ const ROLE_BADGE_COLORS: Record<string, string> = {
 };
 
 /* -------------------------------------------------------------------------- */
-/*  Demo data — 33 tasks across 5 phases                                     */
+/*  Phase data — tasks are generated as the project progresses                */
 /* -------------------------------------------------------------------------- */
 
 const PHASES: Phase[] = [
   {
     number: 1,
     name: 'Scope & Assess',
-    status: 'complete',
-    completionDate: '2026-02-10',
-    tasks: [
-      { id: 'p1-1', title: 'Complete intake scorecard', assignedRole: 'Consultant', roleKey: 'consultant', dueDate: '2026-02-05', completionDate: '2026-02-05', status: 'complete' },
-      { id: 'p1-2', title: 'Run discovery questionnaire', assignedRole: 'Consultant', roleKey: 'consultant', dueDate: '2026-02-06', completionDate: '2026-02-06', status: 'complete' },
-      { id: 'p1-3', title: 'Review readiness assessment', assignedRole: 'Consultant', roleKey: 'consultant', dueDate: '2026-02-08', completionDate: '2026-02-08', status: 'complete' },
-      { id: 'p1-4', title: 'Complete prerequisites', assignedRole: 'Admin', roleKey: 'admin', dueDate: '2026-02-09', completionDate: '2026-02-09', status: 'complete' },
-      { id: 'p1-5', title: 'Assign project team', assignedRole: 'Admin', roleKey: 'admin', dueDate: '2026-02-04', completionDate: '2026-02-04', status: 'complete' },
-      { id: 'p1-6', title: 'Data readiness review', assignedRole: 'IT Lead', roleKey: 'it', dueDate: '2026-02-10', completionDate: '2026-02-10', status: 'complete' },
-    ],
+    status: 'not_started',
+    tasks: [],
   },
   {
     number: 2,
     name: 'Classify & Govern',
-    status: 'in_progress',
-    tasks: [
-      { id: 'p2-1', title: 'Data classification', assignedRole: 'IT Lead', roleKey: 'it', dueDate: '2026-02-14', completionDate: '2026-02-14', status: 'complete' },
-      { id: 'p2-2', title: 'Risk register', assignedRole: 'Consultant', roleKey: 'consultant', dueDate: '2026-02-16', completionDate: '2026-02-16', status: 'complete' },
-      { id: 'p2-3', title: 'RACI matrix', assignedRole: 'Admin', roleKey: 'admin', dueDate: '2026-02-18', completionDate: '2026-02-18', status: 'complete' },
-      { id: 'p2-4', title: 'AUP policy draft', assignedRole: 'Consultant', roleKey: 'consultant', dueDate: '2026-02-20', completionDate: '2026-02-20', status: 'complete' },
-      { id: 'p2-5', title: 'IRP addendum draft', assignedRole: 'Consultant', roleKey: 'consultant', dueDate: '2026-02-20', completionDate: '2026-02-20', status: 'complete' },
-      { id: 'p2-6', title: 'Data handling policy', assignedRole: 'Consultant', roleKey: 'consultant', dueDate: '2026-02-21', completionDate: '2026-02-21', status: 'complete' },
-      { id: 'p2-7', title: 'SOC2 compliance mapping', assignedRole: 'IT Lead', roleKey: 'it', dueDate: '2026-02-22', completionDate: '2026-02-22', status: 'complete' },
-      { id: 'p2-8', title: 'HIPAA compliance mapping', assignedRole: 'Legal Lead', roleKey: 'legal', dueDate: '2026-02-22', completionDate: '2026-02-22', status: 'complete' },
-      { id: 'p2-9', title: 'Ethics review', assignedRole: 'Legal Lead', roleKey: 'legal', dueDate: '2026-02-28', status: 'in_progress' },
-      { id: 'p2-10', title: 'AUP policy legal review', assignedRole: 'Legal Lead', roleKey: 'legal', dueDate: '2026-02-28', status: 'in_progress' },
-      { id: 'p2-11', title: 'Security controls baseline', assignedRole: 'IT Lead', roleKey: 'it', dueDate: '2026-03-03', status: 'not_started' },
-      { id: 'p2-12', title: 'Gate 1 review preparation', assignedRole: 'Consultant', roleKey: 'consultant', dueDate: '2026-03-05', status: 'blocked', blockedBy: 'Ethics review, AUP legal review' },
-    ],
+    status: 'not_started',
+    tasks: [],
   },
   {
     number: 3,
     name: 'Gate Reviews',
     status: 'not_started',
-    tasks: [
-      { id: 'p3-1', title: 'Gate 1: Scope Review', assignedRole: 'Exec Sponsor', roleKey: 'executive', dueDate: '2026-03-07', status: 'not_started' },
-      { id: 'p3-2', title: 'Gate 2: Security Review', assignedRole: 'IT Lead', roleKey: 'it', dueDate: '2026-03-10', status: 'not_started' },
-      { id: 'p3-3', title: 'Evidence package', assignedRole: 'Consultant', roleKey: 'consultant', dueDate: '2026-03-12', status: 'not_started' },
-      { id: 'p3-4', title: 'Exception requests (if needed)', assignedRole: 'Legal Lead', roleKey: 'legal', dueDate: '2026-03-12', status: 'not_started' },
-      { id: 'p3-5', title: 'Gate 3: Pilot Approval', assignedRole: 'Exec Sponsor', roleKey: 'executive', dueDate: '2026-03-14', status: 'not_started' },
-    ],
+    tasks: [],
   },
   {
     number: 4,
     name: 'Sandbox & Pilot',
     status: 'not_started',
-    tasks: [
-      { id: 'p4-1', title: 'Sandbox configuration', assignedRole: 'IT Lead', roleKey: 'it', dueDate: '2026-03-18', status: 'not_started' },
-      { id: 'p4-2', title: 'Sandbox validation', assignedRole: 'IT Lead', roleKey: 'it', dueDate: '2026-03-20', status: 'not_started' },
-      { id: 'p4-3', title: 'Pilot design', assignedRole: 'Eng Lead', roleKey: 'engineering', dueDate: '2026-03-22', status: 'not_started' },
-      { id: 'p4-4', title: 'Sprint 1 execution', assignedRole: 'Eng Lead', roleKey: 'engineering', dueDate: '2026-03-29', status: 'not_started' },
-      { id: 'p4-5', title: 'Sprint 2 execution', assignedRole: 'Eng Lead', roleKey: 'engineering', dueDate: '2026-04-05', status: 'not_started' },
-      { id: 'p4-6', title: 'Monitoring setup', assignedRole: 'IT Lead', roleKey: 'it', dueDate: '2026-03-25', status: 'not_started' },
-    ],
+    tasks: [],
   },
   {
     number: 5,
     name: 'Evaluate & Decide',
     status: 'not_started',
-    tasks: [
-      { id: 'p5-1', title: 'Outcome metrics analysis', assignedRole: 'Consultant', roleKey: 'consultant', dueDate: '2026-04-08', status: 'not_started' },
-      { id: 'p5-2', title: 'ROI calculation', assignedRole: 'Consultant', roleKey: 'consultant', dueDate: '2026-04-10', status: 'not_started' },
-      { id: 'p5-3', title: 'Executive brief', assignedRole: 'Consultant', roleKey: 'consultant', dueDate: '2026-04-12', status: 'not_started' },
-      { id: 'p5-4', title: 'Go/No-Go decision', assignedRole: 'Exec Sponsor', roleKey: 'executive', dueDate: '2026-04-15', status: 'not_started' },
-    ],
+    tasks: [],
   },
 ];
+
+/* -------------------------------------------------------------------------- */
+/*  Phase guidance text (shown when phases have no tasks)                     */
+/* -------------------------------------------------------------------------- */
+
+const PHASE_GUIDANCE: Record<number, string> = {
+  1: 'Complete the intake scorecard and discovery questionnaire to generate scope tasks.',
+  2: 'Tasks will be generated after Phase 1 assessments — includes data classification, policy drafting, compliance mapping.',
+  3: 'Gate reviews will be scheduled after governance artifacts are completed in Phase 2.',
+  4: 'Sandbox configuration and pilot design tasks appear after gate approvals in Phase 3.',
+  5: 'Evaluation tasks appear after pilot execution completes in Phase 4.',
+};
 
 /* -------------------------------------------------------------------------- */
 /*  useRoleOverride hook                                                      */
@@ -299,7 +273,7 @@ function PhaseSection({
             {isComplete && phase.completionDate && (
               <p className="text-xs text-emerald-600 mt-0.5">Completed {formatDate(phase.completionDate)}</p>
             )}
-            {isFuture && (
+            {isFuture && phase.number > 1 && (
               <p className="text-xs text-slate-400 mt-0.5">Begins after Phase {phase.number - 1}</p>
             )}
           </div>
@@ -314,73 +288,82 @@ function PhaseSection({
         </span>
       </button>
 
-      {/* Task rows */}
+      {/* Task rows or guidance text */}
       {expanded && (
         <div className={cn(
           'border-t',
           isComplete ? 'border-emerald-200' : 'border-slate-200',
           isFuture ? 'bg-slate-50' : 'bg-white',
         )}>
-          {phase.tasks.map((task, idx) => {
-            const isUserTask = task.roleKey === currentRole;
-            const isDimmed = roleFilter !== 'all' && task.roleKey !== roleFilter;
+          {phase.tasks.length === 0 ? (
+            <div className="px-5 py-6 flex items-start gap-3">
+              <Info className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+              <p className="text-sm text-slate-500">
+                {PHASE_GUIDANCE[phase.number] ?? 'Tasks will be generated as the project progresses.'}
+              </p>
+            </div>
+          ) : (
+            phase.tasks.map((task, idx) => {
+              const isUserTask = task.roleKey === currentRole;
+              const isDimmed = roleFilter !== 'all' && task.roleKey !== roleFilter;
 
-            return (
-              <div
-                key={task.id}
-                className={cn(
-                  'flex items-center gap-3 px-5 py-3 transition-opacity',
-                  idx < phase.tasks.length - 1 ? 'border-b border-slate-100' : '',
-                  isDimmed ? 'opacity-30' : '',
-                  isFuture && !isDimmed ? 'opacity-60' : '',
-                )}
-              >
-                <TaskStatusIcon status={task.status} />
+              return (
+                <div
+                  key={task.id}
+                  className={cn(
+                    'flex items-center gap-3 px-5 py-3 transition-opacity',
+                    idx < phase.tasks.length - 1 ? 'border-b border-slate-100' : '',
+                    isDimmed ? 'opacity-30' : '',
+                    isFuture && !isDimmed ? 'opacity-60' : '',
+                  )}
+                >
+                  <TaskStatusIcon status={task.status} />
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className={cn(
-                      'text-sm',
-                      task.status === 'complete' ? 'text-slate-500' :
-                      task.status === 'blocked' ? 'text-slate-600' :
-                      'text-slate-900 font-medium',
-                    )}>
-                      {task.title}
-                    </span>
-                    {isUserTask && !isDimmed && (
-                      <span className="text-xs font-bold text-blue-600 shrink-0">&larr; YOU</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        'text-sm',
+                        task.status === 'complete' ? 'text-slate-500' :
+                        task.status === 'blocked' ? 'text-slate-600' :
+                        'text-slate-900 font-medium',
+                      )}>
+                        {task.title}
+                      </span>
+                      {isUserTask && !isDimmed && (
+                        <span className="text-xs font-bold text-blue-600 shrink-0">&larr; YOU</span>
+                      )}
+                    </div>
+                    {task.status === 'blocked' && task.blockedBy && (
+                      <p className="text-xs text-red-500 mt-0.5 flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        Blocked by: {task.blockedBy}
+                      </p>
                     )}
                   </div>
-                  {task.status === 'blocked' && task.blockedBy && (
-                    <p className="text-xs text-red-500 mt-0.5 flex items-center gap-1">
-                      <AlertTriangle className="h-3 w-3" />
-                      Blocked by: {task.blockedBy}
-                    </p>
-                  )}
+
+                  <Badge className={cn(
+                    'border-transparent text-[10px] shrink-0',
+                    ROLE_BADGE_COLORS[task.roleKey] ?? 'bg-slate-100 text-slate-700',
+                  )}>
+                    {ROLE_BADGE_LABELS[task.roleKey] ?? task.assignedRole}
+                  </Badge>
+
+                  <span className={cn(
+                    'text-xs shrink-0 w-20 text-right',
+                    task.status === 'complete' ? 'text-emerald-600' :
+                    task.status === 'in_progress' ? 'text-blue-600' :
+                    task.status === 'blocked' ? 'text-red-500' :
+                    'text-slate-400',
+                  )}>
+                    {task.completionDate
+                      ? formatDate(task.completionDate)
+                      : `Due ${formatDate(task.dueDate)}`
+                    }
+                  </span>
                 </div>
-
-                <Badge className={cn(
-                  'border-transparent text-[10px] shrink-0',
-                  ROLE_BADGE_COLORS[task.roleKey] ?? 'bg-slate-100 text-slate-700',
-                )}>
-                  {ROLE_BADGE_LABELS[task.roleKey] ?? task.assignedRole}
-                </Badge>
-
-                <span className={cn(
-                  'text-xs shrink-0 w-20 text-right',
-                  task.status === 'complete' ? 'text-emerald-600' :
-                  task.status === 'in_progress' ? 'text-blue-600' :
-                  task.status === 'blocked' ? 'text-red-500' :
-                  'text-slate-400',
-                )}>
-                  {task.completionDate
-                    ? formatDate(task.completionDate)
-                    : `Due ${formatDate(task.dueDate)}`
-                  }
-                </span>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       )}
     </div>
@@ -399,7 +382,7 @@ export default function ProjectPlanPage({ params }: { params: Promise<{ id: stri
   const allTasks = getAllTasks(PHASES);
   const totalItems = allTasks.length;
   const completedItems = allTasks.filter((t) => t.status === 'complete').length;
-  const completedPct = Math.round((completedItems / totalItems) * 100);
+  const completedPct = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
   return (
     <div className="py-8 px-6">
@@ -416,11 +399,10 @@ export default function ProjectPlanPage({ params }: { params: Promise<{ id: stri
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {getProjectStatusBadge(completedPct)}
-            <div className="text-right">
-              <p className="text-xs text-slate-400">Target completion</p>
-              <p className="text-sm font-medium text-slate-700">Apr 15, 2026</p>
-            </div>
+            {totalItems > 0
+              ? getProjectStatusBadge(completedPct)
+              : <Badge className="bg-slate-100 text-slate-600 border-transparent">Not Started</Badge>
+            }
           </div>
         </div>
 
@@ -439,7 +421,7 @@ export default function ProjectPlanPage({ params }: { params: Promise<{ id: stri
           <Select
             value={roleFilter}
             onValueChange={setRoleFilter}
-            className="w-48 h-8 text-sm border-slate-200"
+            className="w-56 h-8 text-sm border-slate-200"
           >
             <SelectOption value="all">All Roles</SelectOption>
             <SelectOption value="admin">{ROLE_LABELS.admin}</SelectOption>
@@ -475,7 +457,7 @@ export default function ProjectPlanPage({ params }: { params: Promise<{ id: stri
             phase={phase}
             currentRole={currentRole}
             roleFilter={roleFilter}
-            defaultExpanded={phase.status !== 'complete'}
+            defaultExpanded={phase.tasks.length === 0 || phase.status !== 'complete'}
           />
         ))}
       </div>
