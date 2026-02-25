@@ -12,16 +12,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import {
   ShieldCheck,
   Rocket,
@@ -29,13 +19,9 @@ import {
   CheckCircle2,
   Clock,
   Lock,
-  ChevronDown,
   ChevronUp,
-  User,
-  Bot,
   AlertTriangle,
   ArrowRight,
-  Send,
   Info,
 } from "lucide-react";
 import { useGateReviews } from '@/hooks/use-governance';
@@ -72,71 +58,58 @@ interface Gate {
   note?: string;
 }
 
+type GateGuidance = string;
+
+const GATE_GUIDANCE: Record<string, GateGuidance> = {
+  'gate-1': 'Submit after completing data classification and initial policies in Phase 2.',
+  'gate-2': 'Submit after security controls are configured and verified in Phase 3.',
+  'gate-3': 'Submit after pilot execution completes with metrics in Phase 4.',
+};
+
 const GATES: Gate[] = [
   {
     id: "gate-1",
     number: 1,
-    title: "Sandbox Access",
-    status: "approved",
+    title: "Data Approval",
+    status: "locked",
     type: "Automated",
     description:
-      "Initial gate verifying that all prerequisites for sandbox environment access have been met, including mandatory training and policy acknowledgments.",
-    criteria: "Training complete + AUP signed",
+      "Initial gate verifying that data classification is complete and initial governance policies have been drafted and reviewed.",
+    criteria: "Data classification complete + initial policies drafted",
     checklist: [
-      { label: "Security training module completed", status: "checked" },
-      { label: "AUP signed digitally", status: "checked" },
-      { label: "NDA on file", status: "checked" },
+      { label: "Data classification completed", status: "unchecked" },
+      { label: "Acceptable Use Policy drafted", status: "unchecked" },
+      { label: "Data handling procedures documented", status: "unchecked" },
     ],
-    approvers: [
-      {
-        name: "System",
-        role: "Automated Verification",
-        status: "approved",
-        date: "Jan 20, 2026",
-      },
-    ],
-    approvedDate: "Jan 20, 2026",
+    approvers: [],
   },
   {
     id: "gate-2",
     number: 2,
-    title: "Pilot Deployment",
-    status: "in_review",
+    title: "Security Review",
+    status: "locked",
     type: "Manual Approval Required",
     description:
-      "Gate requiring manual approval from security and engineering leadership before expanding from sandbox to controlled pilot deployment.",
-    criteria: "Infrastructure verified + security controls active",
+      "Gate requiring security controls to be configured, verified, and approved before proceeding to pilot execution.",
+    criteria: "Security controls configured + verification complete",
     checklist: [
-      { label: "Managed settings deployed", status: "checked" },
-      { label: "CI/CD SAST confirmed", status: "checked" },
-      { label: "DLP rules active", status: "unchecked" },
-      { label: "Audit logging confirmed", status: "checked" },
-      { label: "Penetration test report", status: "unchecked" },
+      { label: "Security controls configured", status: "unchecked" },
+      { label: "DLP rules active and verified", status: "unchecked" },
+      { label: "Audit logging confirmed", status: "unchecked" },
+      { label: "Penetration test report submitted", status: "unchecked" },
+      { label: "Network segmentation verified", status: "unchecked" },
     ],
-    approvers: [
-      {
-        name: "Maria Lopez",
-        role: "Security Lead",
-        status: "pending",
-      },
-      {
-        name: "David Kim",
-        role: "Engineering Lead",
-        status: "approved",
-        date: "Feb 5, 2026",
-      },
-    ],
-    sla: "3-5 business days",
-    submittedDate: "Feb 3, 2026",
+    approvers: [],
+    note: "Requires Gate 1 approval first",
   },
   {
     id: "gate-3",
     number: 3,
-    title: "Production Path",
+    title: "Launch Review",
     status: "locked",
     type: "Full Review Board",
     description:
-      "Final gate requiring full review board approval with comprehensive evidence of successful pilot execution, zero security incidents, and complete compliance documentation.",
+      "Final gate requiring full review board approval with comprehensive evidence of successful pilot execution, compliance documentation, and risk assessment.",
     criteria: "Pilot success + full board approval",
     checklist: [
       { label: "Complete pilot evaluation data", status: "unchecked" },
@@ -146,16 +119,7 @@ const GATES: Gate[] = [
       { label: "Production monitoring plan", status: "unchecked" },
       { label: "Cost-benefit analysis", status: "unchecked" },
     ],
-    approvers: [
-      { name: "Maria Lopez", role: "CISO", status: "pending" },
-      { name: "David Kim", role: "CTO", status: "pending" },
-      { name: "Rachel Foster", role: "Legal", status: "pending" },
-      {
-        name: "Patricia Nguyen",
-        role: "Executive Sponsor",
-        status: "pending",
-      },
-    ],
+    approvers: [],
     note: "Requires Gate 2 approval first",
   },
 ];
@@ -193,7 +157,7 @@ function getGateStatusLabel(status: GateStatus): string {
     case "in_review":
       return "In Review";
     case "locked":
-      return "Locked";
+      return "Not Started";
     default:
       return status;
   }
@@ -240,16 +204,11 @@ export default function GateReviewPage({
   params: Promise<{ id: string }>;
 }): React.ReactElement {
   const { id } = React.use(params);
-  const { data: fetchedGates, isLoading, error } = useGateReviews(id);
+  const { data: fetchedGates, isLoading } = useGateReviews(id);
 
   const [expandedGate, setExpandedGate] = React.useState<string | null>(
-    "gate-2"
+    "gate-1"
   );
-  const [showEvidenceDialog, setShowEvidenceDialog] = React.useState(false);
-  const [evidenceGateId, setEvidenceGateId] = React.useState<string>("");
-  const [evidenceText, setEvidenceText] = React.useState("");
-  const [submittedEvidence, setSubmittedEvidence] = React.useState<Record<string, string[]>>({});
-  const [reminderSent, setReminderSent] = React.useState<Record<string, boolean>>({});
 
   if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
 
@@ -272,48 +231,6 @@ export default function GateReviewPage({
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      {/* Evidence Dialog */}
-      <Dialog open={showEvidenceDialog} onOpenChange={setShowEvidenceDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Submit Additional Evidence</DialogTitle>
-            <DialogDescription>
-              Provide documentation, links, or descriptions of evidence to support this gate review.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="evidence-text">Evidence Description</Label>
-              <Textarea
-                id="evidence-text"
-                placeholder="Describe the evidence being submitted (e.g., link to audit report, test results, policy document)..."
-                value={evidenceText}
-                onChange={(e) => setEvidenceText(e.target.value)}
-                rows={4}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowEvidenceDialog(false); setEvidenceText(""); }}>Cancel</Button>
-            <Button
-              disabled={!evidenceText.trim()}
-              className="bg-slate-900 text-white hover:bg-slate-800"
-              onClick={() => {
-                if (!evidenceText.trim()) return;
-                setSubmittedEvidence((prev) => ({
-                  ...prev,
-                  [evidenceGateId]: [...(prev[evidenceGateId] || []), evidenceText.trim()],
-                }));
-                setShowEvidenceDialog(false);
-                setEvidenceText("");
-              }}
-            >
-              Submit Evidence
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -321,7 +238,7 @@ export default function GateReviewPage({
             The Three Gates
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Three checkpoints between sandbox and production. Clear each one to level up your deployment.
+            Three formal approval checkpoints between sandbox and production. Each gate must be approved in sequence.
           </p>
         </div>
         <div className="text-right">
@@ -537,72 +454,16 @@ export default function GateReviewPage({
                   </div>
                 </div>
 
-                {/* Approvers & Details */}
+                {/* Gate Details & Guidance */}
                 <div className="flex flex-col gap-6">
-                  {/* Approvers */}
-                  <div>
-                    <h3 className="text-sm font-semibold text-slate-900 mb-4">
-                      {gate.type === "Automated"
-                        ? "Verification"
-                        : "Required Approvers"}
-                    </h3>
-                    <div className="space-y-3">
-                      {gate.approvers.map((approver, idx) => (
-                        <div
-                          key={idx}
-                          className={cn(
-                            "flex items-center justify-between rounded-lg border p-3",
-                            approver.status === "approved"
-                              ? "border-emerald-500/25 bg-emerald-500/5"
-                              : "border-slate-200 bg-white"
-                          )}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={cn(
-                                "flex h-8 w-8 items-center justify-center rounded-full",
-                                approver.name === "System"
-                                  ? "bg-slate-100"
-                                  : "bg-slate-100"
-                              )}
-                            >
-                              {approver.name === "System" ? (
-                                <Bot className="h-4 w-4 text-slate-900" />
-                              ) : (
-                                <User className="h-4 w-4 text-slate-500" />
-                              )}
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-slate-900">
-                                {approver.name}
-                              </p>
-                              <p className="text-xs text-slate-500">
-                                {approver.role}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "text-xs",
-                                approver.status === "approved"
-                                  ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/25"
-                                  : "bg-amber-500/15 text-amber-700 border-amber-500/25"
-                              )}
-                            >
-                              {approver.status === "approved"
-                                ? "Approved"
-                                : "Pending"}
-                            </Badge>
-                            {approver.date && (
-                              <p className="text-xs text-slate-500 mt-1">
-                                {approver.date}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                  {/* Guidance */}
+                  <div className="flex items-start gap-3 rounded-lg bg-slate-50 border border-slate-200 p-4">
+                    <Info className="h-5 w-5 text-slate-400 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-slate-900 mb-1">Not Started</p>
+                      <p className="text-sm text-slate-500">
+                        {GATE_GUIDANCE[gate.id]}
+                      </p>
                     </div>
                   </div>
 
@@ -620,36 +481,14 @@ export default function GateReviewPage({
                           {gate.criteria}
                         </span>
                       </div>
-                      {gate.sla && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">
-                            Review SLA
-                          </span>
-                          <span className="text-slate-900 font-medium">
-                            {gate.sla}
-                          </span>
-                        </div>
-                      )}
-                      {gate.submittedDate && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">
-                            Submitted
-                          </span>
-                          <span className="text-slate-900 font-medium">
-                            {gate.submittedDate}
-                          </span>
-                        </div>
-                      )}
-                      {gate.approvedDate && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">
-                            Approved
-                          </span>
-                          <span className="text-slate-900 font-medium">
-                            {gate.approvedDate}
-                          </span>
-                        </div>
-                      )}
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-500">
+                          Review Type
+                        </span>
+                        <span className="text-slate-900 font-medium">
+                          {gate.type}
+                        </span>
+                      </div>
                       {gate.note && (
                         <div className="mt-2 flex items-center gap-2 rounded-md bg-amber-500/10 p-2.5 text-xs text-amber-700">
                           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
@@ -658,53 +497,6 @@ export default function GateReviewPage({
                       )}
                     </div>
                   </div>
-
-                  {/* Actions */}
-                  {gate.status === "in_review" && (
-                    <div className="space-y-3">
-                      <div className="flex gap-2">
-                        <Button
-                          className="flex-1 bg-slate-900 text-white hover:bg-slate-800"
-                          onClick={() => {
-                            setEvidenceGateId(gate.id);
-                            setShowEvidenceDialog(true);
-                          }}
-                        >
-                          Submit Additional Evidence
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setReminderSent((prev) => ({ ...prev, [gate.id]: true }));
-                          }}
-                          disabled={reminderSent[gate.id]}
-                        >
-                          <Send className="h-3.5 w-3.5 mr-1" />
-                          {reminderSent[gate.id] ? 'Reminder Sent' : 'Send Reminder'}
-                        </Button>
-                      </div>
-                      {/* Show submitted evidence */}
-                      {submittedEvidence[gate.id] && submittedEvidence[gate.id].length > 0 && (
-                        <div className="rounded-md bg-emerald-50 border border-emerald-200 p-3">
-                          <p className="text-xs font-medium text-emerald-800 mb-1">Submitted Evidence:</p>
-                          <ul className="space-y-1">
-                            {submittedEvidence[gate.id].map((ev, i) => (
-                              <li key={i} className="text-xs text-emerald-700 flex items-start gap-1">
-                                <CheckCircle2 className="h-3 w-3 mt-0.5 shrink-0" />
-                                {ev}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      {reminderSent[gate.id] && (
-                        <p className="text-xs text-emerald-600 flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3" />
-                          Reminder sent to pending approvers
-                        </p>
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
             </CardContent>
