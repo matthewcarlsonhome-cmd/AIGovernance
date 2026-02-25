@@ -2,11 +2,21 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const requestUrl = new URL(request.url);
+  const searchParams = requestUrl.searchParams;
   const code = searchParams.get('code');
   const next = searchParams.get('redirect') || '/';
   const errorParam = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
+
+  // Behind a reverse proxy (Render, Vercel, etc.), request.url contains the
+  // internal origin (e.g. http://localhost:10000). Use forwarded headers or
+  // the configured NEXT_PUBLIC_APP_URL to get the real public origin.
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+  const origin = forwardedHost
+    ? `${forwardedProto}://${forwardedHost}`
+    : process.env.NEXT_PUBLIC_APP_URL || requestUrl.origin;
 
   // Handle OAuth error callbacks
   if (errorParam) {
