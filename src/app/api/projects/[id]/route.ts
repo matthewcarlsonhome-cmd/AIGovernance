@@ -90,6 +90,16 @@ export async function GET(
     }
 
     const db = await createServiceRoleClient();
+
+    // Resolve user's organization for tenant isolation
+    const { data: userProfile } = await db
+      .from('users')
+      .select('organization_id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const orgId = userProfile?.organization_id;
+
     const { data, error } = await db
       .from('projects')
       .select('*')
@@ -100,6 +110,14 @@ export async function GET(
       console.error('[GET /api/projects/[id]] Supabase error:', error.message, error.code);
       return NextResponse.json(
         { error: 'Project not found', message: error.message },
+        { status: 404 },
+      );
+    }
+
+    // Tenant isolation: verify project belongs to user's organization
+    if (orgId && data?.organization_id && data.organization_id !== orgId) {
+      return NextResponse.json(
+        { error: 'Project not found' },
         { status: 404 },
       );
     }
@@ -154,6 +172,32 @@ export async function PUT(
     }
 
     const db = await createServiceRoleClient();
+
+    // Resolve user's organization for tenant isolation
+    const { data: userProfile } = await db
+      .from('users')
+      .select('organization_id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const orgId = userProfile?.organization_id;
+
+    // Verify project belongs to user's org before allowing update
+    if (orgId) {
+      const { data: existing } = await db
+        .from('projects')
+        .select('organization_id')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (existing?.organization_id && existing.organization_id !== orgId) {
+        return NextResponse.json(
+          { error: 'Project not found' },
+          { status: 404 },
+        );
+      }
+    }
+
     const { data: updated, error } = await db
       .from('projects')
       .update({ ...parsed.data, updated_at: new Date().toISOString() })
@@ -199,6 +243,31 @@ export async function DELETE(
     }
 
     const db = await createServiceRoleClient();
+
+    // Resolve user's organization for tenant isolation
+    const { data: userProfile } = await db
+      .from('users')
+      .select('organization_id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const orgId = userProfile?.organization_id;
+
+    // Verify project belongs to user's org before allowing delete
+    if (orgId) {
+      const { data: existing } = await db
+        .from('projects')
+        .select('organization_id')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (existing?.organization_id && existing.organization_id !== orgId) {
+        return NextResponse.json(
+          { error: 'Project not found' },
+          { status: 404 },
+        );
+      }
+    }
 
     // Try soft-delete first, fall back to hard-delete
     const now = new Date().toISOString();

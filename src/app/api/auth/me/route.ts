@@ -56,47 +56,37 @@ export async function GET(): Promise<NextResponse<ApiResponse<User>>> {
 
     const emailDomain = (user.email ?? 'example.com').split('@')[1] ?? 'example';
 
-    // Step 1: Ensure an organization exists
+    // Step 1: Create a NEW organization for this user.
+    // Each user gets their own org for tenant isolation. Organization
+    // sharing is handled through explicit invitation flows, not auto-join.
     let organizationId = '';
 
-    // Check for existing org first
-    const { data: existingOrg } = await db
+    const orgName = `${fullName}'s Organization`;
+    const orgSlug = `${emailDomain.replace(/[^a-z0-9-]/gi, '-').toLowerCase()}-${user.id.slice(0, 8)}`;
+    const { data: newOrg, error: orgErr } = await db
       .from('organizations')
+      .insert({ name: orgName, slug: orgSlug })
       .select('id')
-      .limit(1)
-      .maybeSingle();
+      .single();
 
-    if (existingOrg?.id) {
-      organizationId = existingOrg.id;
-      console.log('[GET /api/auth/me] Found existing org:', organizationId);
-    } else {
-      // Create a default organization with required slug
-      const orgSlug = emailDomain.replace(/[^a-z0-9-]/gi, '-').toLowerCase();
-      const { data: newOrg, error: orgErr } = await db
+    if (orgErr) {
+      console.error('[GET /api/auth/me] Failed to create organization:', orgErr.message, orgErr.code, orgErr.details);
+      // Try with a unique slug in case of collision
+      const fallbackSlug = `org-${Date.now()}-${user.id.slice(0, 8)}`;
+      const { data: retryOrg, error: retryErr } = await db
         .from('organizations')
-        .insert({ name: 'My Organization', slug: orgSlug })
+        .insert({ name: orgName, slug: fallbackSlug })
         .select('id')
         .single();
-
-      if (orgErr) {
-        console.error('[GET /api/auth/me] Failed to create organization:', orgErr.message, orgErr.code, orgErr.details);
-        // Try with a unique slug in case of collision
-        const fallbackSlug = `org-${Date.now()}`;
-        const { data: retryOrg, error: retryErr } = await db
-          .from('organizations')
-          .insert({ name: 'My Organization', slug: fallbackSlug })
-          .select('id')
-          .single();
-        if (retryErr) {
-          console.error('[GET /api/auth/me] Retry org creation also failed:', retryErr.message);
-        } else if (retryOrg?.id) {
-          organizationId = retryOrg.id;
-          console.log('[GET /api/auth/me] Created org with fallback slug:', organizationId);
-        }
-      } else if (newOrg?.id) {
-        organizationId = newOrg.id;
-        console.log('[GET /api/auth/me] Created new org:', organizationId);
+      if (retryErr) {
+        console.error('[GET /api/auth/me] Retry org creation also failed:', retryErr.message);
+      } else if (retryOrg?.id) {
+        organizationId = retryOrg.id;
+        console.log('[GET /api/auth/me] Created org with fallback slug:', organizationId);
       }
+    } else if (newOrg?.id) {
+      organizationId = newOrg.id;
+      console.log('[GET /api/auth/me] Created new org:', organizationId);
     }
 
     if (!organizationId) {
