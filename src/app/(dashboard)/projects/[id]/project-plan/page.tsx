@@ -439,7 +439,7 @@ export default function ProjectPlanPage({ params }: { params: Promise<{ id: stri
           <Select
             value={roleFilter}
             onValueChange={setRoleFilter}
-            className="w-48 h-8 text-sm border-slate-200"
+            className="w-56 h-8 text-sm border-slate-200"
           >
             <SelectOption value="all">All Roles</SelectOption>
             <SelectOption value="admin">{ROLE_LABELS.admin}</SelectOption>

@@ -128,13 +128,24 @@ function buildProjectTopItems(projectId: string): NavItem[] {
   ];
 }
 
-function buildProjectPhases(projectId: string): PhaseNavSection[] {
+/**
+ * Compute phase status based on which phase is currently active.
+ * Phases before the active one are 'complete', the active one is 'active',
+ * and everything after is 'locked'.
+ */
+function phaseStatus(phaseNumber: number, activePhase: number): PhaseStatus {
+  if (phaseNumber < activePhase) return 'complete';
+  if (phaseNumber === activePhase) return 'active';
+  return 'locked';
+}
+
+function buildProjectPhases(projectId: string, activePhase: number): PhaseNavSection[] {
   const p = (path: string) => `/projects/${projectId}${path}`;
   return [
     {
       phase: 1,
       title: 'Scope & Assess',
-      status: 'complete',
+      status: phaseStatus(1, activePhase),
       items: [
         { label: 'Intake Scorecard', href: p('/intake'), icon: ClipboardList },
         { label: 'Discovery Questionnaire', href: p('/discovery/questionnaire'), icon: FileText },
@@ -146,7 +157,7 @@ function buildProjectPhases(projectId: string): PhaseNavSection[] {
     {
       phase: 2,
       title: 'Classify & Govern',
-      status: 'active',
+      status: phaseStatus(2, activePhase),
       items: [
         { label: 'Data Classification', href: p('/governance/data-classification'), icon: Database, roles: ['admin', 'consultant', 'it', 'legal'] },
         { label: 'Policies', href: p('/governance/policies'), icon: FileText, roles: ['admin', 'consultant', 'legal', 'it'] },
@@ -160,7 +171,7 @@ function buildProjectPhases(projectId: string): PhaseNavSection[] {
     {
       phase: 3,
       title: 'Approve & Gate',
-      status: 'locked',
+      status: phaseStatus(3, activePhase),
       items: [
         { label: 'Gate Reviews', href: p('/governance/gates'), icon: ShieldCheck },
         { label: 'Evidence Packages', href: p('/reports/evidence'), icon: FileOutput, roles: ['admin', 'consultant', 'legal'] },
@@ -171,7 +182,7 @@ function buildProjectPhases(projectId: string): PhaseNavSection[] {
     {
       phase: 4,
       title: 'Build & Test',
-      status: 'locked',
+      status: phaseStatus(4, activePhase),
       items: [
         { label: 'Sandbox Setup', href: p('/sandbox/configure'), icon: Settings, roles: ['admin', 'consultant', 'it', 'engineering'] },
         { label: 'Sandbox Validation', href: p('/sandbox/validate'), icon: CheckCircle, roles: ['admin', 'consultant', 'it', 'engineering'] },
@@ -184,7 +195,7 @@ function buildProjectPhases(projectId: string): PhaseNavSection[] {
     {
       phase: 5,
       title: 'Evaluate & Decide',
-      status: 'locked',
+      status: phaseStatus(5, activePhase),
       items: [
         { label: 'Outcome Metrics', href: p('/outcomes'), icon: Target },
         { label: 'Decision Hub', href: p('/decision-hub'), icon: Scale },
@@ -195,6 +206,63 @@ function buildProjectPhases(projectId: string): PhaseNavSection[] {
       ],
     },
   ];
+}
+
+/* ------------------------------------------------------------------ */
+/*  Active phase tracking (per project, stored in localStorage)        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Read and write the active phase for a project.
+ * Phase 1 = Scope & Assess, Phase 5 = Evaluate & Decide.
+ * New projects start at Phase 1.
+ */
+function useActivePhase(projectId: string | null): {
+  activePhase: number;
+  advancePhase: () => void;
+} {
+  const storageKey = projectId ? `govai_project_phase_${projectId}` : null;
+  const [activePhase, setActivePhase] = useState(1);
+
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (parsed >= 1 && parsed <= 5) setActivePhase(parsed);
+      }
+    } catch { /* localStorage unavailable */ }
+
+    // Listen for phase-advance events from other components
+    const handler = () => {
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsed = parseInt(saved, 10);
+          if (parsed >= 1 && parsed <= 5) setActivePhase(parsed);
+        }
+      } catch { /* ignore */ }
+    };
+    window.addEventListener('govai-phase-advance', handler);
+    window.addEventListener('storage', handler);
+    return () => {
+      window.removeEventListener('govai-phase-advance', handler);
+      window.removeEventListener('storage', handler);
+    };
+  }, [storageKey]);
+
+  const advancePhase = () => {
+    if (!storageKey) return;
+    const next = Math.min(activePhase + 1, 5);
+    setActivePhase(next);
+    try {
+      localStorage.setItem(storageKey, String(next));
+      window.dispatchEvent(new Event('govai-phase-advance'));
+    } catch { /* ignore */ }
+  };
+
+  return { activePhase, advancePhase };
 }
 
 /* ------------------------------------------------------------------ */
@@ -459,6 +527,7 @@ export default function DashboardLayout({
   const { data: currentUser } = useCurrentUser();
   const roleOverride = useRoleOverride();
   const projectId = extractProjectId(pathname);
+  const { activePhase } = useActivePhase(projectId);
 
   // Effective role: override from settings > user's actual role
   const effectiveRole = roleOverride || currentUser?.role;
@@ -470,7 +539,7 @@ export default function DashboardLayout({
 
   // Build project-scoped navigation only when viewing a real project
   const projectTopItems = projectId ? buildProjectTopItems(projectId) : [];
-  const allPhases = projectId ? buildProjectPhases(projectId) : [];
+  const allPhases = projectId ? buildProjectPhases(projectId, activePhase) : [];
   const filteredPhases = filterPhasesByRole(allPhases, effectiveRole);
 
   return (

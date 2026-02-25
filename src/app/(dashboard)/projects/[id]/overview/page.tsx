@@ -71,12 +71,54 @@ function formatDate(iso: string): string {
 /*  Demo Data                                                                  */
 /* -------------------------------------------------------------------------- */
 
-const PROJECT = {
+const PHASE_LABELS = ['Scope & Assess', 'Classify & Govern', 'Approve & Gate', 'Build & Test', 'Evaluate & Decide'];
+const PROGRESS_BY_PHASE = [0, 20, 40, 60, 80, 100]; // approximate progress per active phase
+
+function useProjectPhase(projectId: string): { phase: number; advance: () => void } {
+  const key = `govai_project_phase_${projectId}`;
+  const [phase, setPhase] = useState(1);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (parsed >= 1 && parsed <= 5) setPhase(parsed);
+      }
+    } catch { /* ignore */ }
+
+    const handler = () => {
+      try {
+        const saved = localStorage.getItem(key);
+        if (saved) {
+          const parsed = parseInt(saved, 10);
+          if (parsed >= 1 && parsed <= 5) setPhase(parsed);
+        }
+      } catch { /* ignore */ }
+    };
+    window.addEventListener('govai-phase-advance', handler);
+    window.addEventListener('storage', handler);
+    return () => {
+      window.removeEventListener('govai-phase-advance', handler);
+      window.removeEventListener('storage', handler);
+    };
+  }, [key]);
+
+  const advance = () => {
+    const next = Math.min(phase + 1, 5);
+    setPhase(next);
+    try {
+      localStorage.setItem(key, String(next));
+      window.dispatchEvent(new Event('govai-phase-advance'));
+    } catch { /* ignore */ }
+  };
+
+  return { phase, advance };
+}
+
+const PROJECT_BASE = {
   name: 'Enterprise AI Coding Agent Pilot',
-  phase: 2,
-  phaseLabel: 'Classify & Govern',
   totalPhases: 5,
-  overallProgress: 38,
   status: 'on_track' as const,
   startDate: '2026-01-15',
   targetDate: '2026-07-30',
@@ -100,8 +142,10 @@ function StatusBadge({ status }: { status: 'on_track' | 'at_risk' | 'delayed' })
 /*  Common Header                                                              */
 /* -------------------------------------------------------------------------- */
 
-function CommonHeader(): React.ReactElement {
-  const remaining = daysRemaining(PROJECT.targetDate);
+function CommonHeader({ phase, onAdvancePhase }: { phase: number; onAdvancePhase: () => void }): React.ReactElement {
+  const remaining = daysRemaining(PROJECT_BASE.targetDate);
+  const overallProgress = PROGRESS_BY_PHASE[phase] ?? 0;
+  const phaseLabel = PHASE_LABELS[phase - 1] ?? '';
 
   return (
     <div className="space-y-4">
@@ -109,17 +153,17 @@ function CommonHeader(): React.ReactElement {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{PROJECT.name}</h1>
-            <StatusBadge status={PROJECT.status} />
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{PROJECT_BASE.name}</h1>
+            <StatusBadge status={PROJECT_BASE.status} />
           </div>
           <p className="text-sm text-slate-500">
-            Phase {PROJECT.phase} of {PROJECT.totalPhases} &mdash; {PROJECT.phaseLabel}
+            Phase {phase} of {PROJECT_BASE.totalPhases} &mdash; {phaseLabel}
           </p>
         </div>
         <div className="flex items-center gap-4 text-xs text-slate-500 shrink-0">
           <span className="flex items-center gap-1">
             <Calendar className="h-3.5 w-3.5" />
-            {formatDate(PROJECT.startDate)} &ndash; {formatDate(PROJECT.targetDate)}
+            {formatDate(PROJECT_BASE.startDate)} &ndash; {formatDate(PROJECT_BASE.targetDate)}
           </span>
           <span className={cn(
             'flex items-center gap-1 font-medium',
@@ -136,26 +180,26 @@ function CommonHeader(): React.ReactElement {
         <CardContent className="py-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-slate-500">Overall Progress</span>
-            <span className="text-xs font-bold text-slate-900">{PROJECT.overallProgress}%</span>
+            <span className="text-xs font-bold text-slate-900">{overallProgress}%</span>
           </div>
           <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
             <div
               className={cn(
                 'h-full rounded-full transition-all',
-                PROJECT.overallProgress >= 75 ? 'bg-emerald-500' :
-                PROJECT.overallProgress >= 50 ? 'bg-blue-500' :
-                PROJECT.overallProgress >= 25 ? 'bg-amber-500' : 'bg-slate-300',
+                overallProgress >= 75 ? 'bg-emerald-500' :
+                overallProgress >= 50 ? 'bg-blue-500' :
+                overallProgress >= 25 ? 'bg-amber-500' : 'bg-slate-300',
               )}
-              style={{ width: `${PROJECT.overallProgress}%` }}
+              style={{ width: `${overallProgress}%` }}
             />
           </div>
           <div className="flex justify-between mt-2">
-            {['Assess', 'Govern', 'Build', 'Pilot', 'Decide'].map((label, i) => (
+            {['Assess', 'Govern', 'Gate', 'Build', 'Decide'].map((label, i) => (
               <span
                 key={label}
                 className={cn(
                   'text-[10px] font-medium',
-                  i < PROJECT.phase ? 'text-emerald-600' : i === PROJECT.phase - 1 ? 'text-blue-600' : 'text-slate-400',
+                  i < phase ? 'text-emerald-600' : i === phase - 1 ? 'text-blue-600' : 'text-slate-400',
                 )}
               >
                 {label}
@@ -164,6 +208,29 @@ function CommonHeader(): React.ReactElement {
           </div>
         </CardContent>
       </Card>
+
+      {/* Phase Advancement */}
+      {phase < 5 && (
+        <Card>
+          <CardContent className="py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                <span className="text-sm text-slate-700">
+                  Ready to advance to <strong>Phase {phase + 1}: {PHASE_LABELS[phase]}</strong>?
+                </span>
+              </div>
+              <button
+                onClick={onAdvancePhase}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 transition-colors"
+              >
+                Mark Phase {phase} Complete
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
@@ -847,6 +914,7 @@ export default function ProjectOverviewPage({
 }): React.ReactElement {
   const { id } = use(params);
   const [currentRole, setCurrentRole] = useState<UserRole>('consultant');
+  const { phase: projectPhase, advance: advancePhase } = useProjectPhase(id);
 
   // Read role from localStorage on mount
   useEffect(() => {
@@ -873,7 +941,7 @@ export default function ProjectOverviewPage({
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Common Header */}
-      <CommonHeader />
+      <CommonHeader phase={projectPhase} onAdvancePhase={advancePhase} />
 
       {/* Role Switcher */}
       <Card>
