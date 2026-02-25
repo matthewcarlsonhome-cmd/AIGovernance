@@ -16,6 +16,7 @@ import {
   ArrowDownRight,
   CheckCircle2,
   AlertTriangle,
+  Eye,
 } from 'lucide-react';
 import {
   Card,
@@ -352,6 +353,41 @@ function SetupStatusBanner() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Sample project CTA banner                                          */
+/* ------------------------------------------------------------------ */
+
+function SampleProjectBanner() {
+  return (
+    <Card className="border-blue-200 bg-blue-50">
+      <CardContent className="pt-5">
+        <div className="flex items-start gap-4 sm:items-center sm:flex-row flex-col">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100">
+            <Eye className="h-5 w-5 text-blue-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-blue-900">
+              Explore a Sample Project
+            </p>
+            <p className="text-sm text-blue-700 mt-0.5">
+              See how GovAI Studio guides an enterprise AI coding agent pilot from assessment through go/no-go decision. This sample demonstrates all 5 project phases with realistic data.
+            </p>
+          </div>
+          <Link href="/projects/sample/overview" className="shrink-0">
+            <Button
+              size="sm"
+              className="gap-2 bg-blue-600 text-white hover:bg-blue-700"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              View Sample Project
+            </Button>
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -365,6 +401,7 @@ export default function DashboardPage() {
     return (
       <div className="space-y-8">
         <SetupStatusBanner />
+        <SampleProjectBanner />
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Welcome</h1>

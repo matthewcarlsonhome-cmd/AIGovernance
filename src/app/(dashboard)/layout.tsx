@@ -38,7 +38,6 @@ import {
   Database,
   Activity,
   Briefcase,
-  Lock,
   Circle,
   Radar,
   FileOutput,
@@ -58,7 +57,7 @@ interface NavItem {
   roles?: UserRole[];
 }
 
-type PhaseStatus = 'complete' | 'active' | 'locked';
+type PhaseStatus = 'complete' | 'active' | 'not_started';
 
 interface PhaseNavSection {
   phase: number;
@@ -137,7 +136,7 @@ function buildProjectTopItems(projectId: string): NavItem[] {
 function phaseStatus(phaseNumber: number, activePhase: number): PhaseStatus {
   if (phaseNumber < activePhase) return 'complete';
   if (phaseNumber === activePhase) return 'active';
-  return 'locked';
+  return 'not_started';
 }
 
 function buildProjectPhases(projectId: string, activePhase: number): PhaseNavSection[] {
@@ -352,7 +351,7 @@ const PHASE_STATUS_CONFIG: Record<
 > = {
   complete: { icon: CheckCircle, label: 'Complete', color: 'text-emerald-500' },
   active: { icon: Circle, label: 'In Progress', color: 'text-blue-500' },
-  locked: { icon: Lock, label: 'Locked', color: 'text-slate-400' },
+  not_started: { icon: Circle, label: 'Not Started', color: 'text-slate-400' },
 };
 
 function PhaseSection({
@@ -385,7 +384,7 @@ function PhaseSection({
             item={item}
             collapsed
             pathname={pathname}
-            dimmed={phase.status === 'locked'}
+            dimmed={phase.status === 'not_started'}
           />
         ))}
       </div>
@@ -394,7 +393,7 @@ function PhaseSection({
 
   const config = PHASE_STATUS_CONFIG[phase.status];
   const StatusIcon = config.icon;
-  const isDimmed = phase.status === 'locked';
+  const isDimmed = phase.status === 'not_started';
 
   return (
     <div>

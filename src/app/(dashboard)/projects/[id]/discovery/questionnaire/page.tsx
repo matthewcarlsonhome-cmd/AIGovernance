@@ -8,6 +8,7 @@ import {
   ChevronRight,
   CircleCheck,
   HelpCircle,
+  Info,
   Server,
   Shield,
   Scale,
@@ -825,6 +826,28 @@ export default function QuestionnairePage({
           Five domains, 25 questions, one readiness score. Let&apos;s find out
           where you stand and what to tackle first.
         </p>
+      </div>
+
+      {/* ---------------------------------------------------------------- */}
+      {/*  What You'll Need                                                 */}
+      {/* ---------------------------------------------------------------- */}
+      <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
+        <div className="flex items-start gap-3">
+          <Info className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <h2 className="text-sm font-semibold text-amber-900 mb-2">What You&apos;ll Need</h2>
+            <ul className="space-y-1.5 text-sm text-amber-800 list-disc list-inside">
+              <li>Current infrastructure documentation (cloud provider, network topology)</li>
+              <li>Security policies and compliance certifications (SOC2, HIPAA, etc.)</li>
+              <li>IT team contacts for technical questions</li>
+              <li>List of AI tools currently in use or under evaluation</li>
+              <li>Budget estimates or spending authority levels</li>
+            </ul>
+            <p className="mt-3 text-xs text-amber-700">
+              The questionnaire takes approximately 15-20 minutes to complete. Your progress is saved automatically.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* ---------------------------------------------------------------- */}

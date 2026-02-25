@@ -6,6 +6,7 @@ import Link from 'next/link';
 import {
   ArrowRight,
   Calendar,
+  Check,
   CheckCircle2,
   Clock,
   FileText,
@@ -222,24 +223,143 @@ function CommonHeader({ phase, onAdvancePhase }: { phase: number; onAdvancePhase
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Project Progress Stepper (visible to ALL roles)                            */
+/* -------------------------------------------------------------------------- */
+
+function ProjectProgressStepper({ phase }: { phase: number }): React.ReactElement {
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base text-slate-900">Project Progress</CardTitle>
+        <CardDescription className="text-sm text-slate-500">
+          Current phase and milestone status across all five governance stages.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-start justify-between">
+          {PHASE_LABELS.map((label, i) => {
+            const phaseIndex = i + 1;
+            const isCompleted = phaseIndex < phase;
+            const isActive = phaseIndex === phase;
+
+            return (
+              <div key={label} className="flex flex-col items-center flex-1 relative">
+                {/* Connector line (skip first) */}
+                {i > 0 && (
+                  <div
+                    className={cn(
+                      'absolute top-3.5 right-1/2 w-full h-0.5',
+                      phaseIndex <= phase ? 'bg-emerald-400' : 'bg-slate-200',
+                    )}
+                    style={{ zIndex: 0 }}
+                  />
+                )}
+
+                {/* Circle indicator */}
+                <div
+                  className={cn(
+                    'relative z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 transition-colors',
+                    isCompleted
+                      ? 'bg-emerald-500 border-emerald-500'
+                      : isActive
+                        ? 'bg-blue-600 border-blue-600'
+                        : 'bg-white border-slate-300',
+                  )}
+                >
+                  {isCompleted ? (
+                    <Check className="h-4 w-4 text-white" />
+                  ) : isActive ? (
+                    <span className="h-2 w-2 rounded-full bg-white" />
+                  ) : (
+                    <span className="h-2 w-2 rounded-full bg-slate-300" />
+                  )}
+                </div>
+
+                {/* Phase label */}
+                <span
+                  className={cn(
+                    'mt-2 text-xs font-medium text-center leading-tight',
+                    isCompleted
+                      ? 'text-emerald-700'
+                      : isActive
+                        ? 'text-blue-700'
+                        : 'text-slate-400',
+                  )}
+                >
+                  {label}
+                </span>
+
+                {/* Status text */}
+                <span
+                  className={cn(
+                    'mt-0.5 text-[10px]',
+                    isCompleted
+                      ? 'text-emerald-500'
+                      : isActive
+                        ? 'text-blue-500'
+                        : 'text-slate-300',
+                  )}
+                >
+                  {isCompleted ? 'Completed' : isActive ? 'Active' : '\u2014'}
+                </span>
+
+                {/* Your tasks count */}
+                <span className="mt-1 text-[10px] text-slate-400">
+                  Your tasks: &mdash;
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Upcoming Section (role-specific guidance)                                   */
+/* -------------------------------------------------------------------------- */
+
+function UpcomingSection({ text }: { text: string }): React.ReactElement {
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold text-slate-900">
+          What&apos;s Coming Up for You
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-start gap-2.5">
+          <Calendar className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+          <p className="text-sm text-slate-600">{text}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Executive Sponsor View                                                     */
 /* -------------------------------------------------------------------------- */
 
 function ExecutiveView({ projectId }: RoleViewProps): React.ReactElement {
   return (
-    <Card>
-      <CardContent className="py-12">
-        <div className="flex flex-col items-center text-center max-w-lg mx-auto">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-4">
-            <Gavel className="h-6 w-6 text-slate-400" />
+    <>
+      <Card>
+        <CardContent className="py-12">
+          <div className="flex flex-col items-center text-center max-w-lg mx-auto">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-4">
+              <Gavel className="h-6 w-6 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">No Decisions Pending</h3>
+            <p className="text-sm text-slate-500">
+              No decisions pending. As the project progresses, gate approvals, risk exceptions, and budget decisions will appear here for your review.
+            </p>
           </div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">No Decisions Pending</h3>
-          <p className="text-sm text-slate-500">
-            No decisions pending. As the project progresses, gate approvals, risk exceptions, and budget decisions will appear here for your review.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+      <UpcomingSection text="Phase 3 gate reviews will require your approval for pilot launch and production decisions." />
+    </>
   );
 }
 
@@ -249,19 +369,22 @@ function ExecutiveView({ projectId }: RoleViewProps): React.ReactElement {
 
 function ITSecurityView({ projectId }: RoleViewProps): React.ReactElement {
   return (
-    <Card>
-      <CardContent className="py-12">
-        <div className="flex flex-col items-center text-center max-w-lg mx-auto">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-4">
-            <Shield className="h-6 w-6 text-slate-400" />
+    <>
+      <Card>
+        <CardContent className="py-12">
+          <div className="flex flex-col items-center text-center max-w-lg mx-auto">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-4">
+              <Shield className="h-6 w-6 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">No Security Controls Configured</h3>
+            <p className="text-sm text-slate-500">
+              No security controls configured yet. Start by completing the data classification in Phase 2, then configure your sandbox environment in Phase 4.
+            </p>
           </div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">No Security Controls Configured</h3>
-          <p className="text-sm text-slate-500">
-            No security controls configured yet. Start by completing the data classification in Phase 2, then configure your sandbox environment in Phase 4.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+      <UpcomingSection text="Phase 2 data classification and Phase 4 sandbox configuration are your primary deliverables." />
+    </>
   );
 }
 
@@ -271,19 +394,22 @@ function ITSecurityView({ projectId }: RoleViewProps): React.ReactElement {
 
 function LegalView({ projectId }: RoleViewProps): React.ReactElement {
   return (
-    <Card>
-      <CardContent className="py-12">
-        <div className="flex flex-col items-center text-center max-w-lg mx-auto">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-4">
-            <FileText className="h-6 w-6 text-slate-400" />
+    <>
+      <Card>
+        <CardContent className="py-12">
+          <div className="flex flex-col items-center text-center max-w-lg mx-auto">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-4">
+              <FileText className="h-6 w-6 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">No Policies or Compliance Mappings</h3>
+            <p className="text-sm text-slate-500">
+              No policies or compliance mappings yet. Draft the Acceptable Use Policy and map compliance frameworks in Phase 2.
+            </p>
           </div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">No Policies or Compliance Mappings</h3>
-          <p className="text-sm text-slate-500">
-            No policies or compliance mappings yet. Draft the Acceptable Use Policy and map compliance frameworks in Phase 2.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+      <UpcomingSection text="Phase 2 policy drafting and compliance mapping need your review. Phase 3 exceptions may require legal sign-off." />
+    </>
   );
 }
 
@@ -293,19 +419,22 @@ function LegalView({ projectId }: RoleViewProps): React.ReactElement {
 
 function EngineeringView({ projectId }: RoleViewProps): React.ReactElement {
   return (
-    <Card>
-      <CardContent className="py-12">
-        <div className="flex flex-col items-center text-center max-w-lg mx-auto">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-4">
-            <Wrench className="h-6 w-6 text-slate-400" />
+    <>
+      <Card>
+        <CardContent className="py-12">
+          <div className="flex flex-col items-center text-center max-w-lg mx-auto">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-4">
+              <Wrench className="h-6 w-6 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">No Sandbox or Pilot Data</h3>
+            <p className="text-sm text-slate-500">
+              No sandbox or pilot data yet. Sandbox configuration and pilot sprints will appear after governance gates are approved in Phase 3.
+            </p>
           </div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">No Sandbox or Pilot Data</h3>
-          <p className="text-sm text-slate-500">
-            No sandbox or pilot data yet. Sandbox configuration and pilot sprints will appear after governance gates are approved in Phase 3.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+      <UpcomingSection text="Phase 4 sandbox setup and pilot sprints are your focus. Start reviewing tool options now." />
+    </>
   );
 }
 
@@ -315,19 +444,22 @@ function EngineeringView({ projectId }: RoleViewProps): React.ReactElement {
 
 function CommunicationsView({ projectId }: RoleViewProps): React.ReactElement {
   return (
-    <Card>
-      <CardContent className="py-12">
-        <div className="flex flex-col items-center text-center max-w-lg mx-auto">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-4">
-            <MessageSquare className="h-6 w-6 text-slate-400" />
+    <>
+      <Card>
+        <CardContent className="py-12">
+          <div className="flex flex-col items-center text-center max-w-lg mx-auto">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-4">
+              <MessageSquare className="h-6 w-6 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">No Change Management Artifacts</h3>
+            <p className="text-sm text-slate-500">
+              No change management artifacts yet. Communication plans and client briefs will be generated after the pilot runs in Phase 4.
+            </p>
           </div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">No Change Management Artifacts</h3>
-          <p className="text-sm text-slate-500">
-            No change management artifacts yet. Communication plans and client briefs will be generated after the pilot runs in Phase 4.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+      <UpcomingSection text="Phase 4 change management plans and Phase 5 client briefs will need your input." />
+    </>
   );
 }
 
