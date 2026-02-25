@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useCurrentUser } from '@/hooks/use-auth';
+import { usePathname, useRouter } from 'next/navigation';
+import { useCurrentUser, useSignOut } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -43,6 +43,7 @@ import {
   Radar,
   FileOutput,
   Flag,
+  LogOut,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -451,7 +452,24 @@ function TopBar({
   pathname: string;
   effectiveRole: UserRole | undefined;
 }): React.ReactElement {
+  const router = useRouter();
   const { data: currentUser } = useCurrentUser();
+  const signOut = useSignOut();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [menuOpen]);
 
   const getBreadcrumbs = (path: string): { label: string; href: string }[] => {
     if (path === '/') return [{ label: 'Dashboard', href: '/' }];
@@ -479,6 +497,15 @@ function TopBar({
   const displayRole = role ? ROLE_LABELS[role] : '';
   const initials = getInitials(displayName);
 
+  const handleSignOut = async () => {
+    setMenuOpen(false);
+    try {
+      await signOut.mutateAsync();
+    } catch { /* ignore */ }
+    router.push('/login');
+    router.refresh();
+  };
+
   return (
     <header className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-6">
       <nav className="flex items-center gap-1.5 text-sm">
@@ -498,16 +525,49 @@ function TopBar({
           </span>
         ))}
       </nav>
-      <div className="flex items-center gap-3">
-        <div className="hidden sm:block text-right text-sm mr-2">
-          <p className="font-medium leading-none text-slate-900">{displayName}</p>
-          {displayRole && (
-            <p className="text-xs text-slate-500 mt-0.5">{displayRole}</p>
-          )}
-        </div>
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-600 text-white text-xs font-semibold">
-          {initials}
-        </div>
+
+      {/* User menu with dropdown */}
+      <div className="relative" ref={menuRef}>
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-slate-50 transition-colors"
+        >
+          <div className="hidden sm:block text-right text-sm">
+            <p className="font-medium leading-none text-slate-900">{displayName}</p>
+            {displayRole && (
+              <p className="text-xs text-slate-500 mt-0.5">{displayRole}</p>
+            )}
+          </div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-600 text-white text-xs font-semibold">
+            {initials}
+          </div>
+        </button>
+
+        {menuOpen && (
+          <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-slate-200 bg-white shadow-lg py-1 z-50">
+            <div className="px-3 py-2 border-b border-slate-100 sm:hidden">
+              <p className="text-sm font-medium text-slate-900">{displayName}</p>
+              {displayRole && (
+                <p className="text-xs text-slate-500">{displayRole}</p>
+              )}
+            </div>
+            <Link
+              href="/settings"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              <Settings className="h-4 w-4 text-slate-400" />
+              Settings
+            </Link>
+            <button
+              onClick={handleSignOut}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              Log Out
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );
@@ -523,11 +583,21 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }): React.ReactElement {
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const { data: currentUser } = useCurrentUser();
+  const signOut = useSignOut();
   const roleOverride = useRoleOverride();
   const projectId = extractProjectId(pathname);
   const { activePhase } = useActivePhase(projectId);
+
+  const handleSidebarSignOut = async () => {
+    try {
+      await signOut.mutateAsync();
+    } catch { /* ignore */ }
+    router.push('/login');
+    router.refresh();
+  };
 
   // Effective role: override from settings > user's actual role
   const effectiveRole = roleOverride || currentUser?.role;
@@ -659,6 +729,20 @@ export default function DashboardLayout({
             collapsed={collapsed}
             pathname={pathname}
           />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSidebarSignOut}
+            title={collapsed ? 'Log Out' : undefined}
+            className={cn(
+              'w-full justify-start gap-3 text-slate-500 hover:bg-red-50 hover:text-red-600',
+              collapsed && 'justify-center px-2',
+            )}
+          >
+            <LogOut className="h-4 w-4 shrink-0" />
+            {!collapsed && <span className="text-sm">Log Out</span>}
+          </Button>
+          <Separator className="bg-slate-200 my-1" />
           <Button
             variant="ghost"
             size="sm"
