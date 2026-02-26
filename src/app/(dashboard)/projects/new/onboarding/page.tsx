@@ -13,8 +13,8 @@ import {
   ChevronLeft,
   Check,
   Info,
-  Rocket,
   ArrowRight,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -245,6 +245,9 @@ function StepIndicator({ currentStep }: { currentStep: number }): React.ReactEle
 export default function OnboardingWizardPage(): React.ReactElement {
   const [currentStep, setCurrentStep] = useState(0);
   const [created, setCreated] = useState(false);
+  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Step 1 state
   const [orgProfile, setOrgProfile] = useState<OrgProfile>({
@@ -328,29 +331,109 @@ export default function OnboardingWizardPage(): React.ReactElement {
     });
   }, []);
 
-  const handleCreate = useCallback(() => {
-    setCreated(true);
-  }, []);
+  const handleCreate = useCallback(async () => {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      // Compute timeline dates
+      const now = new Date();
+      const startDate = now.toISOString();
+      const daysMap: Record<string, number> = { '30 days': 30, '60 days': 60, '90 days': 90, '120 days': 120 };
+      const days = daysMap[projectDef.targetTimeline] || riskConfig.days;
+      const endDate = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
+
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: projectDef.projectName,
+          description: projectDef.businessUseCase || `${orgProfile.companyName} — ${projectDef.aiTool} governance project`,
+          status: 'discovery',
+          start_date: startDate,
+          target_end_date: endDate,
+        }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || body.message || 'Failed to create project');
+      }
+
+      const json = await res.json();
+      const newProject = json.data;
+      const projectId = newProject?.id;
+
+      // Save team members if we have a project ID
+      if (projectId) {
+        const filledMembers = teamSlots.filter((s) => s.name.trim() && s.email.trim());
+        for (const member of filledMembers) {
+          try {
+            await fetch(`/api/projects/${projectId}/team`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: member.name,
+                email: member.email,
+                role: member.role,
+                project_id: projectId,
+              }),
+            });
+          } catch {
+            // Best-effort — team members can be added later
+          }
+        }
+      }
+
+      // Store org profile and intake answers in localStorage for this project
+      if (projectId) {
+        try {
+          localStorage.setItem(`govai_project_org_${projectId}`, JSON.stringify(orgProfile));
+          localStorage.setItem(`govai_project_intake_${projectId}`, JSON.stringify({
+            answers: intakeAnswers,
+            riskPath,
+            riskConfig: { label: riskConfig.label, tasks: riskConfig.tasks, days: riskConfig.days },
+          }));
+          localStorage.setItem(`govai_project_phase_${projectId}`, '1');
+        } catch { /* ignore */ }
+      }
+
+      setCreatedProjectId(projectId || null);
+      setCreated(true);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to create project');
+    } finally {
+      setSaving(false);
+    }
+  }, [projectDef, orgProfile, teamSlots, intakeAnswers, riskPath, riskConfig]);
 
   /* ---- Success State ---- */
   if (created) {
+    const projectLink = createdProjectId
+      ? `/projects/${createdProjectId}/my-tasks`
+      : '/projects';
     return (
       <div className="max-w-2xl mx-auto py-16 text-center space-y-6">
         <div className="flex justify-center">
           <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
-            <Rocket className="h-8 w-8 text-emerald-600" />
+            <Check className="h-8 w-8 text-emerald-600" />
           </div>
         </div>
         <h1 className="text-2xl font-bold text-slate-900">Project Created Successfully</h1>
         <p className="text-slate-500 max-w-md mx-auto">
-          Your project &quot;{projectDef.projectName}&quot; has been created with a {riskConfig.label} governance path.
+          Your project &quot;{projectDef.projectName}&quot; has been saved with a {riskConfig.label} governance path.
           {riskConfig.tasks} tasks have been generated across {riskConfig.days} days.
+          All team members will see this project when they log in.
         </p>
         <div className="flex justify-center gap-3">
-          <Link href="/">
+          <Link href={projectLink}>
             <Button className="bg-slate-900 text-white hover:bg-slate-800 gap-2">
-              Go to Dashboard
+              Go to My Tasks
               <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Link href="/projects">
+            <Button variant="outline" className="border-slate-200 text-slate-700 gap-2">
+              View All Projects
             </Button>
           </Link>
         </div>
@@ -745,12 +828,19 @@ export default function OnboardingWizardPage(): React.ReactElement {
         </div>
       )}
 
+      {/* Error message */}
+      {saveError && (
+        <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+          {saveError}
+        </div>
+      )}
+
       {/* Navigation Buttons */}
       <div className="flex items-center justify-between mt-6">
         <Button
           variant="outline"
           onClick={handleBack}
-          disabled={currentStep === 0}
+          disabled={currentStep === 0 || saving}
           className="gap-1 border-slate-200 text-slate-700"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -768,10 +858,20 @@ export default function OnboardingWizardPage(): React.ReactElement {
         ) : (
           <Button
             onClick={handleCreate}
+            disabled={saving}
             className="gap-1 bg-slate-900 text-white hover:bg-slate-800"
           >
-            Create Project
-            <Rocket className="h-4 w-4" />
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                Create Project
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
           </Button>
         )}
       </div>
