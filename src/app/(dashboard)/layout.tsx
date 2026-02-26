@@ -116,7 +116,6 @@ const ROLE_LABELS: Record<UserRole, string> = {
 const mainNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Projects', href: '/projects', icon: FolderKanban },
-  { label: 'Portfolio', href: '/portfolio', icon: Shield, roles: ['admin', 'consultant', 'executive'] },
 ];
 
 function buildProjectTopItems(projectId: string): NavItem[] {
@@ -125,6 +124,7 @@ function buildProjectTopItems(projectId: string): NavItem[] {
     { label: 'Overview', href: p('/overview'), icon: BarChart3 },
     { label: 'My Tasks', href: p('/my-tasks'), icon: ClipboardList },
     { label: 'Project Plan', href: p('/project-plan'), icon: Flag },
+    { label: 'Project Risks', href: p('/risks'), icon: AlertTriangle },
   ];
 }
 

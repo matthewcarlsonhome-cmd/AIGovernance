@@ -5,11 +5,13 @@ import {
   Plus,
   FolderKanban,
   ArrowRight,
-  AlertCircle,
   Search,
   ArrowUpRight,
   ArrowDownRight,
   Minus,
+  AlertTriangle,
+  CheckCircle2,
+  Users,
 } from 'lucide-react';
 import {
   Card,
@@ -120,6 +122,51 @@ function HealthBadge({ score }: { score: number | undefined }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Portfolio summary stats                                            */
+/* ------------------------------------------------------------------ */
+
+function PortfolioSummary({ projects }: { projects: Project[] }) {
+  const total = projects.length;
+  const active = projects.filter((p) => p.status !== 'completed').length;
+  const scored = projects.filter((p) => typeof p.feasibility_score === 'number' && p.feasibility_score > 0);
+  const avgScore = scored.length > 0
+    ? Math.round(scored.reduce((s, p) => s + (p.feasibility_score ?? 0), 0) / scored.length)
+    : 0;
+  const atRisk = projects.filter((p) => typeof p.feasibility_score === 'number' && p.feasibility_score > 0 && p.feasibility_score < 50).length;
+  const healthy = projects.filter((p) => typeof p.feasibility_score === 'number' && p.feasibility_score >= 75).length;
+
+  const stats = [
+    { label: 'Total Projects', value: total, icon: FolderKanban, color: 'text-slate-600' },
+    { label: 'Active', value: active, icon: Users, color: 'text-blue-600' },
+    { label: 'Healthy', value: healthy, icon: CheckCircle2, color: 'text-emerald-600' },
+    { label: 'At Risk', value: atRisk, icon: AlertTriangle, color: 'text-red-600' },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {stats.map((stat) => {
+        const Icon = stat.icon;
+        return (
+          <Card key={stat.label}>
+            <CardContent className="pt-5 pb-4">
+              <div className="flex items-center gap-3">
+                <div className={`flex items-center justify-center h-10 w-10 rounded-lg bg-slate-50 ${stat.color}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+                  <p className="text-xs text-slate-500">{stat.label}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Skeleton                                                           */
 /* ------------------------------------------------------------------ */
 
@@ -130,9 +177,14 @@ function ProjectsSkeleton() {
         <div className="h-7 w-40 bg-slate-200 rounded" />
         <div className="h-10 w-36 bg-slate-200 rounded" />
       </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i}><CardContent className="pt-5 pb-4"><div className="h-10 w-24 bg-slate-100 rounded" /></CardContent></Card>
+        ))}
+      </div>
       <div className="h-10 w-full bg-slate-100 rounded" />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
+        {[1, 2, 3].map((i) => (
           <Card key={i} className="h-48">
             <CardHeader><div className="h-5 w-40 bg-slate-100 rounded" /></CardHeader>
             <CardContent><div className="h-4 w-full bg-slate-100 rounded" /></CardContent>
@@ -165,6 +217,8 @@ export default function ProjectsPage() {
 
   if (isLoading) return <ProjectsSkeleton />;
 
+  const projectList = projects || [];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -172,16 +226,21 @@ export default function ProjectsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Manage your AI governance projects
+            Manage and monitor your organization&apos;s AI governance projects
           </p>
         </div>
-        <Link href="/projects/new">
+        <Link href="/projects/new/onboarding">
           <Button className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
             <Plus className="h-4 w-4" />
             New Project
           </Button>
         </Link>
       </div>
+
+      {/* Portfolio summary — only when projects exist */}
+      {projectList.length > 0 && !error && (
+        <PortfolioSummary projects={projectList} />
+      )}
 
       {/* Error — show as friendly empty state */}
       {error && (
@@ -192,7 +251,7 @@ export default function ProjectsPage() {
             Create your first AI governance project to get started with assessments,
             policies, sandbox configuration, and more.
           </p>
-          <Link href="/projects/new" className="mt-5 inline-block">
+          <Link href="/projects/new/onboarding" className="mt-5 inline-block">
             <Button className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
               <Plus className="h-4 w-4" />
               Create Your First Project
@@ -221,13 +280,13 @@ export default function ProjectsPage() {
           <h3 className="text-lg font-medium text-slate-900">
             {search ? 'No matching projects' : 'No projects yet'}
           </h3>
-          <p className="text-sm text-slate-500 mt-2">
+          <p className="text-sm text-slate-500 mt-2 max-w-md mx-auto">
             {search
               ? 'Try adjusting your search terms.'
-              : 'Create your first AI governance project to get started.'}
+              : 'Create your first AI governance project. The setup wizard will guide you through organization profile, project scope, team assignments, and intake classification.'}
           </p>
           {!search && (
-            <Link href="/projects/new" className="mt-4 inline-block">
+            <Link href="/projects/new/onboarding" className="mt-4 inline-block">
               <Button className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
                 <Plus className="h-4 w-4" />
                 Create Project
@@ -240,7 +299,7 @@ export default function ProjectsPage() {
           {filtered.map((project: Project) => (
             <Link
               key={project.id}
-              href={`/projects/${project.id}/overview`}
+              href={`/projects/${project.id}/my-tasks`}
               className="group"
             >
               <Card className="h-full transition-shadow group-hover:shadow-md">

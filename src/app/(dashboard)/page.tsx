@@ -371,7 +371,7 @@ export default function DashboardPage() {
             <h1 className="text-2xl font-bold tracking-tight">Welcome</h1>
             <p className="text-slate-500">Create your first project to begin</p>
           </div>
-          <Link href="/projects/new">
+          <Link href="/projects/new/onboarding">
             <Button className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
               <Plus className="h-4 w-4" />
               New Project
@@ -387,7 +387,7 @@ export default function DashboardPage() {
             Your AI governance journey starts with a single project. From readiness assessments
             to sandbox configs to production rollout &mdash; we&apos;ll guide you every step of the way.
           </p>
-          <Link href="/projects/new" className="mt-6 inline-block">
+          <Link href="/projects/new/onboarding" className="mt-6 inline-block">
             <Button size="lg" className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
               <Plus className="h-5 w-5" />
               Create Your First Project
@@ -461,7 +461,7 @@ export default function DashboardPage() {
           </h1>
           <p className="text-slate-500">Project overview and recent activity</p>
         </div>
-        <Link href="/projects/new">
+        <Link href="/projects/new/onboarding">
           <Button className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
             <Plus className="h-4 w-4" />
             Create Project
@@ -556,7 +556,7 @@ export default function DashboardPage() {
             <p className="text-sm text-slate-500 mt-2">
               Create your first AI governance project to get started.
             </p>
-            <Link href="/projects/new" className="mt-4 inline-block">
+            <Link href="/projects/new/onboarding" className="mt-4 inline-block">
               <Button className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
                 <Plus className="h-4 w-4" />
                 Create Project

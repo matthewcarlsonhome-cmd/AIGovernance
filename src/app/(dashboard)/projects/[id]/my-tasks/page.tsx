@@ -6,7 +6,6 @@ import {
   ArrowRight,
   Calendar,
   CheckCircle2,
-  Circle,
   Clock,
   ClipboardList,
   AlertTriangle,
@@ -18,6 +17,8 @@ import {
   Gavel,
   Code2,
   BarChart3,
+  XCircle,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +32,7 @@ import type { UserRole } from '@/types';
 /* -------------------------------------------------------------------------- */
 
 type TaskPriority = 'required' | 'recommended' | 'optional';
-type TaskStatus = 'action_needed' | 'upcoming' | 'completed';
+type TaskStatus = 'action_needed' | 'in_progress' | 'passed' | 'failed' | 'upcoming' | 'completed';
 
 interface DemoTask {
   id: string;
@@ -47,6 +48,7 @@ interface DemoTask {
   blocking?: string;
   blockedBy?: string;
   scheduledPhase?: number;
+  failureReason?: string;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -64,11 +66,65 @@ const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 /* -------------------------------------------------------------------------- */
+/*  Status config                                                              */
+/* -------------------------------------------------------------------------- */
+
+const STATUS_CONFIG: Record<TaskStatus, {
+  label: string;
+  icon: React.ElementType;
+  dotClass: string;
+  badgeClass: string;
+  textClass: string;
+}> = {
+  action_needed: {
+    label: 'Action Needed',
+    icon: AlertTriangle,
+    dotClass: 'bg-blue-500',
+    badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+    textClass: 'text-blue-700',
+  },
+  in_progress: {
+    label: 'In Progress',
+    icon: Loader2,
+    dotClass: 'bg-amber-500',
+    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+    textClass: 'text-amber-700',
+  },
+  passed: {
+    label: 'Passed',
+    icon: CheckCircle2,
+    dotClass: 'bg-emerald-500',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    textClass: 'text-emerald-700',
+  },
+  failed: {
+    label: 'Failed',
+    icon: XCircle,
+    dotClass: 'bg-red-500',
+    badgeClass: 'bg-red-50 text-red-700 border-red-200',
+    textClass: 'text-red-700',
+  },
+  upcoming: {
+    label: 'Upcoming',
+    icon: Clock,
+    dotClass: 'bg-slate-400',
+    badgeClass: 'bg-slate-50 text-slate-500 border-slate-200',
+    textClass: 'text-slate-500',
+  },
+  completed: {
+    label: 'Completed',
+    icon: CheckCircle2,
+    dotClass: 'bg-emerald-500',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    textClass: 'text-emerald-700',
+  },
+};
+
+/* -------------------------------------------------------------------------- */
 /*  Role-based task data                                                      */
 /* -------------------------------------------------------------------------- */
 
 function getTasksForRole(role: UserRole): DemoTask[] {
-  // Phase-aware tasks per role — each role sees what they're responsible for
   const today = new Date();
   const d = (offset: number) => {
     const dt = new Date(today);
@@ -85,12 +141,12 @@ function getTasksForRole(role: UserRole): DemoTask[] {
     admin: [
       { id: 'a-1', title: 'Invite team members and assign roles', description: 'Add your core team — IT/Security, Legal, Engineering, Executive Sponsor — so they see role-filtered tasks.', assignedBy: 'System', dueDate: d(3), priority: 'required', status: 'action_needed', ctaLabel: 'Manage Team', ctaHref: 'team', blocking: 'All role-specific tasks depend on team setup' },
       { id: 'a-2', title: 'Complete pilot intake scorecard', description: 'Answer 10 questions to classify this pilot by risk level (Fast Track, Standard, or High Risk).', assignedBy: 'System', dueDate: d(5), priority: 'required', status: 'action_needed', ctaLabel: 'Start Intake', ctaHref: 'intake' },
-      { id: 'a-3', title: 'Review project setup checklist', description: 'Verify each phase has the required prerequisites and configuration.', assignedBy: 'System', dueDate: d(7), priority: 'recommended', status: 'action_needed', ctaLabel: 'View Setup', ctaHref: 'setup' },
+      { id: 'a-3', title: 'Review project setup checklist', description: 'Verify each phase has the required prerequisites and configuration.', assignedBy: 'System', dueDate: d(7), priority: 'recommended', status: 'in_progress', ctaLabel: 'View Setup', ctaHref: 'setup' },
       { id: 'a-4', title: 'Schedule gate review meetings', description: 'Coordinate gate review sessions with stakeholders for Phase 3.', assignedBy: 'System', dueDate: d(21), priority: 'recommended', status: 'upcoming', scheduledPhase: 3 },
       { id: 'a-5', title: 'Archive project and generate final report', description: 'After go/no-go decision, archive project documentation and export final report.', assignedBy: 'System', dueDate: d(60), priority: 'optional', status: 'upcoming', scheduledPhase: 5 },
     ],
     consultant: [
-      { id: 'c-1', title: 'Complete readiness questionnaire', description: 'Score organizational readiness across 5 domains: infrastructure, security, governance, engineering, and business.', assignedBy: 'Project Admin', dueDate: d(5), priority: 'required', status: 'action_needed', ctaLabel: 'Start Assessment', ctaHref: 'discovery/questionnaire', blocking: 'Readiness score blocks Phase 2 activities' },
+      { id: 'c-1', title: 'Complete readiness questionnaire', description: 'Score organizational readiness across 5 domains: infrastructure, security, governance, engineering, and business.', assignedBy: 'Project Admin', dueDate: d(5), priority: 'required', status: 'in_progress', ctaLabel: 'Start Assessment', ctaHref: 'discovery/questionnaire', blocking: 'Readiness score blocks Phase 2 activities' },
       { id: 'c-2', title: 'Review readiness results and identify gaps', description: 'Analyze domain scores and prioritize remediation items before governance phase.', assignedBy: 'Project Admin', dueDate: d(7), priority: 'required', status: 'action_needed', ctaLabel: 'View Readiness', ctaHref: 'discovery/readiness' },
       { id: 'c-3', title: 'Track prerequisite completion', description: 'Monitor prerequisite checklist and coordinate with team leads on blocking items.', assignedBy: 'Project Admin', dueDate: d(10), priority: 'recommended', status: 'action_needed', ctaLabel: 'Prerequisites', ctaHref: 'discovery/prerequisites' },
       { id: 'c-4', title: 'Draft governance policies', description: 'Create Acceptable Use Policy, Incident Response Plan, and Data Classification Policy.', assignedBy: 'Project Admin', dueDate: d(14), priority: 'required', status: 'upcoming', blockedBy: 'Readiness assessment completion', scheduledPhase: 2 },
@@ -104,15 +160,15 @@ function getTasksForRole(role: UserRole): DemoTask[] {
       { id: 'e-4', title: 'Review executive decision brief', description: 'One-page brief with feasibility score, risk posture, KPI results, and recommendation.', assignedBy: 'System', dueDate: d(50), priority: 'required', status: 'upcoming', scheduledPhase: 5 },
     ],
     it: [
-      { id: 'i-1', title: 'Complete data classification', description: 'Identify and classify data types that AI tools will access. Define sensitivity levels and handling requirements.', assignedBy: 'Project Admin', dueDate: d(10), priority: 'required', status: 'action_needed', ctaLabel: 'Classify Data', ctaHref: 'governance/compliance', blocking: 'Blocks sandbox configuration' },
-      { id: 'i-2', title: 'Review security controls', description: 'Audit 9 categories of security controls for AI coding agent deployment readiness.', assignedBy: 'Governance Consultant', dueDate: d(14), priority: 'required', status: 'action_needed', ctaLabel: 'Review Controls', ctaHref: 'controls' },
+      { id: 'i-1', title: 'Complete data classification', description: 'Identify and classify data types that AI tools will access. Define sensitivity levels and handling requirements.', assignedBy: 'Project Admin', dueDate: d(10), priority: 'required', status: 'in_progress', ctaLabel: 'Classify Data', ctaHref: 'governance/compliance', blocking: 'Blocks sandbox configuration' },
+      { id: 'i-2', title: 'Review security controls', description: 'Audit 9 categories of security controls for AI coding agent deployment readiness.', assignedBy: 'Governance Consultant', dueDate: past(1), priority: 'required', status: 'failed', ctaLabel: 'Review Controls', ctaHref: 'controls', failureReason: 'Overdue: 2 of 9 control categories incomplete' },
       { id: 'i-3', title: 'Configure sandbox environment', description: 'Generate infrastructure files (JSON, TOML, YAML, HCL) for your cloud provider and validate configuration.', assignedBy: 'Project Admin', dueDate: d(25), priority: 'required', status: 'upcoming', blockedBy: 'Data classification and security review', scheduledPhase: 4 },
       { id: 'i-4', title: 'Run sandbox validation checks', description: 'Execute 20+ automated health checks to verify sandbox readiness before pilot launch.', assignedBy: 'Project Admin', dueDate: d(28), priority: 'required', status: 'upcoming', scheduledPhase: 4 },
       { id: 'i-5', title: 'Monitor pilot security metrics', description: 'Track DLP events, access patterns, and security incidents during pilot execution.', assignedBy: 'Project Admin', dueDate: d(40), priority: 'recommended', status: 'upcoming', scheduledPhase: 4 },
     ],
     legal: [
       { id: 'l-1', title: 'Review Acceptable Use Policy draft', description: 'Review and provide feedback on the AUP for AI coding tool usage within the organization.', assignedBy: 'Governance Consultant', dueDate: d(14), priority: 'required', status: 'action_needed', ctaLabel: 'Review Policies', ctaHref: 'governance/policies', blocking: 'Gate 1 approval requires policy sign-off' },
-      { id: 'l-2', title: 'Complete compliance framework mapping', description: 'Verify control mappings for SOC 2, HIPAA, NIST, and GDPR frameworks applicable to your organization.', assignedBy: 'Governance Consultant', dueDate: d(16), priority: 'required', status: 'action_needed', ctaLabel: 'Compliance Map', ctaHref: 'governance/compliance' },
+      { id: 'l-2', title: 'Complete compliance framework mapping', description: 'Verify control mappings for SOC 2, HIPAA, NIST, and GDPR frameworks applicable to your organization.', assignedBy: 'Governance Consultant', dueDate: d(16), priority: 'required', status: 'in_progress', ctaLabel: 'Compliance Map', ctaHref: 'governance/compliance' },
       { id: 'l-3', title: 'Review risk register', description: 'Assess identified risks, approve mitigation strategies, and sign off on risk acceptance for low-tier items.', assignedBy: 'Governance Consultant', dueDate: d(18), priority: 'required', status: 'action_needed', ctaLabel: 'Risk Register', ctaHref: 'governance/risk' },
       { id: 'l-4', title: 'Sign off on Gate 2: Data & Security', description: 'Confirm data governance, privacy requirements, and compliance are addressed before sandbox setup.', assignedBy: 'Project Admin', dueDate: d(22), priority: 'required', status: 'upcoming', blockedBy: 'Policy reviews and compliance mapping', scheduledPhase: 3 },
       { id: 'l-5', title: 'Review IP and licensing terms', description: 'Assess intellectual property implications and licensing requirements for AI-generated code.', assignedBy: 'Project Admin', dueDate: d(30), priority: 'recommended', status: 'upcoming', scheduledPhase: 3 },
@@ -125,7 +181,7 @@ function getTasksForRole(role: UserRole): DemoTask[] {
       { id: 'eng-5', title: 'Complete tool comparison', description: 'Evaluate Claude Code vs. other tools across quality, velocity, documentation, and satisfaction dimensions.', assignedBy: 'Project Admin', dueDate: d(42), priority: 'recommended', status: 'upcoming', scheduledPhase: 4 },
     ],
     marketing: [
-      { id: 'm-1', title: 'Draft stakeholder communication plan', description: 'Create messaging framework for internal audiences about the AI coding tool pilot program.', assignedBy: 'Project Admin', dueDate: d(14), priority: 'required', status: 'action_needed', ctaLabel: 'View Reports', ctaHref: 'reports/generate' },
+      { id: 'm-1', title: 'Draft stakeholder communication plan', description: 'Create messaging framework for internal audiences about the AI coding tool pilot program.', assignedBy: 'Project Admin', dueDate: d(14), priority: 'required', status: 'in_progress', ctaLabel: 'View Reports', ctaHref: 'reports/generate' },
       { id: 'm-2', title: 'Prepare FAQ document', description: 'Compile frequently asked questions from developers, management, and legal about the AI tool adoption.', assignedBy: 'Project Admin', dueDate: d(18), priority: 'recommended', status: 'action_needed', ctaLabel: 'Generate Reports', ctaHref: 'reports/generate' },
       { id: 'm-3', title: 'Create pilot announcement materials', description: 'Draft internal announcement for pilot launch, including scope, timeline, and expected outcomes.', assignedBy: 'Project Admin', dueDate: d(28), priority: 'recommended', status: 'upcoming', scheduledPhase: 4 },
       { id: 'm-4', title: 'Prepare post-pilot summary for leadership', description: 'Draft communications-ready summary of pilot results for executive and board presentation.', assignedBy: 'Executive Sponsor', dueDate: d(50), priority: 'recommended', status: 'upcoming', scheduledPhase: 5 },
@@ -182,12 +238,8 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function priorityDotClass(priority: TaskPriority): string {
-  switch (priority) {
-    case 'required': return 'bg-red-500';
-    case 'recommended': return 'bg-amber-500';
-    case 'optional': return 'bg-slate-400';
-  }
+function isOverdue(dueDate: string): boolean {
+  return new Date(dueDate) < new Date();
 }
 
 function priorityLabel(priority: TaskPriority): string {
@@ -198,37 +250,65 @@ function priorityLabel(priority: TaskPriority): string {
   }
 }
 
-function borderAccentClass(priority: TaskPriority): string {
-  switch (priority) {
-    case 'required': return 'border-l-blue-600';
-    case 'recommended': return 'border-l-amber-500';
-    case 'optional': return 'border-l-slate-300';
+function borderAccentClass(status: TaskStatus): string {
+  switch (status) {
+    case 'action_needed': return 'border-l-blue-600';
+    case 'in_progress': return 'border-l-amber-500';
+    case 'passed': return 'border-l-emerald-500';
+    case 'failed': return 'border-l-red-500';
+    case 'completed': return 'border-l-emerald-400';
+    case 'upcoming': return 'border-l-slate-300';
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Status Badge component                                                    */
+/* -------------------------------------------------------------------------- */
+
+function TaskStatusBadge({ status }: { status: TaskStatus }): React.ReactElement {
+  const config = STATUS_CONFIG[status];
+  const Icon = config.icon;
+  return (
+    <Badge variant="outline" className={cn('text-[10px] px-2 py-0.5 gap-1', config.badgeClass)}>
+      <Icon className={cn('h-3 w-3', status === 'in_progress' && 'animate-spin')} />
+      {config.label}
+    </Badge>
+  );
 }
 
 /* -------------------------------------------------------------------------- */
 /*  Task Card components                                                      */
 /* -------------------------------------------------------------------------- */
 
-function ActionTaskCard({ task, projectId }: { task: DemoTask; projectId: string }): React.ReactElement {
+function TaskCard({ task, projectId }: { task: DemoTask; projectId: string }): React.ReactElement {
+  const config = STATUS_CONFIG[task.status];
+  const overdue = (task.status === 'action_needed' || task.status === 'in_progress') && isOverdue(task.dueDate);
+
   return (
-    <Card className={cn('border-l-4 bg-white', borderAccentClass(task.priority))}>
+    <Card className={cn('border-l-4 bg-white', borderAccentClass(task.status))}>
       <CardContent className="py-4 px-5">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className={cn('inline-block h-2.5 w-2.5 rounded-full shrink-0', priorityDotClass(task.priority))} />
-              <h3 className="font-semibold text-slate-900 text-sm">{task.title}</h3>
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className={cn('inline-block h-2.5 w-2.5 rounded-full shrink-0', config.dotClass)} />
+              <h3 className={cn(
+                'font-semibold text-sm',
+                task.status === 'completed' || task.status === 'passed' ? 'text-slate-400 line-through' : 'text-slate-900',
+              )}>
+                {task.title}
+              </h3>
+              <TaskStatusBadge status={task.status} />
             </div>
             <p className="text-sm text-slate-500 mb-3 ml-[18px]">{task.description}</p>
-            <div className="flex items-center gap-4 ml-[18px] text-xs text-slate-400">
+            <div className="flex items-center gap-4 ml-[18px] text-xs text-slate-400 flex-wrap">
               <span className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
                 Assigned by {task.assignedBy}
               </span>
-              <span className="flex items-center gap-1">
+              <span className={cn('flex items-center gap-1', overdue && 'text-red-600 font-medium')}>
                 <Calendar className="h-3 w-3" />
-                Due {formatDate(task.dueDate)}
+                {overdue ? 'Overdue: ' : 'Due '}
+                {formatDate(task.dueDate)}
               </span>
               <Badge className={cn(
                 'text-[10px] px-1.5 py-0 border-transparent',
@@ -245,55 +325,31 @@ function ActionTaskCard({ task, projectId }: { task: DemoTask; projectId: string
                 Blocking: {task.blocking}
               </p>
             )}
+            {task.blockedBy && (
+              <p className="text-xs text-slate-400 mt-2 ml-[18px] flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                Blocked by: {task.blockedBy}
+              </p>
+            )}
+            {task.failureReason && (
+              <p className="text-xs text-red-600 mt-2 ml-[18px] flex items-center gap-1">
+                <XCircle className="h-3 w-3" />
+                {task.failureReason}
+              </p>
+            )}
           </div>
-          {task.ctaLabel && task.ctaHref && (
+          {task.ctaLabel && task.ctaHref && task.status !== 'completed' && task.status !== 'passed' && (
             <Link href={`/projects/${projectId}/${task.ctaHref}`}>
-              <Button size="sm" className="shrink-0 bg-slate-900 text-white hover:bg-slate-800">
-                {task.ctaLabel}
+              <Button size="sm" className={cn(
+                'shrink-0',
+                task.status === 'failed'
+                  ? 'bg-red-600 text-white hover:bg-red-700'
+                  : 'bg-slate-900 text-white hover:bg-slate-800',
+              )}>
+                {task.status === 'failed' ? 'Resolve' : task.ctaLabel}
                 <ArrowRight className="h-3.5 w-3.5 ml-1" />
               </Button>
             </Link>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function UpcomingTaskCard({ task }: { task: DemoTask }): React.ReactElement {
-  return (
-    <Card className="border border-slate-200 bg-slate-50 opacity-70">
-      <CardContent className="py-3 px-5">
-        <div className="flex items-center gap-2 mb-1">
-          <Circle className="h-3.5 w-3.5 text-slate-300 shrink-0" />
-          <h3 className="text-sm text-slate-500">{task.title}</h3>
-        </div>
-        <p className="text-xs text-slate-400 ml-[22px]">
-          {task.blockedBy
-            ? <span className="text-red-400 flex items-center gap-1"><AlertTriangle className="h-3 w-3 inline" /> Blocked by: {task.blockedBy}</span>
-            : task.scheduledPhase
-              ? `Scheduled for Phase ${task.scheduledPhase}`
-              : `Due ${formatDate(task.dueDate)}`
-          }
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function CompletedTaskCard({ task }: { task: DemoTask }): React.ReactElement {
-  return (
-    <Card className="border border-slate-200 bg-white">
-      <CardContent className="py-3 px-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-            <h3 className="text-sm text-slate-400 line-through">{task.title}</h3>
-          </div>
-          {task.completedDate && (
-            <span className="text-xs text-slate-400">
-              Completed {formatDate(task.completedDate)}
-            </span>
           )}
         </div>
       </CardContent>
@@ -319,6 +375,48 @@ function getRoleIcon(role: UserRole): React.ReactElement {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Summary bar                                                               */
+/* -------------------------------------------------------------------------- */
+
+function StatusSummaryBar({ tasks }: { tasks: DemoTask[] }) {
+  const counts: Record<string, { count: number; color: string; label: string }> = {
+    failed: { count: tasks.filter((t) => t.status === 'failed').length, color: 'bg-red-500', label: 'Failed' },
+    action_needed: { count: tasks.filter((t) => t.status === 'action_needed').length, color: 'bg-blue-500', label: 'Action Needed' },
+    in_progress: { count: tasks.filter((t) => t.status === 'in_progress').length, color: 'bg-amber-500', label: 'In Progress' },
+    upcoming: { count: tasks.filter((t) => t.status === 'upcoming').length, color: 'bg-slate-300', label: 'Upcoming' },
+    passed: { count: tasks.filter((t) => t.status === 'passed' || t.status === 'completed').length, color: 'bg-emerald-500', label: 'Passed' },
+  };
+
+  const total = tasks.length;
+
+  return (
+    <div className="space-y-3">
+      {/* Legend */}
+      <div className="flex items-center gap-4 flex-wrap">
+        {Object.values(counts).filter((c) => c.count > 0).map((c) => (
+          <span key={c.label} className="flex items-center gap-1.5 text-xs text-slate-600">
+            <span className={cn('inline-block h-2.5 w-2.5 rounded-full', c.color)} />
+            {c.count} {c.label}
+          </span>
+        ))}
+      </div>
+
+      {/* Progress bar */}
+      <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden flex">
+        {Object.values(counts).filter((c) => c.count > 0).map((c) => (
+          <div
+            key={c.label}
+            className={cn('h-full first:rounded-l-full last:rounded-r-full', c.color)}
+            style={{ width: `${(c.count / total) * 100}%` }}
+            title={`${c.count} ${c.label}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Page                                                                      */
 /* -------------------------------------------------------------------------- */
 
@@ -327,13 +425,12 @@ export default function MyTasksPage({ params }: { params: Promise<{ id: string }
   const role = useRoleOverride();
   const tasks = getTasksForRole(role);
 
+  // Group tasks by status category
+  const failedTasks = tasks.filter((t) => t.status === 'failed');
   const actionTasks = tasks.filter((t) => t.status === 'action_needed');
+  const inProgressTasks = tasks.filter((t) => t.status === 'in_progress');
   const upcomingTasks = tasks.filter((t) => t.status === 'upcoming');
-  const completedTasks = tasks.filter((t) => t.status === 'completed');
-
-  const totalTasks = tasks.length;
-  const completedCount = completedTasks.length;
-  const phaseProgress = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
+  const passedTasks = tasks.filter((t) => t.status === 'passed' || t.status === 'completed');
 
   const hasNoTasks = tasks.length === 0;
 
@@ -351,26 +448,11 @@ export default function MyTasksPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
 
-        <div className="mt-4 p-4 rounded-lg bg-slate-50 border border-slate-200">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-slate-700">
-                {actionTasks.length} action{actionTasks.length !== 1 ? 's' : ''} needed
-              </span>
-              <span className="text-slate-300">&middot;</span>
-              <span className="text-sm text-slate-500">{upcomingTasks.length} upcoming</span>
-              <span className="text-slate-300">&middot;</span>
-              <span className="text-sm text-slate-500">{completedCount} completed</span>
-            </div>
-            <span className="text-sm text-slate-500">{completedCount} of {totalTasks} tasks</span>
+        {!hasNoTasks && (
+          <div className="mt-4 p-4 rounded-lg bg-slate-50 border border-slate-200">
+            <StatusSummaryBar tasks={tasks} />
           </div>
-          <div className="w-full bg-slate-200 rounded-full h-2">
-            <div
-              className="bg-blue-600 h-2 rounded-full transition-all"
-              style={{ width: `${phaseProgress}%` }}
-            />
-          </div>
-        </div>
+        )}
       </div>
 
       {hasNoTasks ? (
@@ -420,50 +502,117 @@ export default function MyTasksPage({ params }: { params: Promise<{ id: string }
         </div>
       ) : (
         <>
-          {/* Requires Your Action */}
-          <section className="mb-10">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">
-                {actionTasks.length}
+          {/* Failed — show first with high visibility */}
+          {failedTasks.length > 0 && (
+            <section className="mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center justify-center h-6 w-6 rounded-full bg-red-100 text-red-700 text-xs font-bold">
+                  {failedTasks.length}
+                </div>
+                <h2 className="text-lg font-semibold text-red-700">Failed / Blocked</h2>
               </div>
-              <h2 className="text-lg font-semibold text-slate-900">Requires Your Action</h2>
-            </div>
-            <div className="space-y-3">
-              {actionTasks.map((task) => (
-                <ActionTaskCard key={task.id} task={task} projectId={projectId} />
-              ))}
-            </div>
-          </section>
+              <div className="space-y-3">
+                {failedTasks.map((task) => (
+                  <TaskCard key={task.id} task={task} projectId={projectId} />
+                ))}
+              </div>
+            </section>
+          )}
 
-          <Separator className="mb-10 bg-slate-200" />
+          {failedTasks.length > 0 && (actionTasks.length > 0 || inProgressTasks.length > 0) && (
+            <Separator className="mb-8 bg-slate-200" />
+          )}
+
+          {/* Action Needed */}
+          {actionTasks.length > 0 && (
+            <section className="mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">
+                  {actionTasks.length}
+                </div>
+                <h2 className="text-lg font-semibold text-slate-900">Action Needed</h2>
+              </div>
+              <div className="space-y-3">
+                {actionTasks.map((task) => (
+                  <TaskCard key={task.id} task={task} projectId={projectId} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* In Progress */}
+          {inProgressTasks.length > 0 && (
+            <section className="mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center justify-center h-6 w-6 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">
+                  {inProgressTasks.length}
+                </div>
+                <h2 className="text-lg font-semibold text-slate-700">In Progress</h2>
+              </div>
+              <div className="space-y-3">
+                {inProgressTasks.map((task) => (
+                  <TaskCard key={task.id} task={task} projectId={projectId} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          <Separator className="mb-8 bg-slate-200" />
 
           {/* Upcoming */}
-          <section className="mb-10">
-            <div className="flex items-center gap-2 mb-4">
-              <Clock className="h-5 w-5 text-slate-400" />
-              <h2 className="text-lg font-semibold text-slate-700">Upcoming</h2>
-            </div>
-            <div className="space-y-2">
-              {upcomingTasks.map((task) => (
-                <UpcomingTaskCard key={task.id} task={task} />
-              ))}
-            </div>
-          </section>
+          {upcomingTasks.length > 0 && (
+            <section className="mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <Clock className="h-5 w-5 text-slate-400" />
+                <h2 className="text-lg font-semibold text-slate-700">Upcoming</h2>
+              </div>
+              <div className="space-y-2">
+                {upcomingTasks.map((task) => (
+                  <TaskCard key={task.id} task={task} projectId={projectId} />
+                ))}
+              </div>
+            </section>
+          )}
 
-          <Separator className="mb-10 bg-slate-200" />
+          <Separator className="mb-8 bg-slate-200" />
 
-          {/* Recently Completed */}
+          {/* Passed / Completed */}
           <section className="mb-8">
             <div className="flex items-center gap-2 mb-4">
               <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-              <h2 className="text-lg font-semibold text-slate-700">Recently Completed</h2>
+              <h2 className="text-lg font-semibold text-slate-700">Passed / Completed</h2>
             </div>
-            <div className="space-y-2">
-              {completedTasks.map((task) => (
-                <CompletedTaskCard key={task.id} task={task} />
-              ))}
-            </div>
+            {passedTasks.length === 0 ? (
+              <p className="text-sm text-slate-400 ml-7">No completed tasks yet. Complete actions above to see them here.</p>
+            ) : (
+              <div className="space-y-2">
+                {passedTasks.map((task) => (
+                  <TaskCard key={task.id} task={task} projectId={projectId} />
+                ))}
+              </div>
+            )}
           </section>
+
+          {/* Next Steps card */}
+          <Card className="border-slate-200 bg-slate-50">
+            <CardContent className="py-5">
+              <h3 className="text-sm font-semibold text-slate-700 mb-3">Next Steps</h3>
+              <div className="flex flex-wrap gap-2">
+                <Link href={`/projects/${projectId}/project-plan`}>
+                  <Button variant="outline" size="sm" className="gap-1 border-slate-200 text-slate-600">
+                    View Full Project Plan
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </Link>
+                <Link href={`/projects/${projectId}/risks`}>
+                  <Button variant="outline" size="sm" className="gap-1 border-slate-200 text-slate-600">
+                    View Project Risks
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>
