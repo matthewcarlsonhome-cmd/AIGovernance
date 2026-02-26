@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 // ---------------------------------------------------------------------------
-// Generic real-time subscription hook
+// Generic real-time subscription hook (options-based API)
 // ---------------------------------------------------------------------------
 
 interface UseRealtimeSubscriptionOptions {
@@ -118,4 +118,41 @@ export function useRealtimeSubscription({
   }, [table, filter, enabled]);
 
   return { isConnected };
+}
+
+// ---------------------------------------------------------------------------
+// Simplified positional-parameter API
+// ---------------------------------------------------------------------------
+
+/**
+ * Simplified real-time subscription hook with positional parameters.
+ *
+ * Subscribes to INSERT, UPDATE, and DELETE events on the specified table.
+ * On any change, the provided TanStack Query key is invalidated so the
+ * relevant query automatically refetches.
+ *
+ * Gracefully returns early when Supabase is not configured (demo mode).
+ * Cleans up the subscription on unmount.
+ *
+ * @param table    - The Postgres table name to subscribe to.
+ * @param queryKey - The TanStack Query key to invalidate on changes.
+ * @param filter   - Optional column filter to scope the subscription.
+ */
+export function useRealtimeTable(
+  table: string,
+  queryKey: readonly unknown[],
+  filter?: { column: string; value: string },
+): UseRealtimeSubscriptionReturn {
+  // Memoize the query keys array to prevent re-subscriptions on every render
+  const queryKeysToInvalidate = useMemo(() => [queryKey], [queryKey]);
+
+  // Convert the structured filter to Supabase's filter string format
+  const filterString = filter ? `${filter.column}=eq.${filter.value}` : undefined;
+
+  return useRealtimeSubscription({
+    table,
+    filter: filterString,
+    queryKeysToInvalidate,
+    enabled: true,
+  });
 }

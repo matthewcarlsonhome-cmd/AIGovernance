@@ -20,9 +20,9 @@ describe('ProjectStore', () => {
     useProjectStore.getState().reset();
   });
 
-  it('should initialize with demo projects', () => {
+  it('should initialize with empty project list', () => {
     const { projects } = useProjectStore.getState();
-    expect(projects.length).toBeGreaterThan(0);
+    expect(projects).toHaveLength(0);
   });
 
   it('should set projects', () => {
@@ -113,7 +113,7 @@ describe('ProjectStore', () => {
     expect(useProjectStore.getState().error).toBeNull();
   });
 
-  it('should reset to demo state', () => {
+  it('should reset to initial empty state', () => {
     useProjectStore.getState().setProjects([TEST_PROJECT]);
     useProjectStore.getState().setCurrentProject(TEST_PROJECT);
     useProjectStore.getState().setLoading(true);
@@ -121,7 +121,7 @@ describe('ProjectStore', () => {
     useProjectStore.getState().reset();
 
     const state = useProjectStore.getState();
-    expect(state.projects.length).toBeGreaterThan(1); // demo projects
+    expect(state.projects).toHaveLength(0);
     expect(state.currentProject).toBeNull();
     expect(state.isLoading).toBe(false);
     expect(state.error).toBeNull();
