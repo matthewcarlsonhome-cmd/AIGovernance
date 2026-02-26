@@ -247,6 +247,7 @@ export default function RiskPage({
             <AlertTriangle className="h-6 w-6 text-orange-500" />
             Risk Classification Manager
           </h1>
+          <span className="inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">Owned by: IT / Security Lead, Legal Lead</span>
           <p className="text-slate-500 mt-1">Identify, assess, and mitigate AI deployment risks</p>
         </div>
         <Button onClick={() => setShowAddDialog(true)} className="bg-slate-900 text-white hover:bg-slate-800">

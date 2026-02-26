@@ -75,62 +75,7 @@ interface Sprint {
 /*  Demo Data                                                          */
 /* ------------------------------------------------------------------ */
 
-const DEFAULT_SPRINTS: Sprint[] = [
-  {
-    id: 's1',
-    name: 'Sprint 1',
-    startDate: '2026-01-27',
-    endDate: '2026-02-07',
-    status: 'completed',
-    goals: [
-      { name: 'API endpoint generation', completed: true },
-      { name: 'Unit test writing', completed: true },
-      { name: 'Code review automation', completed: true },
-    ],
-    velocity: 34,
-    baselineVelocity: 21,
-    storyPointsPlanned: 34,
-    storyPointsCompleted: 34,
-    defectRate: 9,
-    satisfaction: 8.4,
-  },
-  {
-    id: 's2',
-    name: 'Sprint 2',
-    startDate: '2026-02-10',
-    endDate: '2026-02-21',
-    status: 'active',
-    goals: [
-      { name: 'Database migration generation', completed: true },
-      { name: 'Integration testing', completed: false },
-      { name: 'Performance optimization', completed: false },
-    ],
-    velocity: 38,
-    baselineVelocity: 21,
-    storyPointsPlanned: 40,
-    storyPointsCompleted: 24,
-    defectRate: 7,
-    satisfaction: 8.9,
-  },
-  {
-    id: 's3',
-    name: 'Sprint 3',
-    startDate: '2026-02-24',
-    endDate: '2026-03-07',
-    status: 'planned',
-    goals: [
-      { name: 'Full feature development', completed: false },
-      { name: 'CI/CD pipeline tasks', completed: false },
-      { name: 'Documentation generation', completed: false },
-    ],
-    velocity: 0,
-    baselineVelocity: 21,
-    storyPointsPlanned: 42,
-    storyPointsCompleted: 0,
-    defectRate: 0,
-    satisfaction: 0,
-  },
-];
+const DEFAULT_SPRINTS: Sprint[] = [];
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -532,6 +477,12 @@ export default function SprintEvaluationPage({
             Track evaluation sprints for your AI coding agent PoC with velocity,
             quality, and satisfaction metrics per sprint.
           </p>
+          <Badge
+            variant="outline"
+            className="mt-2 bg-slate-100 text-slate-700 border-slate-200 font-normal text-xs"
+          >
+            Owned by: Engineering Lead
+          </Badge>
         </div>
         <div className="flex items-center gap-3">
           <Badge

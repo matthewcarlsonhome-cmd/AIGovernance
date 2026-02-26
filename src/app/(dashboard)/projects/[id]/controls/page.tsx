@@ -53,6 +53,7 @@ export default function ControlCenterPage({ params }: { params: Promise<{ id: st
     <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Governance Control Center</h1>
+        <span className="inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">Owned by: IT / Security Lead, Legal Lead</span>
         <p className="text-slate-500 mt-1">Unified view of gates, controls, risks, and exceptions for this project.</p>
       </div>
 

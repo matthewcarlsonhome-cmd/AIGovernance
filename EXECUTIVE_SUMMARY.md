@@ -98,8 +98,8 @@ Behind the UI, GovAI Studio runs a structured governance engine:
 | API endpoints | 71 |
 | UI components | 24 base + feature-specific |
 | Library modules | 35+ |
-| Unit test suites | 22 |
-| Unit tests | 518 |
+| Unit test suites | 24 |
+| Unit tests | 550 |
 | Database tables | 40+ |
 | Database migrations | 18 |
 | RBAC permissions | 33 |
@@ -147,7 +147,11 @@ Behind the UI, GovAI Studio runs a structured governance engine:
 | Real-time collaboration (Supabase subscriptions) | Production-ready |
 | AI-powered recommendations (Claude API) | Production-ready |
 | Monitoring & observability (metrics dashboard) | Production-ready |
-| Unit test suite (518 tests, 22 suites) | Production-ready |
+| Unit test suite (550 tests, 24 suites) | Production-ready |
+| Role-specific task queues (My Tasks per role) | Production-ready |
+| Project Plan with 41 tasks across 5 phases and 7 roles | Production-ready |
+| Role-ownership badges on all governance pages | Production-ready |
+| Next Step navigation between connected pages | Production-ready |
 | Integration framework (10-connector catalog) | MVP |
 | Gantt chart with drag-and-drop and critical path | 90% |
 | Ethics review (bias, fairness, transparency) | 95% |
@@ -297,13 +301,14 @@ GovAI Studio's governance processes map directly to emerging regulatory requirem
 
 ### Development Timeline
 
-GovAI Studio was built across four intensive development sessions:
+GovAI Studio was built across six intensive development sessions:
 
 - **Session 1:** Foundation — Next.js 15 scaffolding, Supabase integration, auth system, core page routes, 24 UI components
 - **Session 2:** Governance engine — scoring engine, assessment questionnaire, readiness dashboard, policy editor, gate reviews, sandbox configuration, PoC tracking, Gantt chart, report generation
 - **Session 3:** Advanced systems — 7-state project FSM, SLA escalation engine, domain event bus, KPI catalog, portfolio dashboard, adoption analytics, executive decision brief
 - **Session 4:** Production polish — phase-driven navigation, role-based task filtering, multi-tenant isolation, OAuth fix, deployment guide, professional tone overhaul, demo data cleanup, sample project
 - **Session 5:** Hardening and scale — 518-test unit suite, real-time collaboration via Supabase subscriptions, AI-powered recommendations via Claude API, monitoring and observability dashboard, complete demo data removal, admin-only RBAC enforcement, executive summary and market analysis
+- **Session 6:** UX simplification — Full 82-page audit across all 7 roles, role-specific My Tasks queue (each role sees their action items with CTAs), 41-task Project Plan with role assignments across 5 phases, role-ownership badges on 15+ pages, Next Step navigation between connected pages, intake dead-end fix, onboarding redirect fix, remaining demo data removal from PoC/sprint/comparison pages, 550 tests across 24 suites
 
 ### Key Roadblocks and Insights
 
@@ -339,4 +344,4 @@ The competitors govern the AI. GovAI Studio governs the journey to AI.
 
 ---
 
-*Built with Next.js 15, TypeScript, Supabase, and Tailwind CSS 4. Deployed on Render. 102,000 lines of code. 82 pages. 71 API endpoints. 518 tests. 7 roles. 5 phases. One platform.*
+*Built with Next.js 15, TypeScript, Supabase, and Tailwind CSS 4. Deployed on Render. 102,000+ lines of code. 82 pages. 71 API endpoints. 550 tests. 7 roles. 5 phases. 41 project plan tasks. One platform.*

@@ -112,6 +112,30 @@ export default function PilotIntakePage({ params }: { params: Promise<{ id: stri
             </div>
           </CardContent>
         </Card>
+
+        {/* Next Steps */}
+        <Card className="bg-blue-50 border-blue-200">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold text-blue-900">Next Steps</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-blue-800 mb-4">
+              Your pilot has been classified. Continue to the readiness assessment to score your organization across 5 domains.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <a href={`/projects/${projectId}/discovery/questionnaire`}>
+                <Button className="bg-slate-900 text-white hover:bg-slate-800 gap-2">
+                  Start Readiness Assessment <ArrowRight className="h-4 w-4" />
+                </Button>
+              </a>
+              <a href={`/projects/${projectId}/my-tasks`}>
+                <Button variant="outline" className="gap-2">
+                  View My Tasks <ArrowRight className="h-4 w-4" />
+                </Button>
+              </a>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

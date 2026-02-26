@@ -176,6 +176,7 @@ export default function ReadinessPage({
             <ListChecks className="h-6 w-6 text-slate-900" />
             Readiness Assessment
           </h1>
+          <span className="inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">Owned by: Governance Consultant, Executive Sponsor</span>
           <p className="mt-1 text-sm text-slate-500">
             Complete the assessment questionnaire to see your readiness scores.
           </p>
@@ -231,6 +232,7 @@ export default function ReadinessPage({
         <h1 className="text-2xl font-bold tracking-tight">
           {overallScore >= 75 ? 'You\'re Ready to Roll!' : overallScore >= 50 ? 'Getting There!' : 'Your Starting Point'}
         </h1>
+        <span className="inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">Owned by: Governance Consultant, Executive Sponsor</span>
         <p className="mt-1 text-sm text-slate-500">
           {overallScore >= 75
             ? 'Your organization is well-positioned for AI governance. Here\'s the full picture.'

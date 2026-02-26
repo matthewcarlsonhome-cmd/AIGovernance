@@ -8,26 +8,12 @@ import { Button } from '@/components/ui/button';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
-import { TrendingUp, TrendingDown, Minus, Target, BarChart3, CheckCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Target, BarChart3, CheckCircle, ArrowRight } from 'lucide-react';
 import type { OutcomeMetric } from '@/types';
 
-const DEMO_METRICS: OutcomeMetric[] = [
-  { id: 'om-1', project_id: 'proj-1', name: 'Developer Time Saved', category: 'efficiency', target_value: 8, actual_value: 5.2, unit: 'hours/week', confidence: 'high', measurement_date: '2025-06-14', notes: 'Trending upward each sprint' },
-  { id: 'om-2', project_id: 'proj-1', name: 'Code Quality Score', category: 'quality', target_value: 85, actual_value: 82, unit: 'score', confidence: 'high', measurement_date: '2025-06-14', notes: null },
-  { id: 'om-3', project_id: 'proj-1', name: 'Pilot Adoption Rate', category: 'adoption', target_value: 80, actual_value: 95, unit: '%', confidence: 'high', measurement_date: '2025-06-14', notes: 'Exceeded expectations' },
-  { id: 'om-4', project_id: 'proj-1', name: 'Bug Resolution Time', category: 'efficiency', target_value: 4, actual_value: 5.1, unit: 'hours', confidence: 'medium', measurement_date: '2025-06-14', notes: 'Still improving' },
-  { id: 'om-5', project_id: 'proj-1', name: 'Cost per Feature', category: 'value', target_value: 800, actual_value: 920, unit: 'USD', confidence: 'medium', measurement_date: '2025-06-14', notes: null },
-  { id: 'om-6', project_id: 'proj-1', name: 'Security Incidents', category: 'risk', target_value: 0, actual_value: 0, unit: 'count', confidence: 'high', measurement_date: '2025-06-14', notes: 'No incidents during pilot' },
-];
+const DEMO_METRICS: OutcomeMetric[] = [];
 
-const TREND_DATA = [
-  { week: 'W1', time_saved: 2.1, adoption: 45, quality: 72 },
-  { week: 'W2', time_saved: 3.0, adoption: 58, quality: 75 },
-  { week: 'W3', time_saved: 3.8, adoption: 72, quality: 78 },
-  { week: 'W4', time_saved: 4.5, adoption: 82, quality: 80 },
-  { week: 'W5', time_saved: 5.0, adoption: 90, quality: 81 },
-  { week: 'W6', time_saved: 5.2, adoption: 95, quality: 82 },
-];
+const TREND_DATA: { week: string; time_saved: number; adoption: number; quality: number }[] = [];
 
 const CATEGORY_COLORS: Record<string, string> = {
   value: 'bg-blue-100 text-blue-800 border-blue-200',
@@ -62,6 +48,7 @@ export default function OutcomeMetricsPage({ params }: { params: Promise<{ id: s
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Outcome Metrics</h1>
         <p className="text-slate-500 mt-1">Track pilot results against targets. These feed directly into the executive decision brief.</p>
+        <Badge className="bg-slate-100 text-slate-600 border-slate-200 text-xs font-normal mt-2">Owned by: Governance Consultant, Executive Sponsor</Badge>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -147,6 +134,23 @@ export default function OutcomeMetricsPage({ params }: { params: Promise<{ id: s
                 </div>
               );
             })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Next Step */}
+      <Card className="bg-blue-50 border-blue-200 mt-6">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-blue-900">Next Step</p>
+              <p className="text-sm text-blue-700">Review the executive decision brief for the go/no-go recommendation.</p>
+            </div>
+            <a href={`/projects/${projectId}/decision-hub`}>
+              <Button size="sm" className="bg-slate-900 text-white hover:bg-slate-800">
+                Decision Hub <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </a>
           </div>
         </CardContent>
       </Card>

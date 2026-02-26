@@ -407,6 +407,38 @@ GET               /api/governance/readiness
 - `cmdk` — not yet added
 
 ## Current Sprint
-Sprint focus: Design Spec V4 implementation — phase-driven navigation, role-based
-task queuing, onboarding wizard, professional tone overhaul. All gamified language
-removed. Build passes with zero TS errors. Sentry integration deferred.
+Sprint focus: UX simplification and role-based task clarity. My Tasks page now
+populated with role-specific action items (CTA links to relevant pages). Project
+Plan has 41 tasks distributed across 5 phases and all 7 roles. Role-ownership
+badges added to 15+ governance/build pages. Next Step navigation cards guide
+users between connected pages. 550 tests across 24 suites, zero TS errors.
+
+### Development Pitfalls Added in Session 6
+
+**My Tasks and Project Plan must have real task data.**
+The `getTasksForRole()` function was returning `[]` for all roles, making the
+primary user landing page completely empty. Always populate task generation
+functions with meaningful role-specific data that links to real pages.
+
+**Role-ownership badges clarify page responsibility.**
+Every governance page should include a small badge indicating which role(s) own
+that page. Pattern:
+```tsx
+<span className="inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">
+  Owned by: IT / Security Lead
+</span>
+```
+
+**Every page needs a "Next Step" exit.**
+Users should never hit a dead-end. After completing a page's primary action,
+show a card guiding them to the next logical page. Especially important on
+assessment completion pages (intake, readiness).
+
+**Onboarding wizard redirect must use real project ID.**
+The onboarding wizard success screen was hardcoding `/projects/demo-new/overview`
+instead of the actual project ID. Always use dynamic values from state.
+
+**Empty states > demo data for clean-start UX.**
+Pages like PoC Projects, Sprint Evaluation, and Tool Comparison should start
+with empty arrays and helpful empty states, not hardcoded demo data that confuses
+real users into thinking they have pre-existing data.
