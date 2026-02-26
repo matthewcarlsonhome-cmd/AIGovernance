@@ -347,9 +347,9 @@ export default function OnboardingWizardPage(): React.ReactElement {
           {riskConfig.tasks} tasks have been generated across {riskConfig.days} days.
         </p>
         <div className="flex justify-center gap-3">
-          <Link href="/projects/demo-new/overview">
+          <Link href="/">
             <Button className="bg-slate-900 text-white hover:bg-slate-800 gap-2">
-              Go to Project Overview
+              Go to Dashboard
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>

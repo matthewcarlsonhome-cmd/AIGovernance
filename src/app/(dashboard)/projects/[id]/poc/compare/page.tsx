@@ -75,15 +75,7 @@ function computeSummary(comparisons: ComparisonCategory[]) {
 /*  Initial Demo Data                                                  */
 /* ------------------------------------------------------------------ */
 
-const INITIAL_COMPARISONS: ComparisonCategory[] = [
-  { category: 'Code Quality', claudeCode: 92, codex: 85, winner: 'Claude Code' },
-  { category: 'Velocity Impact', claudeCode: 62, codex: 45, winner: 'Claude Code' },
-  { category: 'Test Generation', claudeCode: 88, codex: 91, winner: 'Codex' },
-  { category: 'Documentation', claudeCode: 95, codex: 78, winner: 'Claude Code' },
-  { category: 'Context Understanding', claudeCode: 94, codex: 82, winner: 'Claude Code' },
-  { category: 'Setup Complexity', claudeCode: 85, codex: 90, winner: 'Codex' },
-  { category: 'Cost Efficiency', claudeCode: 78, codex: 82, winner: 'Codex' },
-];
+const INITIAL_COMPARISONS: ComparisonCategory[] = [];
 
 /* ------------------------------------------------------------------ */
 /*  Inline Score Input                                                 */
@@ -469,6 +461,12 @@ export default function ToolComparisonPage({
             Head-to-head comparison of Claude Code vs OpenAI Codex across key
             evaluation categories. Click &quot;Edit Scores&quot; to manually judge each model.
           </p>
+          <Badge
+            variant="outline"
+            className="mt-2 bg-slate-100 text-slate-700 border-slate-200 font-normal text-xs"
+          >
+            Owned by: Engineering Lead
+          </Badge>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {editMode && (
@@ -511,6 +509,15 @@ export default function ToolComparisonPage({
       </div>
 
       <Separator />
+
+      {comparisons.length === 0 && (
+        <div className="text-center py-16">
+          <h2 className="text-xl font-semibold text-slate-900 mb-2">No comparison data yet</h2>
+          <p className="text-sm text-slate-500 max-w-md mx-auto mb-4">
+            Click &quot;Edit Scores&quot; to add comparison categories and rate each tool.
+          </p>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-2">

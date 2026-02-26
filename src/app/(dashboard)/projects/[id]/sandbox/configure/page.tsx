@@ -776,6 +776,7 @@ export default function SandboxConfigurePage({
         <p className="text-slate-500">
           Design the perfect isolated playground for your AI coding agents.
         </p>
+        <Badge className="bg-slate-100 text-slate-600 border-slate-200 text-xs font-normal mt-2">Owned by: IT / Security Lead</Badge>
       </div>
 
       {/* What You'll Need */}
@@ -864,6 +865,23 @@ export default function SandboxConfigurePage({
           </Button>
         )}
       </div>
+
+      {/* After Configuration */}
+      <Card className="bg-blue-50 border-blue-200 mt-6">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-blue-900">After Configuration</p>
+              <p className="text-sm text-blue-700">Run sandbox validation checks to verify environment readiness.</p>
+            </div>
+            <a href={`/projects/${projectId}/sandbox/validate`}>
+              <Button size="sm" className="bg-slate-900 text-white hover:bg-slate-800">
+                Validate Sandbox <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </a>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

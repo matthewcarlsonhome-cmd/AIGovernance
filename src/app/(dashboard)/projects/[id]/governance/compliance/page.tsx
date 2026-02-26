@@ -399,6 +399,7 @@ export default function ComplianceMappingPage({
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             Compliance Framework Mapping
           </h1>
+          <span className="inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">Owned by: Legal Lead, IT / Security Lead</span>
           <p className="mt-1 text-sm text-slate-500">
             Map AI governance controls to compliance frameworks and track
             implementation status across SOC 2, HIPAA, NIST, and GDPR.

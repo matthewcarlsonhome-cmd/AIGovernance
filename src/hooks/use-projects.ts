@@ -1,6 +1,8 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRealtimeSubscription } from '@/hooks/use-realtime';
 import type { Project, ProjectStatus, ApiResponse } from '@/types';
 
 /**
@@ -159,4 +161,57 @@ export function useDeleteProject() {
       queryClient.invalidateQueries({ queryKey: projectKeys.all });
     },
   });
+}
+
+// ---------------------------------------------------------------------------
+// Real-time enabled queries
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetch all projects with real-time auto-refresh.
+ *
+ * Subscribes to INSERT, UPDATE, and DELETE events on the `projects` table.
+ * When another user creates, edits, or deletes a project the project list
+ * is automatically re-fetched via TanStack Query cache invalidation.
+ *
+ * Falls back to standard polling when Supabase is not configured (demo mode).
+ */
+export function useProjectsRealtime() {
+  const query = useProjects();
+
+  const queryKeysToInvalidate = useMemo(
+    () => [projectKeys.lists()],
+    [],
+  );
+
+  const { isConnected } = useRealtimeSubscription({
+    table: 'projects',
+    queryKeysToInvalidate,
+  });
+
+  return { ...query, isRealtimeConnected: isConnected };
+}
+
+/**
+ * Fetch a single project with real-time auto-refresh.
+ *
+ * Subscribes to changes on the `projects` table filtered by the project ID.
+ * When another user edits this project the data is automatically refetched.
+ */
+export function useProjectRealtime(id: string) {
+  const query = useProject(id);
+
+  const queryKeysToInvalidate = useMemo(
+    () => [projectKeys.detail(id), projectKeys.lists()],
+    [id],
+  );
+
+  const { isConnected } = useRealtimeSubscription({
+    table: 'projects',
+    filter: `id=eq.${id}`,
+    queryKeysToInvalidate,
+    enabled: Boolean(id),
+  });
+
+  return { ...query, isRealtimeConnected: isConnected };
 }

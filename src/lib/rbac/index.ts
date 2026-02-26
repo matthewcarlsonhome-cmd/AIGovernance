@@ -55,7 +55,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'data:classify',
     'report:generate', 'report:export',
     'evidence:generate',
-    'team:manage', 'audit:view',
+    'audit:view',
   ],
   executive: [
     'project:read', 'project:transition_state',

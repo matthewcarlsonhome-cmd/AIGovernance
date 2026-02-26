@@ -20,32 +20,20 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { usePocProjects } from '@/hooks/use-poc';
 
-const POC_PROJECTS = [
-  {
-    id: 'poc-1', name: 'Claude Code Evaluation', tool: 'Claude Code', status: 'active' as const, score: 87,
-    description: 'Evaluate Claude Code for backend API development, unit test generation, and code review automation across 3 evaluation sprints.',
-    sprints: 3, completedSprints: 1, team: ['Alex Kim', 'Sarah Chen'],
-    criteria: [
-      { name: 'Code Quality', score: 92, weight: 25 },
-      { name: 'Velocity Impact', score: 88, weight: 25 },
-      { name: 'Security Compliance', score: 85, weight: 20 },
-      { name: 'Developer Satisfaction', score: 90, weight: 15 },
-      { name: 'Cost Efficiency', score: 78, weight: 15 },
-    ],
-  },
-  {
-    id: 'poc-2', name: 'OpenAI Codex Evaluation', tool: 'OpenAI Codex', status: 'planned' as const, score: 72,
-    description: 'Evaluate OpenAI Codex CLI for frontend component development and documentation generation across 2 evaluation sprints.',
-    sprints: 2, completedSprints: 0, team: ['Alex Kim'],
-    criteria: [
-      { name: 'Code Quality', score: 85, weight: 25 },
-      { name: 'Velocity Impact', score: 75, weight: 25 },
-      { name: 'Security Compliance', score: 68, weight: 20 },
-      { name: 'Developer Satisfaction', score: 70, weight: 15 },
-      { name: 'Cost Efficiency', score: 65, weight: 15 },
-    ],
-  },
-];
+interface PocProject {
+  id: string;
+  name: string;
+  tool: string;
+  status: 'active' | 'planned' | 'completed' | 'cancelled';
+  score: number;
+  description: string;
+  sprints: number;
+  completedSprints: number;
+  team: string[];
+  criteria: { name: string; score: number; weight: number }[];
+}
+
+const POC_PROJECTS: PocProject[] = [];
 
 const statusColors = { active: 'bg-emerald-100 text-emerald-800', planned: 'bg-blue-100 text-blue-800', completed: 'bg-gray-100 text-gray-800', cancelled: 'bg-red-100 text-red-800' };
 
@@ -56,18 +44,18 @@ export default function PocProjectsPage({
 }) {
   const { id } = React.use(params);
   const { data: fetchedProjects, isLoading, error } = usePocProjects(id);
-  const [expanded, setExpanded] = useState<string | null>('poc-1');
+  const [expanded, setExpanded] = useState<string | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [newName, setNewName] = useState('');
   const [newTool, setNewTool] = useState('Claude Code');
   const [newDescription, setNewDescription] = useState('');
   const [newSprints, setNewSprints] = useState(2);
-  const [localProjects, setLocalProjects] = useState<typeof POC_PROJECTS>([]);
+  const [localProjects, setLocalProjects] = useState<PocProject[]>([]);
 
   if (isLoading) return <div className="flex justify-center p-8"><div className="animate-spin h-8 w-8 border-2 border-slate-900 border-t-transparent rounded-full" /></div>;
   // Gracefully fall through to demo data if API errors
 
-  const baseProjects = (fetchedProjects && fetchedProjects.length > 0) ? fetchedProjects as unknown as typeof POC_PROJECTS : POC_PROJECTS;
+  const baseProjects = (fetchedProjects && fetchedProjects.length > 0) ? fetchedProjects as unknown as PocProject[] : POC_PROJECTS;
   const pocProjects = [...baseProjects, ...localProjects];
 
   const handleCreatePoc = (): void => {
@@ -108,6 +96,7 @@ export default function PocProjectsPage({
             PoC Projects
           </h1>
           <p className="text-slate-500 mt-1">Proof-of-concept definitions with selection scoring</p>
+          <Badge className="mt-2 bg-slate-100 text-slate-700 border border-slate-200 font-normal text-xs">Owned by: Engineering Lead</Badge>
         </div>
         <Button onClick={() => setShowNewDialog(true)} className="bg-slate-900 text-white hover:bg-slate-800"><Plus className="h-4 w-4 mr-2" /> New PoC Project</Button>
       </div>
@@ -153,6 +142,20 @@ export default function PocProjectsPage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {pocProjects.length === 0 && (
+        <div className="text-center py-16">
+          <div className="flex justify-center mb-4">
+            <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center">
+              <FlaskConical className="h-8 w-8 text-slate-400" />
+            </div>
+          </div>
+          <h2 className="text-xl font-semibold text-slate-900 mb-2">No PoC projects yet</h2>
+          <p className="text-sm text-slate-500 max-w-md mx-auto mb-4">
+            Create your first proof-of-concept project to begin evaluating AI coding tools.
+          </p>
+        </div>
+      )}
 
       <div className="space-y-4">
         {pocProjects.map((poc) => (

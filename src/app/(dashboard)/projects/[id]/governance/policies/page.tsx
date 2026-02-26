@@ -43,6 +43,7 @@ import {
   Mail,
   BookOpen,
   Layers,
+  ArrowRight,
 } from "lucide-react";
 import { usePolicies } from "@/hooks/use-governance";
 
@@ -899,6 +900,7 @@ export default function PoliciesPage({
           <p className="mt-1 text-sm text-slate-500">
             Draft, version, and approve your AI governance policies. Each document is a building block.
           </p>
+          <Badge className="bg-slate-100 text-slate-600 border-slate-200 text-xs font-normal mt-2">Owned by: Governance Consultant, Legal Lead</Badge>
         </div>
         <Button
           onClick={() => setShowNewPolicyDialog(true)}
@@ -1274,6 +1276,23 @@ export default function PoliciesPage({
           );
         })}
       </div>
+
+      {/* Next Step */}
+      <Card className="bg-blue-50 border-blue-200 mt-6">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-blue-900">Next Step</p>
+              <p className="text-sm text-blue-700">After policies are drafted and signed off, map controls to compliance frameworks.</p>
+            </div>
+            <a href={`/projects/${id}/governance/compliance`}>
+              <Button size="sm" className="bg-slate-900 text-white hover:bg-slate-800">
+                Compliance Mapping <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </a>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

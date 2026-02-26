@@ -75,6 +75,7 @@ export default function DecisionHubPage({ params }: { params: Promise<{ id: stri
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Decision & Evidence Hub</h1>
+          <span className="inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">Owned by: Executive Sponsor, Governance Consultant</span>
           <p className="text-slate-500 mt-1">Executive decision brief, outcome metrics, and governance evidence in one place.</p>
         </div>
         <div className="flex gap-2">

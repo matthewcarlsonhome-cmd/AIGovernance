@@ -240,6 +240,7 @@ export default function GateReviewPage({
           <p className="mt-1 text-sm text-slate-500">
             Three formal approval checkpoints between sandbox and production. Each gate must be approved in sequence.
           </p>
+          <Badge className="bg-slate-100 text-slate-600 border-slate-200 text-xs font-normal mt-2">Owned by: Executive Sponsor, Legal Lead</Badge>
         </div>
         <div className="text-right">
           <p className="text-sm font-medium text-slate-900">
@@ -503,6 +504,23 @@ export default function GateReviewPage({
           </Card>
         );
       })}
+
+      {/* Next Step */}
+      <Card className="bg-blue-50 border-blue-200 mt-6">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-blue-900">Next Step</p>
+              <p className="text-sm text-blue-700">After all gates are approved, proceed to sandbox configuration.</p>
+            </div>
+            <a href={`/projects/${id}/sandbox/configure`}>
+              <Button size="sm" className="bg-slate-900 text-white hover:bg-slate-800">
+                Configure Sandbox <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </a>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

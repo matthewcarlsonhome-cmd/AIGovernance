@@ -67,8 +67,72 @@ const ROLE_LABELS: Record<UserRole, string> = {
 /*  Role-based task data                                                      */
 /* -------------------------------------------------------------------------- */
 
-function getTasksForRole(_role: UserRole): DemoTask[] {
-  return [];
+function getTasksForRole(role: UserRole): DemoTask[] {
+  // Phase-aware tasks per role — each role sees what they're responsible for
+  const today = new Date();
+  const d = (offset: number) => {
+    const dt = new Date(today);
+    dt.setDate(dt.getDate() + offset);
+    return dt.toISOString();
+  };
+  const past = (offset: number) => {
+    const dt = new Date(today);
+    dt.setDate(dt.getDate() - offset);
+    return dt.toISOString();
+  };
+
+  const tasksByRole: Record<UserRole, DemoTask[]> = {
+    admin: [
+      { id: 'a-1', title: 'Invite team members and assign roles', description: 'Add your core team — IT/Security, Legal, Engineering, Executive Sponsor — so they see role-filtered tasks.', assignedBy: 'System', dueDate: d(3), priority: 'required', status: 'action_needed', ctaLabel: 'Manage Team', ctaHref: 'team', blocking: 'All role-specific tasks depend on team setup' },
+      { id: 'a-2', title: 'Complete pilot intake scorecard', description: 'Answer 10 questions to classify this pilot by risk level (Fast Track, Standard, or High Risk).', assignedBy: 'System', dueDate: d(5), priority: 'required', status: 'action_needed', ctaLabel: 'Start Intake', ctaHref: 'intake' },
+      { id: 'a-3', title: 'Review project setup checklist', description: 'Verify each phase has the required prerequisites and configuration.', assignedBy: 'System', dueDate: d(7), priority: 'recommended', status: 'action_needed', ctaLabel: 'View Setup', ctaHref: 'setup' },
+      { id: 'a-4', title: 'Schedule gate review meetings', description: 'Coordinate gate review sessions with stakeholders for Phase 3.', assignedBy: 'System', dueDate: d(21), priority: 'recommended', status: 'upcoming', scheduledPhase: 3 },
+      { id: 'a-5', title: 'Archive project and generate final report', description: 'After go/no-go decision, archive project documentation and export final report.', assignedBy: 'System', dueDate: d(60), priority: 'optional', status: 'upcoming', scheduledPhase: 5 },
+    ],
+    consultant: [
+      { id: 'c-1', title: 'Complete readiness questionnaire', description: 'Score organizational readiness across 5 domains: infrastructure, security, governance, engineering, and business.', assignedBy: 'Project Admin', dueDate: d(5), priority: 'required', status: 'action_needed', ctaLabel: 'Start Assessment', ctaHref: 'discovery/questionnaire', blocking: 'Readiness score blocks Phase 2 activities' },
+      { id: 'c-2', title: 'Review readiness results and identify gaps', description: 'Analyze domain scores and prioritize remediation items before governance phase.', assignedBy: 'Project Admin', dueDate: d(7), priority: 'required', status: 'action_needed', ctaLabel: 'View Readiness', ctaHref: 'discovery/readiness' },
+      { id: 'c-3', title: 'Track prerequisite completion', description: 'Monitor prerequisite checklist and coordinate with team leads on blocking items.', assignedBy: 'Project Admin', dueDate: d(10), priority: 'recommended', status: 'action_needed', ctaLabel: 'Prerequisites', ctaHref: 'discovery/prerequisites' },
+      { id: 'c-4', title: 'Draft governance policies', description: 'Create Acceptable Use Policy, Incident Response Plan, and Data Classification Policy.', assignedBy: 'Project Admin', dueDate: d(14), priority: 'required', status: 'upcoming', blockedBy: 'Readiness assessment completion', scheduledPhase: 2 },
+      { id: 'c-5', title: 'Map compliance controls', description: 'Map governance controls to applicable frameworks (SOC 2, HIPAA, NIST, GDPR).', assignedBy: 'Project Admin', dueDate: d(18), priority: 'required', status: 'upcoming', scheduledPhase: 2 },
+      { id: 'c-6', title: 'Prepare evidence package for gate reviews', description: 'Compile assessment results, policy drafts, and compliance mappings for gate approval.', assignedBy: 'Project Admin', dueDate: d(25), priority: 'required', status: 'upcoming', scheduledPhase: 3 },
+    ],
+    executive: [
+      { id: 'e-1', title: 'Review project scope and risk classification', description: 'Review intake scorecard results and confirm the governance path (Fast Track, Standard, or High Risk).', assignedBy: 'Project Admin', dueDate: d(7), priority: 'required', status: 'action_needed', ctaLabel: 'View Overview', ctaHref: 'overview' },
+      { id: 'e-2', title: 'Approve Gate 1: Design Review', description: 'Review readiness scores and governance artifacts. Sign off to proceed to sandbox setup.', assignedBy: 'Governance Consultant', dueDate: d(21), priority: 'required', status: 'upcoming', blockedBy: 'Phase 2 governance artifacts', scheduledPhase: 3 },
+      { id: 'e-3', title: 'Approve Gate 3: Launch Authorization', description: 'Final gate review before production deployment. Review executive brief and make go/no-go decision.', assignedBy: 'Governance Consultant', dueDate: d(45), priority: 'required', status: 'upcoming', scheduledPhase: 3 },
+      { id: 'e-4', title: 'Review executive decision brief', description: 'One-page brief with feasibility score, risk posture, KPI results, and recommendation.', assignedBy: 'System', dueDate: d(50), priority: 'required', status: 'upcoming', scheduledPhase: 5 },
+    ],
+    it: [
+      { id: 'i-1', title: 'Complete data classification', description: 'Identify and classify data types that AI tools will access. Define sensitivity levels and handling requirements.', assignedBy: 'Project Admin', dueDate: d(10), priority: 'required', status: 'action_needed', ctaLabel: 'Classify Data', ctaHref: 'governance/compliance', blocking: 'Blocks sandbox configuration' },
+      { id: 'i-2', title: 'Review security controls', description: 'Audit 9 categories of security controls for AI coding agent deployment readiness.', assignedBy: 'Governance Consultant', dueDate: d(14), priority: 'required', status: 'action_needed', ctaLabel: 'Review Controls', ctaHref: 'controls' },
+      { id: 'i-3', title: 'Configure sandbox environment', description: 'Generate infrastructure files (JSON, TOML, YAML, HCL) for your cloud provider and validate configuration.', assignedBy: 'Project Admin', dueDate: d(25), priority: 'required', status: 'upcoming', blockedBy: 'Data classification and security review', scheduledPhase: 4 },
+      { id: 'i-4', title: 'Run sandbox validation checks', description: 'Execute 20+ automated health checks to verify sandbox readiness before pilot launch.', assignedBy: 'Project Admin', dueDate: d(28), priority: 'required', status: 'upcoming', scheduledPhase: 4 },
+      { id: 'i-5', title: 'Monitor pilot security metrics', description: 'Track DLP events, access patterns, and security incidents during pilot execution.', assignedBy: 'Project Admin', dueDate: d(40), priority: 'recommended', status: 'upcoming', scheduledPhase: 4 },
+    ],
+    legal: [
+      { id: 'l-1', title: 'Review Acceptable Use Policy draft', description: 'Review and provide feedback on the AUP for AI coding tool usage within the organization.', assignedBy: 'Governance Consultant', dueDate: d(14), priority: 'required', status: 'action_needed', ctaLabel: 'Review Policies', ctaHref: 'governance/policies', blocking: 'Gate 1 approval requires policy sign-off' },
+      { id: 'l-2', title: 'Complete compliance framework mapping', description: 'Verify control mappings for SOC 2, HIPAA, NIST, and GDPR frameworks applicable to your organization.', assignedBy: 'Governance Consultant', dueDate: d(16), priority: 'required', status: 'action_needed', ctaLabel: 'Compliance Map', ctaHref: 'governance/compliance' },
+      { id: 'l-3', title: 'Review risk register', description: 'Assess identified risks, approve mitigation strategies, and sign off on risk acceptance for low-tier items.', assignedBy: 'Governance Consultant', dueDate: d(18), priority: 'required', status: 'action_needed', ctaLabel: 'Risk Register', ctaHref: 'governance/risk' },
+      { id: 'l-4', title: 'Sign off on Gate 2: Data & Security', description: 'Confirm data governance, privacy requirements, and compliance are addressed before sandbox setup.', assignedBy: 'Project Admin', dueDate: d(22), priority: 'required', status: 'upcoming', blockedBy: 'Policy reviews and compliance mapping', scheduledPhase: 3 },
+      { id: 'l-5', title: 'Review IP and licensing terms', description: 'Assess intellectual property implications and licensing requirements for AI-generated code.', assignedBy: 'Project Admin', dueDate: d(30), priority: 'recommended', status: 'upcoming', scheduledPhase: 3 },
+    ],
+    engineering: [
+      { id: 'eng-1', title: 'Define pilot project scope', description: 'Select a bounded pilot project, define success criteria, and identify participating developers.', assignedBy: 'Project Admin', dueDate: d(12), priority: 'required', status: 'action_needed', ctaLabel: 'PoC Projects', ctaHref: 'poc/projects' },
+      { id: 'eng-2', title: 'Capture baseline metrics', description: 'Record current development velocity, defect rate, code review time, and developer satisfaction before AI tools.', assignedBy: 'Governance Consultant', dueDate: d(14), priority: 'required', status: 'action_needed', ctaLabel: 'View Metrics', ctaHref: 'poc/metrics' },
+      { id: 'eng-3', title: 'Set up sandbox environment', description: 'Work with IT to deploy sandbox config files and verify developer tooling access.', assignedBy: 'IT / Security Lead', dueDate: d(28), priority: 'required', status: 'upcoming', blockedBy: 'Sandbox configuration and validation', scheduledPhase: 4 },
+      { id: 'eng-4', title: 'Run sprint evaluations', description: 'Track velocity, defect rate, and satisfaction for each sprint during the pilot period.', assignedBy: 'Project Admin', dueDate: d(35), priority: 'required', status: 'upcoming', scheduledPhase: 4 },
+      { id: 'eng-5', title: 'Complete tool comparison', description: 'Evaluate Claude Code vs. other tools across quality, velocity, documentation, and satisfaction dimensions.', assignedBy: 'Project Admin', dueDate: d(42), priority: 'recommended', status: 'upcoming', scheduledPhase: 4 },
+    ],
+    marketing: [
+      { id: 'm-1', title: 'Draft stakeholder communication plan', description: 'Create messaging framework for internal audiences about the AI coding tool pilot program.', assignedBy: 'Project Admin', dueDate: d(14), priority: 'required', status: 'action_needed', ctaLabel: 'View Reports', ctaHref: 'reports/generate' },
+      { id: 'm-2', title: 'Prepare FAQ document', description: 'Compile frequently asked questions from developers, management, and legal about the AI tool adoption.', assignedBy: 'Project Admin', dueDate: d(18), priority: 'recommended', status: 'action_needed', ctaLabel: 'Generate Reports', ctaHref: 'reports/generate' },
+      { id: 'm-3', title: 'Create pilot announcement materials', description: 'Draft internal announcement for pilot launch, including scope, timeline, and expected outcomes.', assignedBy: 'Project Admin', dueDate: d(28), priority: 'recommended', status: 'upcoming', scheduledPhase: 4 },
+      { id: 'm-4', title: 'Prepare post-pilot summary for leadership', description: 'Draft communications-ready summary of pilot results for executive and board presentation.', assignedBy: 'Executive Sponsor', dueDate: d(50), priority: 'recommended', status: 'upcoming', scheduledPhase: 5 },
+    ],
+  };
+
+  return tasksByRole[role] ?? [];
 }
 
 /* -------------------------------------------------------------------------- */
@@ -290,10 +354,15 @@ export default function MyTasksPage({ params }: { params: Promise<{ id: string }
         <div className="mt-4 p-4 rounded-lg bg-slate-50 border border-slate-200">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <Badge className="bg-slate-100 text-slate-600 border-transparent text-xs">Phase 1 of 5</Badge>
-              <span className="text-sm font-medium text-slate-700">Scope &amp; Assess</span>
+              <span className="text-sm font-medium text-slate-700">
+                {actionTasks.length} action{actionTasks.length !== 1 ? 's' : ''} needed
+              </span>
+              <span className="text-slate-300">&middot;</span>
+              <span className="text-sm text-slate-500">{upcomingTasks.length} upcoming</span>
+              <span className="text-slate-300">&middot;</span>
+              <span className="text-sm text-slate-500">{completedCount} completed</span>
             </div>
-            <span className="text-sm text-slate-500">{completedCount} of {totalTasks} tasks complete</span>
+            <span className="text-sm text-slate-500">{completedCount} of {totalTasks} tasks</span>
           </div>
           <div className="w-full bg-slate-200 rounded-full h-2">
             <div

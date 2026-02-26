@@ -1784,6 +1784,49 @@ export interface DecisionSupportContext {
   outcome_metrics: OutcomeMetric[];
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// AI Recommendations (recommendations engine types)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type RecommendationType = 'remediation' | 'policy' | 'risk';
+export type RecommendationPriority = 'critical' | 'high' | 'medium' | 'low';
+export type RecommendationStatus = 'pending' | 'in_progress' | 'completed' | 'dismissed';
+
+export interface Recommendation {
+  id: string;
+  title: string;
+  description: string;
+  priority: RecommendationPriority;
+  category: string;
+  effort_estimate: 'hours' | 'days' | 'weeks' | 'months';
+  impact: 'high' | 'medium' | 'low';
+  status: RecommendationStatus;
+  rationale: string;
+}
+
+export interface RecommendationRequest {
+  type: RecommendationType;
+  context: Record<string, unknown>;
+}
+
+export interface RecommendationResponse {
+  recommendations: Recommendation[];
+  generated_at: string;
+  model: string;
+}
+
+/** Input type narrowed per recommendation type for strong typing at call sites. */
+export interface RiskItem {
+  id: string;
+  category: string;
+  description: string;
+  tier: RiskTier;
+  likelihood: number;
+  impact: number;
+  mitigation: string;
+  status: string;
+}
+
 // API Response types (updated per Design Doc §12)
 export interface ApiResponse<T = unknown> {
   data?: T;

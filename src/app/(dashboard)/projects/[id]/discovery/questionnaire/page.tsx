@@ -822,6 +822,7 @@ export default function QuestionnairePage({
           How Ready Are You?
           <Sparkles className="h-5 w-5 text-amber-500" />
         </h1>
+        <span className="inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">Owned by: Governance Consultant</span>
         <p className="mt-1 text-sm text-slate-500">
           Five domains, 25 questions, one readiness score. Let&apos;s find out
           where you stand and what to tackle first.

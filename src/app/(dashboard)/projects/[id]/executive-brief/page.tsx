@@ -28,6 +28,7 @@ export default function ExecutiveBriefPage({ params }: { params: Promise<{ id: s
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Executive Decision Brief</h1>
+          <span className="inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">Owned by: Executive Sponsor</span>
           <p className="text-slate-500 mt-1">One-page go/no-go recommendation with evidence summary.</p>
         </div>
         <div className="flex gap-2">
