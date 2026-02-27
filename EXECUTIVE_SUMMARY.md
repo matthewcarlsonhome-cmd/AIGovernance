@@ -1,6 +1,6 @@
 # GovAI Studio — Executive Development Summary
 
-**February 2026 | Version 4.0**
+**February 2026 | Version 4.1**
 
 ---
 
@@ -58,7 +58,7 @@ A three-gate review process requires explicit sign-off before advancing: design 
 Sandbox configuration generators produce infrastructure files (JSON, TOML, YAML, HCL, Dockerfile) for AWS, GCP, Azure, or on-premises environments. A 20-point health check validates sandbox readiness. Pilot design tools define objectives, success metrics, participant criteria, and go/no-go gates. Sprint evaluation trackers compare baseline vs. AI-assisted metrics. Head-to-head tool comparison dashboards evaluate Claude Code, GitHub Copilot, and OpenAI Codex side by side.
 
 **Phase 5 — Evaluate & Decide**
-11 standardized KPIs track outcomes (time saved, quality lift, error rate, adoption, cost reduction, satisfaction). An executive decision brief synthesizes all evidence into a one-page go/no-go recommendation. ROI calculators model NPV, IRR, and scenario analysis. Persona-specific reports (CTO, Legal, CISO, Engineering, Communications) generate PDF, DOCX, or Markdown outputs tailored to each audience.
+11 standardized KPIs track outcomes (time saved, quality lift, error rate, adoption, cost reduction, satisfaction). An executive decision brief synthesizes all evidence into a one-page go/no-go recommendation. ROI calculators model NPV, IRR, and scenario analysis. Persona-specific reports (CTO, Legal, CISO, Engineering, Communications) generate PDF, DOCX, or Markdown outputs tailored to each audience. A project risk dashboard surfaces overdue tasks, blocked dependencies, resource gaps, and stalled initiatives with severity-based prioritization.
 
 ### Seven Stakeholder Roles, One Platform
 
@@ -66,13 +66,13 @@ Every feature is role-aware. The platform shows each person exactly what they ne
 
 | Role | What They See |
 |---|---|
-| **Project Administrator** | Full project visibility, phase advancement, team management |
-| **Governance Consultant** | Assessment scoring, policy drafting, gate coordination |
-| **Executive Sponsor** | Decision briefs, ROI, gate approvals, risk acceptance |
-| **IT / Security Lead** | Sandbox config, security controls, data classification, validation |
-| **Legal / Compliance Lead** | Policy review, compliance mapping, gate sign-off, data governance |
-| **Engineering Lead** | Sandbox setup, pilot metrics, sprint tracking, tool comparison |
-| **Communications Lead** | Change management, stakeholder messaging, FAQ generation |
+| **Project Administrator** | Full project visibility, phase advancement, team management, risk dashboard |
+| **Governance Consultant** | Assessment scoring, policy drafting, gate coordination, compliance mapping |
+| **Executive Sponsor** | Decision briefs, ROI, gate approvals, risk acceptance, executive summary |
+| **IT / Security Lead** | Sandbox config, security controls, data classification, validation, monitoring |
+| **Legal / Compliance Lead** | Policy review, compliance mapping, gate sign-off, data governance, ethics |
+| **Engineering Lead** | Sandbox setup, pilot metrics, sprint tracking, tool comparison, agent deployment |
+| **Communications Lead** | Change management, stakeholder messaging, FAQ generation, client briefs |
 
 ### Governance Engine (Not Just a Dashboard)
 
@@ -80,9 +80,10 @@ Behind the UI, GovAI Studio runs a structured governance engine:
 
 - **7-state project state machine** (draft → scoped → data_approved → security_approved → pilot_running → review_complete → decision_finalized) with role-based transition guards and gate approval requirements
 - **SLA enforcement** with four default policies (risk resolution: 14 days, gate review: 7 days, control remediation: 21 days, incident response: 3 days) and four-level escalation chains
-- **33 granular permissions** across 7 roles with tenant-isolated multi-organization architecture
-- **Domain event bus** with 35+ typed events feeding a comprehensive audit trail
+- **27 granular permissions** across 7 roles with tenant-isolated multi-organization architecture
+- **Domain event bus** with 38 typed events feeding a comprehensive audit trail
 - **Risk exception workflow** with compensating controls, time-bound approvals, and automatic expiry
+- **Project risk tracking** with severity classification (critical/high/medium/low), category-based grouping (overdue, blocked, stalled, dependency chain, resource gap), and cascade impact analysis
 
 ---
 
@@ -92,35 +93,46 @@ Behind the UI, GovAI Studio runs a structured governance engine:
 
 | Metric | Count |
 |---|---|
-| Total lines of code | ~102,000 |
-| TypeScript source files | 336 |
-| Page routes | 82 |
-| API endpoints | 71 |
+| Total lines of code | ~103,000 |
+| TypeScript source files | 334 |
+| Page routes | 77 |
+| API route files | 66 |
 | UI components | 24 base + feature-specific |
-| Library modules | 35+ |
-| Unit test suites | 24 |
-| Unit tests | 550 |
+| Shared components | 6 |
+| Feature component modules | 10 |
+| Library modules | 31 directories + 4 top-level |
+| Custom React hooks | 16 |
+| Zustand stores | 2 |
+| Test files | 13 |
+| Unit tests | 550+ |
 | Database tables | 40+ |
 | Database migrations | 18 |
-| RBAC permissions | 33 |
+| RBAC permissions | 27 |
 | Stakeholder roles | 7 |
 | Project states | 7 |
 | KPI definitions | 11 |
-| Domain event types | 35+ |
+| Domain event types | 38 |
 | Integration connectors | 10 |
+| Assessment questions | 60+ |
+| Project Plan tasks | 41 |
 
 ### Key Technical Stack
 
 | Layer | Technology | Why |
 |---|---|---|
-| Framework | Next.js 15 (App Router) | Server Components for performance, App Router for modern routing |
+| Framework | Next.js 16 (App Router) | Server Components for performance, App Router for modern routing |
+| Runtime | React 19 | Latest concurrent features, Server Components, streaming |
 | Language | TypeScript (strict mode) | Zero build errors enforced, full type safety |
 | UI | Tailwind CSS 4 + shadcn-compatible components | Professional design system, accessible by default |
 | Database | Supabase (PostgreSQL) | Row-Level Security enforced on every table, real-time capabilities |
 | Auth | Supabase Auth + RBAC | Email/password + Google OAuth + Azure AD, custom role claims |
-| Validation | Zod | Every API input and form validated server-side |
-| Charts | Recharts | Readiness radar charts, status distributions, trend lines |
+| Validation | Zod 4 | Every API input and form validated server-side |
+| State | Zustand 5 (client) + TanStack Query 5 (server) | Lightweight client state + smart server cache |
+| Rich Text | TipTap 3 | Extensible rich text editing for policies and reports |
+| Charts | Recharts 3 | Readiness radar charts, status distributions, trend lines |
+| DnD | @dnd-kit | Drag-and-drop for Gantt chart and sortable lists |
 | Export | @react-pdf/renderer + docx-js | Native PDF and DOCX report generation |
+| Testing | Vitest 4 + Testing Library | Fast unit tests with React component testing |
 | Deployment | Render (or Vercel) | Production-ready with CSP headers, rate limiting, security headers |
 
 ### Feature Maturity
@@ -128,7 +140,7 @@ Behind the UI, GovAI Studio runs a structured governance engine:
 | Feature | Status |
 |---|---|
 | Multi-tenant organization isolation | Production-ready |
-| Role-based access control (7 roles, 33 permissions) | Production-ready |
+| Role-based access control (7 roles, 27 permissions) | Production-ready |
 | Feasibility scoring engine (5 domains, weighted) | Production-ready |
 | Three-gate review with evidence checklists | Production-ready |
 | 7-state project state machine with transition guards | Production-ready |
@@ -136,6 +148,7 @@ Behind the UI, GovAI Studio runs a structured governance engine:
 | Data classification and processing activity tracking | Production-ready |
 | Compliance mapping (SOC 2, HIPAA, NIST, GDPR) | Production-ready |
 | Risk register with exception workflow | Production-ready |
+| Project risk dashboard with severity-based tracking | Production-ready |
 | Sandbox configuration generation (multi-cloud) | Production-ready |
 | Pilot intake scorecard (10 weighted questions) | Production-ready |
 | PoC sprint evaluation and tool comparison | Production-ready |
@@ -143,18 +156,68 @@ Behind the UI, GovAI Studio runs a structured governance engine:
 | Executive decision brief (auto go/no-go recommendation) | Production-ready |
 | Multi-persona report generation (PDF, DOCX, Markdown) | Production-ready |
 | Phase-driven navigation with role filtering | Production-ready |
-| Audit logging (17+ event types) | Production-ready |
+| Audit logging (38 event types) | Production-ready |
 | Real-time collaboration (Supabase subscriptions) | Production-ready |
 | AI-powered recommendations (Claude API) | Production-ready |
 | Monitoring & observability (metrics dashboard) | Production-ready |
-| Unit test suite (550 tests, 24 suites) | Production-ready |
+| Unit test suite (550+ tests, 13 files) | Production-ready |
 | Role-specific task queues (My Tasks per role) | Production-ready |
 | Project Plan with 41 tasks across 5 phases and 7 roles | Production-ready |
 | Role-ownership badges on all governance pages | Production-ready |
 | Next Step navigation between connected pages | Production-ready |
+| Unified Projects and Portfolio view | Production-ready |
+| Onboarding wizard with real project persistence | Production-ready |
+| Agent deployment readiness and task specification | Production-ready |
+| Vendor evaluation framework with scoring | Production-ready |
+| Evidence package builder | Production-ready |
+| Change management and communications pages | Production-ready |
+| Security monitoring dashboard | Production-ready |
+| Governance implementation playbook | Production-ready |
 | Integration framework (10-connector catalog) | MVP |
 | Gantt chart with drag-and-drop and critical path | 90% |
 | Ethics review (bias, fairness, transparency) | 95% |
+
+### Complete Page Inventory (77 routes)
+
+**Authentication (3):** Login, Register, Forgot Password
+
+**Dashboard & Navigation (3):** Dashboard Home, Help, Projects (unified with Portfolio stats)
+
+**Portfolio (2):** Portfolio Overview, Health Heatmap
+
+**Project Management (3):** Projects List, New Project, Onboarding Wizard
+
+**Settings (5):** General Settings, Integrations Marketplace, Adoption Analytics, Audit Log, Monitoring Dashboard
+
+**Phase 1 — Scope & Assess (7):** Project Overview, Intake Scorecard, Discovery Questionnaire, Readiness Dashboard, Prerequisites Checklist, Data Readiness, Team Management
+
+**Phase 2 — Classify & Govern (13):** Data Classification, Data Flows, Policies Editor, Compliance Mapping, Risk Register, RACI Matrix, Ethics Review, Security Controls, Governance Playbook, Exceptions Manager, Change Management, Project Setup, Meetings
+
+**Phase 3 — Approve & Gate (4):** Gate Reviews, Evidence Packages, Controls Center, Risk Dashboard
+
+**Phase 4 — Build & Test (14):** Sandbox Configure, Sandbox Files, Sandbox Validate, Sandbox Architecture, Pilot Setup, Pilot Design, PoC Projects, Sprint Evaluation, Tool Comparison, PoC Metrics, Initiative Prioritization, Vendor Evaluation, Monitoring, Security Monitoring
+
+**Phase 5 — Evaluate & Decide (12):** My Tasks, Project Plan, Outcomes, Decision Hub, Executive Brief, ROI Calculator, Reports Generator, Report History, Communications Reports, Client Brief, Action Queue, Workflow
+
+**Agent Deployment (4):** Deployment Readiness, Task Specification, Approval Architecture, Harm Reduction
+
+**Cross-cutting (7):** Plan, Govern, Execute, Decide (lifecycle views), Timeline Gantt, Milestones, Snapshots
+
+### Complete API Inventory (66 route files)
+
+**Core CRUD:** Assessments (3 routes), Projects (3), Configs/Sandbox (3), Reports (4), RACI (2), Meetings (4), Timeline (4), PoC (4)
+
+**Governance:** Policies, Gates (3 routes: list, submit, approve), Compliance, Risk, Readiness
+
+**Data & Security:** Data Classification (2), Data Flows, Security Controls (2), Ethics
+
+**Decision & Evaluation:** Decision Brief, Intake Scorecard, Action Queue, Exceptions, Evidence Packages (2), Vendor Evaluation, Pilot Design, Metrics/KPIs
+
+**AI & Monitoring:** AI Chat, AI Recommendations, Monitoring (2), Health Check, Maturity Assessment
+
+**Export & Auth:** PDF Export, DOCX Export, Storage, Auth Me, Auth Sign-Out
+
+**Reports & Communications:** Report Templates, Report Generation, Communications, Client Brief, Change Management, Architecture
 
 ---
 
@@ -189,7 +252,7 @@ That is GovAI Studio's entire domain.
 GovAI Studio governs how your organization implements AI tools. It does not monitor model weights or detect data drift. It ensures your legal team reviewed the Acceptable Use Policy before engineering gets sandbox access, that your CISO signed off on data classification before the pilot starts, and that your executive sponsor has an evidence-based brief before the go/no-go decision.
 
 **2. Built for AI coding agents specifically.**
-Tool comparison dashboards evaluate Claude Code vs. GitHub Copilot vs. OpenAI Codex. Sandbox configuration generators produce the actual infrastructure files needed for secure coding agent deployment. Sprint metrics track the specific KPIs that matter for coding productivity (velocity, defect rate, code review time, developer satisfaction).
+Tool comparison dashboards evaluate Claude Code vs. GitHub Copilot vs. OpenAI Codex. Sandbox configuration generators produce the actual infrastructure files needed for secure coding agent deployment. Agent deployment pages cover readiness assessment, task specification with guardrails, approval architecture, and harm reduction strategies. Sprint metrics track the specific KPIs that matter for coding productivity (velocity, defect rate, code review time, developer satisfaction).
 
 **3. Seven stakeholder roles, not one.**
 Most governance tools serve a single buyer (the CISO, the compliance officer, the ML engineer). GovAI Studio serves all seven roles involved in an AI implementation — from the executive sponsor who needs a one-page brief to the engineering lead who needs sandbox validation results to the communications lead who needs stakeholder messaging.
@@ -220,11 +283,11 @@ AI governance is no longer optional. The EU AI Act's high-risk system requiremen
 
 ### The CISO Protecting the Perimeter
 
-AI coding agents access source code, internal documentation, and development infrastructure. GovAI Studio's data classification workflows identify what data is exposed. Security control checks validate 9 categories of controls before pilot launch. The sandbox validation engine runs 20+ automated health checks. Risk exception workflows require compensating controls and automatic expiry — no open-ended waivers.
+AI coding agents access source code, internal documentation, and development infrastructure. GovAI Studio's data classification workflows identify what data is exposed. Security control checks validate 9 categories of controls before pilot launch. The sandbox validation engine runs 20+ automated health checks. Risk exception workflows require compensating controls and automatic expiry — no open-ended waivers. A dedicated security monitoring dashboard tracks control drift and incident response.
 
 ### The Executive Sponsor Making the Call
 
-You need to decide: go, no-go, or conditional go. GovAI Studio synthesizes everything into a one-page executive decision brief — feasibility score, risk posture, gate status, KPI results, and a computed recommendation. You do not need to read a 50-page report or sit through a two-hour presentation. The evidence is structured, the recommendation is clear, and the audit trail is complete.
+You need to decide: go, no-go, or conditional go. GovAI Studio synthesizes everything into a one-page executive decision brief — feasibility score, risk posture, gate status, KPI results, and a computed recommendation. A project risk dashboard highlights critical blockers (overdue tasks, stalled phases, resource gaps) with severity-based prioritization. You do not need to read a 50-page report or sit through a two-hour presentation. The evidence is structured, the recommendation is clear, and the audit trail is complete.
 
 ---
 
@@ -232,7 +295,7 @@ You need to decide: go, no-go, or conditional go. GovAI Studio synthesizes every
 
 ### What Was Addressed (Previously Identified Gaps — Now Resolved)
 
-**Unit test coverage: expanded from 4 files to 22 suites (518 tests, 0 failures).** The scoring engine, state machine, RBAC system, escalation engine, intake scorecard, phase gating, and due-date calculations all have comprehensive test coverage. Tests cover edge cases, boundary conditions, role-based guards, and multi-domain scoring.
+**Unit test coverage: expanded from 4 files to 13 test files (550+ tests, 0 failures).** The scoring engine, state machine, RBAC system, escalation engine, intake scorecard, phase gating, due-date calculations, role-specific task generation, and project plan data all have comprehensive test coverage. Tests cover edge cases, boundary conditions, role-based guards, multi-domain scoring, and data integrity for all 41 project plan tasks across 5 phases and 7 roles.
 
 **Real-time collaboration: now wired up via Supabase subscriptions.** Project lists and individual project views auto-refresh when another user creates, edits, or deletes a project. Presence tracking shows which team members are currently viewing a project. Real-time team member lists update instantly when members join or leave.
 
@@ -240,13 +303,19 @@ You need to decide: go, no-go, or conditional go. GovAI Studio synthesizes every
 
 **Monitoring and observability: now operational.** An in-memory monitoring system tracks API request logs, error rates (ring buffer), and performance metrics (sliding window). An admin-only `/settings/monitoring` dashboard surfaces request volume, error trends, and P50/P95/P99 latency. A `/api/monitoring/metrics` endpoint exposes structured metrics for external aggregation.
 
-**Demo data and sample content: fully removed.** All hardcoded team members (Sarah Chen, James Wilson, etc.), sample projects, and pre-populated metrics have been eliminated. The application starts clean — real data only. Empty states provide contextual guidance for new users.
+**Demo data and sample content: fully removed.** All hardcoded team members (Sarah Chen, James Wilson, etc.), sample projects, and pre-populated metrics have been eliminated from all pages including PoC projects, sprint evaluations, and tool comparisons. The application starts clean — real data only. Empty states provide contextual guidance for new users.
 
 **Admin-only team management: enforced.** Only users with the `admin` role can invite team members, assign roles, or remove members. Non-admin users see a read-only team roster with a clear notice that management is restricted to administrators.
 
+**Project persistence through onboarding: now complete.** The 5-step onboarding wizard saves real projects via `POST /api/projects` on completion, persists team members via `POST /api/projects/:id/team`, stores organization profile and intake data per project, and redirects to the actual project's My Tasks page (not a hardcoded path).
+
+**Unified Projects and Portfolio view: consolidated.** The separate Portfolio page was merged into the main Projects page. Summary statistics (Total, Active, Healthy, At Risk) appear at the top of the project list. All "Create Project" buttons now route through the onboarding wizard. This eliminates navigation confusion and redundant views.
+
+**Project risk tracking: now active.** A dedicated risk dashboard at `/projects/[id]/risks` surfaces project-level risks with severity classification (critical/high/medium/low), category grouping (overdue tasks, blocked items, stalled phases, dependency chains, resource gaps), and cascade impact analysis showing how risks compound across phases.
+
 ### Remaining Gaps — Honest Assessment
 
-**Integration connectors are at MVP stage.** The 10-connector catalog (Okta, Azure AD, Jira, Linear, SharePoint, Confluence, Splunk, Datadog, Power BI) defines the framework, webhook support, and event filtering, but production-grade OAuth flows for each connector are not complete. Organizations needing live Jira ticket sync or Azure AD SSO beyond basic SAML will require connector hardening.
+**Integration connectors are at MVP stage.** The 10-connector catalog (Okta, Azure AD, Jira, Linear, SharePoint, Confluence, Splunk, Datadog, Power BI, Webhooks) defines the framework, webhook support, and event filtering, but production-grade OAuth flows for each connector are not complete. Organizations needing live Jira ticket sync or Azure AD SSO beyond basic SAML will require connector hardening.
 
 **Internationalization is not started.** All user-facing strings are extractable for future i18n, but no translation framework (e.g., next-intl) is in place. For global enterprise deployments across non-English-speaking regions, this will need to be addressed.
 
@@ -254,7 +323,7 @@ You need to decide: go, no-go, or conditional go. GovAI Studio synthesizes every
 
 **Template library for industries is not started.** The governance framework is domain-agnostic. Pre-built templates for regulated industries (financial services SOX+GLBA controls, healthcare HIPAA+HITECH workflows, government FedRAMP+FISMA checklists) would significantly accelerate time-to-value for those sectors.
 
-**External APM integration is deferred.** The in-memory monitoring system handles request logging and performance tracking, but integration with Sentry, Datadog APM, or New Relic for distributed tracing, alerting, and long-term metric storage is not yet connected.
+**External APM integration is partially configured.** The @sentry/nextjs package is installed as a dependency, and the in-memory monitoring system handles request logging and performance tracking. Full Sentry configuration (DSN setup, error boundaries, source maps) and integration with Datadog APM or New Relic for distributed tracing and long-term metric storage remains to be completed.
 
 **Notification delivery is in-app only.** The notification system generates role-filtered alerts within the application. Email, Slack, and Microsoft Teams delivery channels are not yet connected.
 
@@ -265,7 +334,7 @@ You need to decide: go, no-go, or conditional go. GovAI Studio synthesizes every
 3. **Enhanced Gantt chart** — PDF/PNG export, resource allocation view, real-time collaborative date editing.
 4. **Industry template library** — Pre-built governance templates for financial services, healthcare, and technology sectors with pre-mapped compliance controls.
 5. **Internationalization framework** — next-intl integration with initial English + Spanish + French + German locale support.
-6. **External APM integration** — Sentry or Datadog connection for production error tracking, alerting, and distributed tracing.
+6. **Full Sentry APM integration** — Complete DSN configuration, error boundary wiring, source map uploads, and alerting rules for production deployments.
 7. **End-to-end testing** — Playwright test suite covering critical user journeys (project creation, assessment completion, gate review, report generation).
 
 ---
@@ -301,14 +370,15 @@ GovAI Studio's governance processes map directly to emerging regulatory requirem
 
 ### Development Timeline
 
-GovAI Studio was built across six intensive development sessions:
+GovAI Studio was built across seven intensive development sessions over 18 days:
 
-- **Session 1:** Foundation — Next.js 15 scaffolding, Supabase integration, auth system, core page routes, 24 UI components
-- **Session 2:** Governance engine — scoring engine, assessment questionnaire, readiness dashboard, policy editor, gate reviews, sandbox configuration, PoC tracking, Gantt chart, report generation
-- **Session 3:** Advanced systems — 7-state project FSM, SLA escalation engine, domain event bus, KPI catalog, portfolio dashboard, adoption analytics, executive decision brief
-- **Session 4:** Production polish — phase-driven navigation, role-based task filtering, multi-tenant isolation, OAuth fix, deployment guide, professional tone overhaul, demo data cleanup, sample project
-- **Session 5:** Hardening and scale — 518-test unit suite, real-time collaboration via Supabase subscriptions, AI-powered recommendations via Claude API, monitoring and observability dashboard, complete demo data removal, admin-only RBAC enforcement, executive summary and market analysis
-- **Session 6:** UX simplification — Full 82-page audit across all 7 roles, role-specific My Tasks queue (each role sees their action items with CTAs), 41-task Project Plan with role assignments across 5 phases, role-ownership badges on 15+ pages, Next Step navigation between connected pages, intake dead-end fix, onboarding redirect fix, remaining demo data removal from PoC/sprint/comparison pages, 550 tests across 24 suites
+- **Session 1 (Feb 9):** Foundation — Next.js scaffolding, Supabase integration, auth system, core page routes, 24 UI components, initial 61-test suite
+- **Session 2 (Feb 10-11):** Feature buildout — scoring engine, assessment questionnaire, readiness dashboard, policy editor, gate reviews, sandbox configuration, PoC tracking, Gantt chart, report generation, 7 new API routes, Suspense boundary fixes, Tailwind CSS 4 migration
+- **Session 3 (Feb 12-13):** UI overhaul — role-based navigation, progress tracker, work queue components, agent deployment section (4 governance pages), reusable component extraction
+- **Session 4 (Feb 16-17):** Advanced systems — 7-state project FSM, SLA escalation engine, domain event bus (38 typed events), KPI catalog, portfolio dashboard, RBAC hardening (27 permissions, 7 roles), risk exception workflow, intake scorecard, workflow mapping, database migrations 014-016
+- **Session 5 (Feb 24-25):** Production polish — Design Spec V4 implementation (phase-driven navigation, onboarding wizard, task engine, notification center, contextual help), Render deployment guide, multi-tenant isolation fix, OAuth redirect fix, complete demo data removal, professional tone overhaul, database migrations 017-018
+- **Session 6 (Feb 26 AM):** Hardening and scale — 550-test unit suite (expanded from 4 to 13 test files), real-time collaboration via Supabase subscriptions, AI-powered recommendations via Claude API, monitoring and observability dashboard, admin-only RBAC enforcement, executive summary and market analysis
+- **Session 7 (Feb 26 PM):** UX simplification and project persistence — Role-specific My Tasks queue with status-aware grouping (Failed > Action Needed > In Progress > Upcoming > Passed), 41-task Project Plan with role assignments across 5 phases, role-ownership badges on 15+ pages, Next Step navigation cards between connected pages, unified Projects/Portfolio view, onboarding wizard saving real projects via API, new project risk dashboard, remaining demo data removal from PoC/sprint/comparison pages, 32 additional tests for task generation and project plan data
 
 ### Key Roadblocks and Insights
 
@@ -326,11 +396,17 @@ GovAI Studio was built across six intensive development sessions:
 
 **7. Seven stakeholder roles revealed the navigation problem.** Building for one persona is straightforward. Building for seven requires that every page answers "who is this for and what do they do here?" Phase-driven navigation with role filtering emerged as the solution — each person sees their phase, their tasks, their next action.
 
-**8. Test coverage exposed real edge cases.** Expanding from 4 to 22 test suites uncovered boundary conditions in scoring aggregation (zero-weight domains), state machine transitions (gate requirements for mid-workflow jumps), and escalation calculations (SLA policies with null thresholds). The 518 tests now serve as living documentation of system behavior.
+**8. Test coverage exposed real edge cases.** Expanding from 4 to 13 test files uncovered boundary conditions in scoring aggregation (zero-weight domains), state machine transitions (gate requirements for mid-workflow jumps), and escalation calculations (SLA policies with null thresholds). The 550+ tests now serve as living documentation of system behavior.
 
 **9. Real-time subscriptions require careful cache invalidation.** Supabase real-time channels broadcast database changes, but TanStack Query's stale-while-revalidate model means simply invalidating query keys — not replacing data — produces the smoothest UX. Direct cache mutations cause race conditions when multiple users edit simultaneously.
 
 **10. AI recommendations need graceful degradation.** Not every deployment will have a Claude API key configured. The recommendation system returns high-quality hardcoded guidance in demo mode, ensuring the feature demonstrates value even without API connectivity. This "progressive enhancement" pattern applies to every external dependency.
+
+**11. Portfolio and Projects should be one view.** The original design had separate Projects and Portfolio pages. Users found this confusing — "Where are my projects?" had two answers. Merging them into a single Projects page with summary statistics (Total, Active, Healthy, At Risk) eliminated the ambiguity. The dedicated Portfolio Heatmap remains as a deep-dive view for multi-project organizations.
+
+**12. Onboarding must persist data, not just collect it.** The 5-step onboarding wizard originally collected organization profile, team members, intake responses, and project metadata but never saved any of it — the success screen redirected to a hardcoded path. Wiring each step to actual API calls (project creation, team persistence, localStorage backup) transformed the wizard from a demo into a functional onboarding flow.
+
+**13. Status-aware task grouping surfaces what matters.** The My Tasks page originally listed all tasks in a flat list. Grouping by status (Failed > Action Needed > In Progress > Upcoming > Passed) with a multi-segment progress bar gives each role an instant read on their workload. Overdue detection with visual indicators (red badges, warning icons) ensures nothing falls through the cracks.
 
 ---
 
@@ -344,4 +420,4 @@ The competitors govern the AI. GovAI Studio governs the journey to AI.
 
 ---
 
-*Built with Next.js 15, TypeScript, Supabase, and Tailwind CSS 4. Deployed on Render. 102,000+ lines of code. 82 pages. 71 API endpoints. 550 tests. 7 roles. 5 phases. 41 project plan tasks. One platform.*
+*Built with Next.js 16, TypeScript, React 19, Supabase, and Tailwind CSS 4. Deployed on Render. 103,000+ lines of code. 77 pages. 66 API routes. 550+ tests. 7 roles. 5 phases. 41 project plan tasks. 38 domain events. 27 permissions. One platform.*
