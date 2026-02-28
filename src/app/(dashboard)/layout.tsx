@@ -4,9 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCurrentUser, useSignOut } from '@/hooks/use-auth';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { CommandPalette } from '@/components/shared/command-palette';
 import type { UserRole } from '@/types';
 import {
@@ -43,6 +45,7 @@ import {
   FileOutput,
   Flag,
   LogOut,
+  Menu,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -312,11 +315,13 @@ function NavLink({
   collapsed,
   pathname,
   dimmed = false,
+  onNavigate,
 }: {
   item: NavItem;
   collapsed: boolean;
   pathname: string;
   dimmed?: boolean;
+  onNavigate?: () => void;
 }): React.ReactElement {
   const Icon = item.icon;
   const isActive = pathname === item.href;
@@ -325,6 +330,7 @@ function NavLink({
     <Link
       href={item.href}
       title={collapsed ? item.label : undefined}
+      onClick={onNavigate}
       className={cn(
         'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all',
         isActive
@@ -358,10 +364,12 @@ function PhaseSection({
   phase,
   collapsed: sidebarCollapsed,
   pathname,
+  onNavigate,
 }: {
   phase: PhaseNavSection;
   collapsed: boolean;
   pathname: string;
+  onNavigate?: () => void;
 }): React.ReactElement {
   const hasActiveChild = phase.items.some((item) => pathname === item.href);
   const defaultOpen = phase.status === 'active' || hasActiveChild;
@@ -385,6 +393,7 @@ function PhaseSection({
             collapsed
             pathname={pathname}
             dimmed={phase.status === 'not_started'}
+            onNavigate={onNavigate}
           />
         ))}
       </div>
@@ -432,11 +441,196 @@ function PhaseSection({
               collapsed={false}
               pathname={pathname}
               dimmed={isDimmed}
+              onNavigate={onNavigate}
             />
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Sidebar content (shared between desktop inline and mobile drawer)   */
+/* ------------------------------------------------------------------ */
+
+function SidebarContent({
+  collapsed,
+  setCollapsed,
+  pathname,
+  filteredMainNav,
+  projectId,
+  projectTopItems,
+  filteredPhases,
+  onSignOut,
+  onNavigate,
+  showCollapseToggle,
+}: {
+  collapsed: boolean;
+  setCollapsed: (v: boolean) => void;
+  pathname: string;
+  filteredMainNav: NavItem[];
+  projectId: string | null;
+  projectTopItems: NavItem[];
+  filteredPhases: PhaseNavSection[];
+  onSignOut: () => void;
+  onNavigate?: () => void;
+  showCollapseToggle: boolean;
+}): React.ReactElement {
+  return (
+    <>
+      {/* Logo */}
+      <div
+        className={cn(
+          'flex h-14 items-center border-b border-slate-200 px-4',
+          collapsed ? 'justify-center' : 'gap-2',
+        )}
+      >
+        <Shield className="h-6 w-6 shrink-0 text-slate-900" />
+        {!collapsed && (
+          <div>
+            <span className="text-lg font-bold tracking-tight">
+              GovAI Studio
+            </span>
+            <p className="text-[10px] text-slate-400 -mt-0.5 tracking-wide">
+              AI Governance Platform
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Scrollable nav region */}
+      <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-4">
+        {/* Main nav */}
+        <div className="space-y-1">
+          {!collapsed && (
+            <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              Main
+            </p>
+          )}
+          {filteredMainNav.map((item) => (
+            <NavLink
+              key={item.href}
+              item={item}
+              collapsed={collapsed}
+              pathname={pathname}
+              onNavigate={onNavigate}
+            />
+          ))}
+        </div>
+
+        {projectId ? (
+          <>
+            <Separator className="bg-slate-200" />
+
+            {/* Current Project top-level items */}
+            <div className="space-y-1">
+              {!collapsed && (
+                <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Current Project
+                </p>
+              )}
+              {projectTopItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  item={item}
+                  collapsed={collapsed}
+                  pathname={pathname}
+                  onNavigate={onNavigate}
+                />
+              ))}
+            </div>
+
+            {/* Phase sections — role-filtered */}
+            {filteredPhases.map((phase) => (
+              <PhaseSection
+                key={phase.phase}
+                phase={phase}
+                collapsed={collapsed}
+                pathname={pathname}
+                onNavigate={onNavigate}
+              />
+            ))}
+          </>
+        ) : (
+          <>
+            <Separator className="bg-slate-200" />
+            {!collapsed && (
+              <div className="px-3 py-6 text-center">
+                <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                  <FolderKanban className="h-6 w-6 text-slate-400" />
+                </div>
+                <p className="text-xs text-slate-500 mb-1">
+                  Select a project to continue
+                </p>
+                <p className="text-[11px] text-slate-400 mb-3">
+                  Choose a project to view tasks and progress
+                </p>
+                <Link
+                  href="/projects"
+                  onClick={onNavigate}
+                  className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                >
+                  Explore Projects
+                </Link>
+              </div>
+            )}
+          </>
+        )}
+      </nav>
+
+      {/* Bottom area */}
+      <div className="border-t border-slate-200 px-2 py-3 space-y-1">
+        <NavLink
+          item={{ label: 'Settings', href: '/settings', icon: Settings }}
+          collapsed={collapsed}
+          pathname={pathname}
+          onNavigate={onNavigate}
+        />
+        <NavLink
+          item={{ label: 'Help', href: '/help', icon: HelpCircle }}
+          collapsed={collapsed}
+          pathname={pathname}
+          onNavigate={onNavigate}
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onSignOut}
+          title={collapsed ? 'Log Out' : undefined}
+          className={cn(
+            'w-full justify-start gap-3 text-slate-500 hover:bg-red-50 hover:text-red-600',
+            collapsed && 'justify-center px-2',
+          )}
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!collapsed && <span className="text-sm">Log Out</span>}
+        </Button>
+        {showCollapseToggle && (
+          <>
+            <Separator className="bg-slate-200 my-1" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setCollapsed(!collapsed)}
+              className={cn(
+                'w-full justify-start gap-3 text-slate-500 hover:bg-slate-100 hover:text-slate-900',
+                collapsed && 'justify-center px-2',
+              )}
+            >
+              {collapsed ? (
+                <PanelLeft className="h-4 w-4 shrink-0" />
+              ) : (
+                <>
+                  <PanelLeftClose className="h-4 w-4 shrink-0" />
+                  <span className="text-sm">Collapse sidebar</span>
+                </>
+              )}
+            </Button>
+          </>
+        )}
+      </div>
+    </>
   );
 }
 
@@ -447,15 +641,20 @@ function PhaseSection({
 function TopBar({
   pathname,
   effectiveRole,
+  onMenuToggle,
+  showMenuButton,
 }: {
   pathname: string;
   effectiveRole: UserRole | undefined;
+  onMenuToggle?: () => void;
+  showMenuButton: boolean;
 }): React.ReactElement {
   const router = useRouter();
   const { data: currentUser } = useCurrentUser();
   const signOut = useSignOut();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const isMobile = useMediaQuery(768);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -488,6 +687,11 @@ function TopBar({
 
   const crumbs = getBreadcrumbs(pathname);
 
+  // On mobile, show only the current page name (last crumb)
+  const displayCrumbs = isMobile && crumbs.length > 1
+    ? [crumbs[crumbs.length - 1]]
+    : crumbs;
+
   const displayName =
     currentUser?.full_name ||
     currentUser?.email?.split('@')[0] ||
@@ -506,24 +710,37 @@ function TopBar({
   };
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-6">
-      <nav className="flex items-center gap-1.5 text-sm">
-        {crumbs.map((crumb, i) => (
-          <span key={crumb.href} className="flex items-center gap-1.5">
-            {i > 0 && <span className="text-slate-400">/</span>}
-            {i === crumbs.length - 1 ? (
-              <span className="font-medium text-slate-900">{crumb.label}</span>
-            ) : (
-              <Link
-                href={crumb.href}
-                className="text-slate-500 hover:text-slate-900 transition-colors"
-              >
-                {crumb.label}
-              </Link>
-            )}
-          </span>
-        ))}
-      </nav>
+    <header className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6">
+      <div className="flex items-center gap-2">
+        {/* Hamburger button — mobile only */}
+        {showMenuButton && (
+          <button
+            onClick={onMenuToggle}
+            className="p-1.5 rounded-md text-slate-600 hover:bg-slate-100 md:hidden"
+            aria-label="Open navigation menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        )}
+
+        <nav className="flex items-center gap-1.5 text-sm">
+          {displayCrumbs.map((crumb, i) => (
+            <span key={crumb.href} className="flex items-center gap-1.5">
+              {i > 0 && <span className="text-slate-400">/</span>}
+              {i === displayCrumbs.length - 1 ? (
+                <span className="font-medium text-slate-900">{crumb.label}</span>
+              ) : (
+                <Link
+                  href={crumb.href}
+                  className="text-slate-500 hover:text-slate-900 transition-colors"
+                >
+                  {crumb.label}
+                </Link>
+              )}
+            </span>
+          ))}
+        </nav>
+      </div>
 
       {/* User menu with dropdown */}
       <div className="relative" ref={menuRef}>
@@ -584,13 +801,21 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const { data: currentUser } = useCurrentUser();
   const signOut = useSignOut();
   const roleOverride = useRoleOverride();
   const projectId = extractProjectId(pathname);
   const { activePhase } = useActivePhase(projectId);
+  const isMobile = useMediaQuery(768);
+
+  // Auto-close mobile drawer on route change
+  useEffect(() => {
+    setMobileDrawerOpen(false);
+  }, [pathname]);
 
   const handleSidebarSignOut = async () => {
+    setMobileDrawerOpen(false);
     try {
       await signOut.mutateAsync();
     } catch { /* ignore */ }
@@ -611,165 +836,54 @@ export default function DashboardLayout({
   const allPhases = projectId ? buildProjectPhases(projectId, activePhase) : [];
   const filteredPhases = filterPhasesByRole(allPhases, effectiveRole);
 
+  const sidebarProps = {
+    collapsed: isMobile ? false : collapsed,
+    setCollapsed,
+    pathname,
+    filteredMainNav,
+    projectId,
+    projectTopItems,
+    filteredPhases,
+    onSignOut: handleSidebarSignOut,
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-white">
-      {/* ---- Sidebar ---- */}
+      {/* ---- Desktop Sidebar (hidden on mobile) ---- */}
       <aside
         className={cn(
-          'flex flex-col border-r border-slate-200 bg-white transition-all duration-200',
+          'hidden md:flex flex-col border-r border-slate-200 bg-white transition-all duration-200',
           collapsed ? 'w-14' : 'w-56',
         )}
       >
-        {/* Logo */}
-        <div
-          className={cn(
-            'flex h-14 items-center border-b border-slate-200 px-4',
-            collapsed ? 'justify-center' : 'gap-2',
-          )}
-        >
-          <Shield className="h-6 w-6 shrink-0 text-slate-900" />
-          {!collapsed && (
-            <div>
-              <span className="text-lg font-bold tracking-tight">
-                GovAI Studio
-              </span>
-              <p className="text-[10px] text-slate-400 -mt-0.5 tracking-wide">
-                AI Governance Platform
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Scrollable nav region */}
-        <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-4">
-          {/* Main nav */}
-          <div className="space-y-1">
-            {!collapsed && (
-              <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                Main
-              </p>
-            )}
-            {filteredMainNav.map((item) => (
-              <NavLink
-                key={item.href}
-                item={item}
-                collapsed={collapsed}
-                pathname={pathname}
-              />
-            ))}
-          </div>
-
-          {projectId ? (
-            <>
-              <Separator className="bg-slate-200" />
-
-              {/* Current Project top-level items */}
-              <div className="space-y-1">
-                {!collapsed && (
-                  <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Current Project
-                  </p>
-                )}
-                {projectTopItems.map((item) => (
-                  <NavLink
-                    key={item.href}
-                    item={item}
-                    collapsed={collapsed}
-                    pathname={pathname}
-                  />
-                ))}
-              </div>
-
-              {/* Phase sections — role-filtered */}
-              {filteredPhases.map((phase) => (
-                <PhaseSection
-                  key={phase.phase}
-                  phase={phase}
-                  collapsed={collapsed}
-                  pathname={pathname}
-                />
-              ))}
-            </>
-          ) : (
-            <>
-              <Separator className="bg-slate-200" />
-              {!collapsed && (
-                <div className="px-3 py-6 text-center">
-                  <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
-                    <FolderKanban className="h-6 w-6 text-slate-400" />
-                  </div>
-                  <p className="text-xs text-slate-500 mb-1">
-                    Select a project to continue
-                  </p>
-                  <p className="text-[11px] text-slate-400 mb-3">
-                    Choose a project to view tasks and progress
-                  </p>
-                  <Link
-                    href="/projects"
-                    className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-                  >
-                    Explore Projects
-                  </Link>
-                </div>
-              )}
-            </>
-          )}
-        </nav>
-
-        {/* Bottom area */}
-        <div className="border-t border-slate-200 px-2 py-3 space-y-1">
-          <NavLink
-            item={{ label: 'Settings', href: '/settings', icon: Settings }}
-            collapsed={collapsed}
-            pathname={pathname}
-          />
-          <NavLink
-            item={{ label: 'Help', href: '/help', icon: HelpCircle }}
-            collapsed={collapsed}
-            pathname={pathname}
-          />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSidebarSignOut}
-            title={collapsed ? 'Log Out' : undefined}
-            className={cn(
-              'w-full justify-start gap-3 text-slate-500 hover:bg-red-50 hover:text-red-600',
-              collapsed && 'justify-center px-2',
-            )}
-          >
-            <LogOut className="h-4 w-4 shrink-0" />
-            {!collapsed && <span className="text-sm">Log Out</span>}
-          </Button>
-          <Separator className="bg-slate-200 my-1" />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCollapsed(!collapsed)}
-            className={cn(
-              'w-full justify-start gap-3 text-slate-500 hover:bg-slate-100 hover:text-slate-900',
-              collapsed && 'justify-center px-2',
-            )}
-          >
-            {collapsed ? (
-              <PanelLeft className="h-4 w-4 shrink-0" />
-            ) : (
-              <>
-                <PanelLeftClose className="h-4 w-4 shrink-0" />
-                <span className="text-sm">Collapse sidebar</span>
-              </>
-            )}
-          </Button>
-        </div>
+        <SidebarContent {...sidebarProps} showCollapseToggle />
       </aside>
+
+      {/* ---- Mobile Sidebar Drawer (Sheet, hidden on desktop) ---- */}
+      {isMobile && (
+        <Sheet open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
+          <SheetContent side="left" className="w-72 p-0 flex flex-col bg-white">
+            <SidebarContent
+              {...sidebarProps}
+              showCollapseToggle={false}
+              onNavigate={() => setMobileDrawerOpen(false)}
+            />
+          </SheetContent>
+        </Sheet>
+      )}
 
       {/* ---- Command Palette (Cmd+K) ---- */}
       <CommandPalette />
 
       {/* ---- Main content ---- */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar pathname={pathname} effectiveRole={effectiveRole} />
-        <main className="flex-1 overflow-y-auto px-8 py-6 lg:px-10">
+        <TopBar
+          pathname={pathname}
+          effectiveRole={effectiveRole}
+          onMenuToggle={() => setMobileDrawerOpen(true)}
+          showMenuButton={isMobile}
+        />
+        <main className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6 lg:px-10">
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>

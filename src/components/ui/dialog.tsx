@@ -100,7 +100,7 @@ const DialogContent = React.forwardRef<
         role="dialog"
         aria-modal="true"
         className={cn(
-          "relative z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg sm:rounded-lg",
+          "relative z-50 grid w-full max-w-[calc(100vw-2rem)] sm:max-w-lg gap-4 border bg-white p-6 shadow-lg sm:rounded-lg",
           className
         )}
         {...props}
