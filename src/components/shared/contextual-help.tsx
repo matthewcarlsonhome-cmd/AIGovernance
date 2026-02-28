@@ -13,6 +13,8 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                      */
@@ -170,6 +172,105 @@ const PHASE_EXPECTATIONS: Record<string, string> = {
 };
 
 /* -------------------------------------------------------------------------- */
+/*  Help panel inner content (shared between desktop panel and mobile sheet)    */
+/* -------------------------------------------------------------------------- */
+
+function HelpPanelContent({
+  helpEntry,
+  phaseExpectation,
+  onClose,
+}: {
+  helpEntry: HelpEntry | undefined;
+  phaseExpectation: string | null;
+  onClose: () => void;
+}): React.ReactElement {
+  return (
+    <>
+      {/* Panel Header */}
+      <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between z-10">
+        <h3 className="text-sm font-semibold text-slate-900">Page Guide</h3>
+        <button
+          onClick={onClose}
+          className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="px-5 py-4 space-y-5">
+        {helpEntry ? (
+          <>
+            {/* Title & Description */}
+            <div className="space-y-2">
+              <h4 className="text-base font-semibold text-slate-900">{helpEntry.title}</h4>
+              <p className="text-sm text-slate-600 leading-relaxed">{helpEntry.description}</p>
+            </div>
+
+            {/* Phase expectations */}
+            {phaseExpectation && (
+              <>
+                <Separator className="bg-slate-200" />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-4 w-4 text-slate-500" />
+                    <h5 className="text-sm font-semibold text-slate-900">What&apos;s Expected</h5>
+                  </div>
+                  <p className="text-sm text-slate-600 leading-relaxed">{phaseExpectation}</p>
+                </div>
+              </>
+            )}
+
+            {/* Why it matters */}
+            <Separator className="bg-slate-200" />
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="h-4 w-4 text-amber-500" />
+                <h5 className="text-sm font-semibold text-slate-900">Why This Matters</h5>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed">{helpEntry.whyItMatters}</p>
+            </div>
+
+            {/* Related Pages */}
+            {helpEntry.relatedPages.length > 0 && (
+              <>
+                <Separator className="bg-slate-200" />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <ExternalLink className="h-4 w-4 text-slate-500" />
+                    <h5 className="text-sm font-semibold text-slate-900">Related Pages</h5>
+                  </div>
+                  <div className="space-y-1">
+                    {helpEntry.relatedPages.map((rp) => (
+                      <Button
+                        key={rp.href}
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-between text-sm text-slate-600 hover:text-slate-900 h-8 px-2"
+                        onClick={() => {
+                          console.log('Navigate to:', rp.href);
+                        }}
+                      >
+                        {rp.label}
+                        <ArrowRight className="h-3 w-3" />
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-8">
+            <HelpCircle className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+            <p className="text-sm text-slate-500">No guide content available for this page.</p>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Component                                                                  */
 /* -------------------------------------------------------------------------- */
 
@@ -177,6 +278,7 @@ export function ContextualHelp({ phase, pageKey }: ContextualHelpProps): React.R
   const [isOpen, setIsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const isMobile = useMediaQuery(768);
 
   const helpEntry = HELP_CONTENT[pageKey];
   const phaseExpectation = phase ? PHASE_EXPECTATIONS[phase] : null;
@@ -185,9 +287,9 @@ export function ContextualHelp({ phase, pageKey }: ContextualHelpProps): React.R
     setIsOpen(false);
   }, []);
 
-  // Close on click outside
+  // Close on click outside (desktop only — Sheet handles its own overlay)
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || isMobile) return;
 
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -202,11 +304,11 @@ export function ContextualHelp({ phase, pageKey }: ContextualHelpProps): React.R
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen, handleClose]);
+  }, [isOpen, handleClose, isMobile]);
 
-  // Close on Escape key
+  // Close on Escape key (desktop only)
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || isMobile) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') handleClose();
@@ -214,7 +316,7 @@ export function ContextualHelp({ phase, pageKey }: ContextualHelpProps): React.R
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, handleClose]);
+  }, [isOpen, handleClose, isMobile]);
 
   return (
     <>
@@ -233,103 +335,42 @@ export function ContextualHelp({ phase, pageKey }: ContextualHelpProps): React.R
         <span className="text-sm font-medium">Guide</span>
       </button>
 
-      {/* Slide-out Panel */}
-      <div
-        ref={panelRef}
-        className={cn(
-          'fixed top-0 right-0 z-50 h-full w-80 bg-white shadow-xl border-l border-slate-200 transition-transform duration-300 ease-in-out overflow-y-auto',
-          isOpen ? 'translate-x-0' : 'translate-x-full',
-        )}
-      >
-        {/* Panel Header */}
-        <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between z-10">
-          <h3 className="text-sm font-semibold text-slate-900">Page Guide</h3>
-          <button
-            onClick={handleClose}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+      {/* Mobile: bottom Sheet */}
+      {isMobile ? (
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto rounded-t-xl p-0 bg-white">
+            <HelpPanelContent
+              helpEntry={helpEntry}
+              phaseExpectation={phaseExpectation}
+              onClose={handleClose}
+            />
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <>
+          {/* Desktop: Slide-out side panel */}
+          <div
+            ref={panelRef}
+            className={cn(
+              'fixed top-0 right-0 z-50 h-full w-80 bg-white shadow-xl border-l border-slate-200 transition-transform duration-300 ease-in-out overflow-y-auto',
+              isOpen ? 'translate-x-0' : 'translate-x-full',
+            )}
           >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+            <HelpPanelContent
+              helpEntry={helpEntry}
+              phaseExpectation={phaseExpectation}
+              onClose={handleClose}
+            />
+          </div>
 
-        <div className="px-5 py-4 space-y-5">
-          {helpEntry ? (
-            <>
-              {/* Title & Description */}
-              <div className="space-y-2">
-                <h4 className="text-base font-semibold text-slate-900">{helpEntry.title}</h4>
-                <p className="text-sm text-slate-600 leading-relaxed">{helpEntry.description}</p>
-              </div>
-
-              {/* Phase expectations */}
-              {phaseExpectation && (
-                <>
-                  <Separator className="bg-slate-200" />
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Target className="h-4 w-4 text-slate-500" />
-                      <h5 className="text-sm font-semibold text-slate-900">What&apos;s Expected</h5>
-                    </div>
-                    <p className="text-sm text-slate-600 leading-relaxed">{phaseExpectation}</p>
-                  </div>
-                </>
-              )}
-
-              {/* Why it matters */}
-              <Separator className="bg-slate-200" />
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Lightbulb className="h-4 w-4 text-amber-500" />
-                  <h5 className="text-sm font-semibold text-slate-900">Why This Matters</h5>
-                </div>
-                <p className="text-sm text-slate-600 leading-relaxed">{helpEntry.whyItMatters}</p>
-              </div>
-
-              {/* Related Pages */}
-              {helpEntry.relatedPages.length > 0 && (
-                <>
-                  <Separator className="bg-slate-200" />
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <ExternalLink className="h-4 w-4 text-slate-500" />
-                      <h5 className="text-sm font-semibold text-slate-900">Related Pages</h5>
-                    </div>
-                    <div className="space-y-1">
-                      {helpEntry.relatedPages.map((rp) => (
-                        <Button
-                          key={rp.href}
-                          variant="ghost"
-                          size="sm"
-                          className="w-full justify-between text-sm text-slate-600 hover:text-slate-900 h-8 px-2"
-                          onClick={() => {
-                            // Navigate via console for now; in production this would use router
-                            console.log('Navigate to:', rp.href);
-                          }}
-                        >
-                          {rp.label}
-                          <ArrowRight className="h-3 w-3" />
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </>
-          ) : (
-            <div className="text-center py-8">
-              <HelpCircle className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-              <p className="text-sm text-slate-500">No guide content available for this page.</p>
-            </div>
+          {/* Backdrop overlay when panel is open */}
+          {isOpen && (
+            <div
+              className="fixed inset-0 z-40 bg-black/10"
+              onClick={handleClose}
+            />
           )}
-        </div>
-      </div>
-
-      {/* Backdrop overlay when panel is open */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/10"
-          onClick={handleClose}
-        />
+        </>
       )}
     </>
   );

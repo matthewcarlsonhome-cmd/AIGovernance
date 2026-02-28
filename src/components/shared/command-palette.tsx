@@ -255,7 +255,7 @@ export function CommandPalette(): React.JSX.Element {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent
-        className="max-w-lg p-0 gap-0 overflow-hidden"
+        className="max-w-[calc(100vw-2rem)] sm:max-w-lg p-0 gap-0 overflow-hidden"
         onKeyDown={handleKeyDown}
       >
         {/* Search input */}
@@ -328,7 +328,7 @@ export function CommandPalette(): React.JSX.Element {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t px-4 py-2 text-[11px] text-slate-500">
+        <div className="hidden sm:flex items-center justify-between border-t px-4 py-2 text-[11px] text-slate-500">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
               <kbd className="inline-flex h-4 min-w-4 items-center justify-center rounded border bg-slate-100 px-0.5 text-[10px] dark:bg-slate-800 dark:border-slate-700">

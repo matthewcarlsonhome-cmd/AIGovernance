@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { CalendarRange, Download, ChevronDown, ChevronRight, Diamond, Plus, Pencil, Trash2, X, Info, Sparkles } from 'lucide-react';
+import { CalendarRange, Download, ChevronDown, ChevronRight, Diamond, Plus, Pencil, Trash2, X, Info, Sparkles, List } from 'lucide-react';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -326,6 +327,8 @@ export default function GanttPage({
     if (typeof window === 'undefined') return true;
     return !localStorage.getItem('govai_gantt_guide_dismissed');
   });
+  const [mobileTaskListOpen, setMobileTaskListOpen] = useState(false);
+  const isMobile = useMediaQuery(768);
 
   // Load tasks from localStorage
   useEffect(() => {
@@ -519,9 +522,60 @@ export default function GanttPage({
       {/* Gantt Chart */}
       <Card className="overflow-hidden">
         <CardContent className="p-0">
+          {/* Mobile: toggle button for task list */}
+          {isMobile && (
+            <div className="flex items-center justify-between px-3 py-2 border-b bg-slate-50 md:hidden">
+              <button
+                onClick={() => setMobileTaskListOpen(!mobileTaskListOpen)}
+                className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-slate-900"
+              >
+                <List className="h-4 w-4" />
+                {mobileTaskListOpen ? 'Hide Task List' : 'Show Task List'}
+              </button>
+              <span className="text-xs text-slate-400">Scroll timeline horizontally</span>
+            </div>
+          )}
+
+          {/* Mobile: collapsible task list overlay */}
+          {isMobile && mobileTaskListOpen && (
+            <div className="border-b bg-slate-50 max-h-64 overflow-y-auto md:hidden">
+              <div className="h-10 border-b flex items-center justify-between px-3 text-xs font-medium text-slate-500">
+                <span>Task Name</span>
+                <span>Actions</span>
+              </div>
+              {groupedTasks.map((group) => (
+                <div key={group.name}>
+                  <button onClick={() => togglePhase(group.name)} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-semibold bg-slate-50 border-b hover:bg-slate-100">
+                    {collapsedPhases.has(group.name) ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                    <div className={`w-2.5 h-2.5 rounded ${group.color}`} />
+                    {group.name}
+                    <Badge variant="outline" className="ml-auto text-[10px]">{group.tasks.length}</Badge>
+                  </button>
+                  {!collapsedPhases.has(group.name) && group.tasks.map((task) => (
+                    <div key={task.id} className="flex items-center gap-2 px-3 py-1.5 text-xs border-b hover:bg-slate-50 pl-8 group">
+                      {task.isMilestone && <Diamond className="h-3 w-3 text-amber-500 fill-amber-500 shrink-0" />}
+                      <span className="truncate flex-1">{task.title}</span>
+                      <button
+                        onClick={() => {
+                          setEditingTask(task);
+                          setDialogOpen(true);
+                        }}
+                        className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 shrink-0"
+                        title="Edit task"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </button>
+                      <span className={`h-2 w-2 rounded-full shrink-0 ${statusStyles[task.status]}`} />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="flex">
-            {/* Left panel - Task list */}
-            <div className="w-[300px] shrink-0 border-r bg-slate-50">
+            {/* Left panel - Task list (desktop only) */}
+            <div className="hidden md:block w-[300px] shrink-0 border-r bg-slate-50">
               <div className="h-10 border-b flex items-center justify-between px-3 text-xs font-medium text-slate-500">
                 <span>Task Name</span>
                 <span>Actions</span>
